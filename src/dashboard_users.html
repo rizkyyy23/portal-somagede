@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Somagede Indonesia – Portal</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ─── RESET & BASE ─── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --blue: #1a56db;
+        --blue-light: #dbeafe;
+        --blue-hover: #1e40af;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --bg: #f1f5f9;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --red: #dc2626;
+        --red-light: #fef2f2;
+        --orange: #f59e0b;
+        --orange-light: #fef3c7;
+        --green: #16a34a;
+        --green-light: #dcfce7;
+        --purple: #7c3aed;
+        --purple-light: #ede9fe;
+        --teal: #0891b2;
+        --teal-light: #cffafe;
+        --radius: 12px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text-primary);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ─── HERO ─── */
+      .hero {
+        position: relative;
+        height: 280px;
+        overflow: hidden;
+        background: #1e293b;
+      }
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.534) 20%,
+            rgba(135, 133, 133, 0.3) 50%,
+            rgba(255, 255, 255, 0) 30%
+          ),
+          url(assets/navbar\ foto\ smg.png) left/cover no-repeat;
+      }
+      .hero-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 39px,
+            rgba(255, 255, 255, 0.04) 39px,
+            rgba(255, 255, 255, 0.04) 40px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 39px,
+            rgba(255, 255, 255, 0.04) 39px,
+            rgba(255, 255, 255, 0.04) 40px
+          );
+      }
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 100%;
+        margin: 0;
+        padding: 40px 80px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      /* LOGO */
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .logo img {
+        width: 400px;
+        height: auto;
+        display: block;
+      }
+
+      /* ═══════════════════════════════════════════
+     USER BADGE — redesigned
+     ═══════════════════════════════════════════ */
+      .profile-btn {
+        position: relative;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        padding: 5px 16px 5px 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition:
+          box-shadow 0.2s,
+          border-color 0.2s;
+        user-select: none;
+        z-index: 10;
+      }
+      .profile-btn:hover {
+        border-color: var(--blue);
+        box-shadow: 0 4px 14px rgba(26, 86, 219, 0.18);
+      }
+
+      /* Avatar circle */
+      .profile-avatar {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      /* Online dot */
+      .profile-avatar::after {
+        content: "";
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #16a34a;
+        border: 2px solid #fff;
+      }
+
+      /* Name + role stacked */
+      .profile-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .profile-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .profile-role {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: capitalize;
+      }
+
+      /* Caret chevron */
+      .profile-caret {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 2px;
+        transition: transform 0.22s;
+      }
+      .profile-caret svg {
+        width: 14px;
+        height: 14px;
+        color: var(--text-muted);
+      }
+      .profile-btn.open .profile-caret {
+        transform: rotate(180deg);
+      }
+
+      /* ─── DROPDOWN MENU ─── */
+      .dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        width: 160px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+        pointer-events: none;
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
+        z-index: 100;
+      }
+
+      .profile-btn.open .dropdown {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
+      /* ─── HEADER ─── */
+      .dropdown-header {
+        padding: 8px 12px; /* 🔽 diperkecil */
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px; /* 🔽 */
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      }
+
+      .dropdown-header .dh-avatar {
+        width: 30px; /* 🔽 */
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px; /* 🔽 */
+        font-weight: 700;
+        color: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+
+      .dropdown-header .dh-info {
+        line-height: 1.2; /* 🔽 */
+      }
+
+      .dropdown-header .dh-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .dropdown-header .dh-role {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: capitalize;
+      }
+
+      /* ─── ITEM MENU ─── */
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* 🔽 */
+        padding: 2px 12px; /* 🔽 */
+        cursor: pointer;
+        color: var(--text-primary);
+        font-size: 12px;
+        font-weight: 500;
+        transition: background 0.15s;
+        text-decoration: none;
+      }
+
+      .dropdown-item:hover {
+        background: var(--blue-light);
+        color: var(--blue);
+      }
+
+      /* ─── ICON ─── */
+      .dropdown-item .di-icon {
+        width: 26px; /* 🔽 */
+        height: 26px;
+        border-radius: 6px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        font-size: 13px; /* 🔽 */
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+
+      .dropdown-item:hover .di-icon {
+        background: var(--blue-light);
+        color: var(--blue);
+      }
+
+      /* ─── ARROW ─── */
+      .dropdown-item .di-arrow {
+        margin-left: auto;
+        color: var(--text-muted);
+        font-size: 13px; /* 🔽 */
+        transition: color 0.15s;
+      }
+
+      .dropdown-item:hover .di-arrow {
+        color: var(--blue);
+      }
+
+      /* ─── LOGOUT ─── */
+      .dropdown-item.logout {
+        background: var(--red-light);
+        margin: 6px 8px 8px; /* 🔽 */
+        border-radius: 6px;
+        color: var(--red);
+      }
+
+      .dropdown-item.logout:hover {
+        background: #fecaca;
+        color: var(--red);
+      }
+
+      .dropdown-item.logout .di-icon {
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--red);
+      }
+
+      .dropdown-item.logout:hover .di-icon {
+        background: rgba(220, 38, 38, 0.15);
+        color: var(--red);
+      }
+
+      .dropdown-item.logout .di-arrow {
+        color: var(--red);
+        opacity: 0.5;
+      }
+
+      /* ─── HERO BOTTOM ─── */
+      .hero-bottom {
+        position: relative;
+        z-index: 2;
+        max-width: 100%;
+        margin: 0;
+        padding: 32px 80px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .hero-text h1 {
+        font-size: 28px;
+        font-weight: 800;
+        color: #000;
+        margin-bottom: 6px;
+      }
+
+      .hero-text h1 span {
+        color: #2e5d98;
+      }
+
+      .hero-text p {
+        font-size: 15px;
+        color: #000;
+        max-width: 380px;
+        line-height: 1.5;
+      }
+
+      /* ─── MAIN CONTENT ─── */
+      .main {
+        max-width: 100%;
+        margin: 0;
+        padding: 36px 80px 60px;
+        display: flex;
+        gap: 28px;
+      }
+      .content-area {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* SECTION */
+      .section {
+        margin-bottom: 40px;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        position: relative;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .section-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+      .section-underline {
+        height: 3px;
+        width: 44px;
+        background: var(--blue);
+        border-radius: 2px;
+        margin-bottom: 20px;
+      }
+
+      /* ─── SECTION APP-NAME DROPDOWN ─── */
+      .section-dropdown-wrap {
+        position: relative;
+        display: inline-flex;
+      }
+      .section-dropdown-trigger {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        user-select: none;
+      }
+      .section-dropdown-trigger .section-title {
+        transition: color 0.15s;
+      }
+      .section-dropdown-trigger:hover .section-title {
+        color: var(--blue);
+      }
+      .section-dropdown-trigger .trigger-caret {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s;
+      }
+      .section-dropdown-trigger.open .trigger-caret {
+        transform: rotate(180deg);
+      }
+
+      .section-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        min-width: 190px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+        z-index: 50;
+      }
+      .section-dropdown-wrap.open .section-dropdown {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .section-dropdown-item {
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-primary);
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        transition: background 0.12s;
+      }
+      .section-dropdown-item:not(:last-child) {
+        border-bottom: 1px solid var(--border);
+      }
+      .section-dropdown-item:hover {
+        background: var(--blue-light);
+        color: var(--blue);
+      }
+
+      /* APP CARDS GRID */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+
+      /* APP CARD */
+      .app-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 24px 20px 20px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        min-height: 285px;
+      }
+      .app-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+      }
+      .app-card .deco {
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        opacity: 0.12;
+        pointer-events: none;
+      }
+      .card-icon-wrap {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      .card-icon-wrap svg {
+        width: 22px;
+        height: 22px;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        position: relative;
+        z-index: 1;
+      }
+      .card-desc {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        line-height: 1.55;
+        flex: 1;
+        position: relative;
+        z-index: 1;
+      }
+      .launch-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        margin-top: 14px;
+        position: relative;
+        z-index: 1;
+        transition: gap 0.2s;
+      }
+      .launch-link:hover {
+        gap: 9px;
+      }
+      .launch-link svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ─── NOTIFICATION SIDEBAR ─── */
+      .sidebar {
+        width: 280px;
+        flex-shrink: 0;
+      }
+      .notif-card {
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--red);
+        padding: 18px;
+        margin-bottom: 14px;
+      }
+      .notif-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .notif-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: var(--orange-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .notif-avatar svg {
+        width: 20px;
+        height: 20px;
+        color: var(--orange);
+      }
+      .notif-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .notif-time {
+        font-size: 10.5px;
+        color: var(--text-muted);
+      }
+      .notif-body {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        line-height: 1.55;
+        padding-left: 46px;
+      }
+      .notif-dismiss {
+        display: inline-block;
+        margin-top: 8px;
+        padding-left: 46px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--blue);
+        cursor: pointer;
+        border: none;
+        background: none;
+        text-align: left;
+      }
+      .notif-dismiss:hover {
+        color: var(--blue-hover);
+      }
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE – TABLET, MOBILE, EXTRA SMALL
+──────────────────────────────────────────── */
+
+/* =================================================
+   TABLET
+================================================= */
+@media (max-width: 900px) {
+
+  .main {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .sidebar {
+    width: 100%;
+    order: -1;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* =================================================
+   MOBILE
+================================================= */
+@media (max-width: 620px) {
+
+  /* ===== HERO ===== */
+  .hero {
+    height: auto;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px 0;
+  }
+
+  .hero-text h1 {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .hero-text p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .hero-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .main {
+    padding: 16px 12px 40px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* ===== LOGO ===== */
+  .logo img {
+    width: 140px;
+  }
+
+  /* ===== PROFILE / USER BADGE ===== */
+  .profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 160px;
+    padding: 4px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .profile-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .profile-name {
+    font-size: 10px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-role {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  /* ===== DROPDOWN ===== */
+  .dropdown {
+    width: 150px;
+  }
+
+  .dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .dropdown-header .dh-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .dropdown-header .dh-name {
+    font-size: 10px;
+  }
+
+  .dropdown-header .dh-role {
+    font-size: 8px;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .dropdown-item .di-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .dropdown-item .di-arrow {
+    font-size: 11px;
+  }
+
+  .dropdown-item.logout {
+    margin: 6px;
+  }
+}
+
+
+/* =================================================
+   EXTRA SMALL DEVICE (HP KECIL)
+================================================= */
+@media (max-width: 480px) {
+
+  /* HERO */
+  .hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .profile-btn {
+    align-self: flex-end;
+    margin-top: 6px;
+  }
+
+  /* CARD */
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* LOGO */
+  .logo img {
+    width: 120px;
+  }
+}
+
+
+    </style>
+  </head>
+  <body>
+    <!-- ═══════════ HERO ═══════════ -->
+    <section class="hero">
+      <div class="hero-bg"></div>
+
+      <div class="hero-content">
+        <!-- Logo -->
+        <div class="logo">
+          <img src="assets/logo somagede black.png" alt="Somagede Indonesia" />
+        </div>
+
+        <!-- ─── USER BADGE ─── -->
+        <div class="profile-btn" id="profileBtn" onclick="toggleDropdown()">
+          <div class="profile-avatar">RS</div>
+          <div class="profile-info">
+            <span class="profile-name">Rizky Setyo</span>
+            <span class="profile-role">Internship</span>
+          </div>
+          <div class="profile-caret">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+
+          <!-- Dropdown -->
+          <div class="dropdown">
+            <div class="dropdown-header">
+              <div class="dh-avatar">RS</div>
+              <div class="dh-info">
+                <div class="dh-name">Rizky Setyo</div>
+                <div class="dh-role">Internship</div>
+              </div>
+            </div>
+            <a
+              class="dropdown-item"
+              href="profile.html"
+              onclick="
+                window.location.href = 'profile.html';
+                return false;
+              "
+            >
+              <div class="di-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </div>
+              Profile
+              <span class="di-arrow">›</span>
+            </a>
+            <a
+              class="dropdown-item"
+              href="settings.html"
+              onclick="
+                window.location.href = 'settings.html';
+                return false;
+              "
+            >
+              <div class="di-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  />
+                </svg>
+              </div>
+              Settings
+              <span class="di-arrow">›</span>
+            </a>
+            <a class="dropdown-item logout" href="#">
+              <div class="di-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </div>
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Bottom: Welcome + Scroll Nav -->
+      <div class="hero-bottom">
+        <div class="hero-text">
+          <h1>Welcome Back <span>Rizky!</span></h1>
+          <p>
+            Everything you need to manage industrial tools and logistics in one
+            unified platform.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ MAIN ═══════════ -->
+    <div class="main">
+      <div class="content-area" id="contentArea">
+        <!-- IT TOOLS -->
+        <div class="section" data-category="it">
+          <div class="section-header">
+            <div class="section-dropdown-wrap" id="drop-it">
+              <button
+                class="section-dropdown-trigger"
+                onclick="toggleSectionDrop('drop-it')"
+              >
+                <span class="section-title">IT Tools</span>
+                <span class="trigger-caret">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--text-muted)"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
+              <div class="section-dropdown">
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-api')"
+                >
+                  API Documentation
+                </button>
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-server')"
+                >
+                  Server Monitoring
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="section-underline"></div>
+          <div class="cards-grid">
+            <div class="app-card" id="card-api">
+              <div class="deco" style="background: var(--blue)"></div>
+              <div class="card-icon-wrap" style="background: var(--red-light)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#dc2626"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                  <line x1="14" y1="4" x2="10" y2="20" />
+                </svg>
+              </div>
+              <div class="card-title">API Documentation</div>
+              <div class="card-desc">
+                Track incoming supplies, manage purchase orders, and monitor
+                real-time delivery statuses across regions.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+            <div class="app-card" id="card-server">
+              <div class="deco" style="background: var(--teal)"></div>
+              <div class="card-icon-wrap" style="background: var(--bg)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-primary)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="2" y="3" width="20" height="5" rx="1" />
+                  <rect x="2" y="11" width="20" height="5" rx="1" />
+                  <rect x="2" y="19" width="20" height="3" rx="1" />
+                  <line x1="6" y1="5.5" x2="6.01" y2="5.5" />
+                  <line x1="6" y1="13.5" x2="6.01" y2="13.5" />
+                  <line x1="6" y1="20.5" x2="6.01" y2="20.5" />
+                </svg>
+              </div>
+              <div class="card-title">Server Monitoring</div>
+              <div class="card-desc">
+                Manage shifts, request leaves, view payslips, and access
+                corporate announcements and training.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINANCE -->
+        <div class="section" data-category="finance">
+          <div class="section-header">
+            <div class="section-dropdown-wrap" id="drop-finance">
+              <button
+                class="section-dropdown-trigger"
+                onclick="toggleSectionDrop('drop-finance')"
+              >
+                <span class="section-title">Finance</span>
+                <span class="trigger-caret">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--text-muted)"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
+              <div class="section-dropdown">
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-accountant1')"
+                >
+                  Accountant
+                </button>
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-ordering')"
+                >
+                  Ordering Management
+                </button>
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-accountant2')"
+                >
+                  Accountant
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="section-underline"></div>
+          <div class="cards-grid">
+            <div class="app-card" id="card-accountant1">
+              <div class="deco" style="background: var(--purple)"></div>
+              <div class="card-icon-wrap" style="background: var(--bg)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-muted)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </div>
+              <div class="card-title">Accountant</div>
+              <div class="card-desc">
+                Plan and track routine maintenance for heavy machinery to ensure
+                peak operational efficiency.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+            <div class="app-card" id="card-ordering">
+              <div class="deco" style="background: var(--orange)"></div>
+              <div class="card-icon-wrap" style="background: var(--bg)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-muted)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path
+                    d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
+                  />
+                </svg>
+              </div>
+              <div class="card-title">Ordering Management</div>
+              <div class="card-desc">
+                Plan and track routine maintenance for heavy machinery to ensure
+                peak operational efficiency.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+            <div class="app-card" id="card-accountant2">
+              <div class="deco" style="background: var(--green)"></div>
+              <div class="card-icon-wrap" style="background: var(--bg)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-muted)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </div>
+              <div class="card-title">Accountant</div>
+              <div class="card-desc">
+                Plan and track routine maintenance for heavy machinery to ensure
+                peak operational efficiency.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAREHOUSE -->
+        <div class="section" data-category="warehouse">
+          <div class="section-header">
+            <div class="section-dropdown-wrap" id="drop-warehouse">
+              <button
+                class="section-dropdown-trigger"
+                onclick="toggleSectionDrop('drop-warehouse')"
+              >
+                <span class="section-title">Warehouse</span>
+                <span class="trigger-caret">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--text-muted)"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
+              <div class="section-dropdown">
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-inventory')"
+                >
+                  Inventory
+                </button>
+                <button
+                  class="section-dropdown-item"
+                  onclick="scrollToCard('card-logistics')"
+                >
+                  Logistics Fleet Tracking
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="section-underline"></div>
+          <div class="cards-grid">
+            <div class="app-card" id="card-inventory">
+              <div class="deco" style="background: var(--blue)"></div>
+              <div class="card-icon-wrap" style="background: var(--blue-light)">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#1a56db"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <div class="card-title">Inventory</div>
+              <div class="card-desc">
+                Access technical specifications, inventory levels, and maintain
+                logs for all cutting equipment.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+            <div class="app-card" id="card-logistics">
+              <div class="deco" style="background: var(--orange)"></div>
+              <div
+                class="card-icon-wrap"
+                style="background: var(--orange-light)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#f59e0b"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                  <circle cx="5.5" cy="18.5" r="2.5" />
+                  <circle cx="18.5" cy="18.5" r="2.5" />
+                </svg>
+              </div>
+              <div class="card-title">Logistics Fleet Tracking</div>
+              <div class="card-desc">
+                GPS-enabled fleet tracking for industrial delivery trucks and
+                onsite heavy equipment units.
+              </div>
+              <a href="#" class="launch-link"
+                >Launch Application
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" /></svg
+              ></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDEBAR: Notifications -->
+      <aside class="sidebar" id="notifSidebar">
+        <div class="notif-card" id="notifMaintenance">
+          <div class="notif-head">
+            <div class="notif-avatar">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div>
+              <div class="notif-title">Maintenance Window Oct 24</div>
+              <div class="notif-time">Just now</div>
+            </div>
+          </div>
+          <div class="notif-body">
+            The Somagede ERP platform will undergo scheduled maintenance this
+            Sunday from 02:00 AM to 04:00 AM WIB. Please ensure all pending
+            transactions are saved before the window.
+          </div>
+          <button
+            class="notif-dismiss"
+            onclick="dismissNotif('notifMaintenance')"
+          >
+            Dismiss
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ═══════════ SCRIPTS ═══════════ -->
+    <script>
+      // ─── PROFILE DROPDOWN ───
+      function toggleDropdown() {
+        document.getElementById("profileBtn").classList.toggle("open");
+      }
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", function (e) {
+        var btn = document.getElementById("profileBtn");
+        if (btn && !btn.contains(e.target)) btn.classList.remove("open");
+      });
+
+      // Close dropdown when clicking on a menu item
+      var dropdownItems = document.querySelectorAll(".dropdown-item");
+      dropdownItems.forEach(function (item) {
+        item.addEventListener("click", function () {
+          setTimeout(function () {
+            document.getElementById("profileBtn").classList.remove("open");
+          }, 100);
+        });
+      });
+
+      // ─── SCROLL NAVIGATOR ───
+      (function () {
+        var track = document.getElementById("scrollTrack");
+        var trackWrap = document.getElementById("scrollTrack-wrap");
+        var prev = document.getElementById("scrollPrev");
+        var next = document.getElementById("scrollNext");
+        var pills = track.querySelectorAll(".scroll-pill");
+        var scrollAmt = 120;
+
+        function updateState() {
+          var atStart = track.scrollLeft <= 1;
+          var atEnd =
+            track.scrollLeft >= track.scrollWidth - track.clientWidth - 1;
+
+          // Arrow enabled/disabled
+          prev.classList.toggle("disabled", atStart);
+          next.classList.toggle("disabled", atEnd);
+
+          // Edge fade classes on the track wrapper
+          trackWrap.classList.toggle("at-start", atStart);
+          trackWrap.classList.toggle("not-start", !atStart);
+          trackWrap.classList.toggle("at-end", atEnd);
+          trackWrap.classList.toggle("not-end", !atEnd);
+        }
+
+        track.addEventListener("scroll", updateState);
+        // Run once after layout settles
+        requestAnimationFrame(updateState);
+
+        // Filter logic
+        pills.forEach(function (pill) {
+          pill.addEventListener("click", function () {
+            pills.forEach(function (p) {
+              p.classList.remove("active");
+            });
+            this.classList.add("active");
+            var filter = this.dataset.filter;
+            document.querySelectorAll(".section").forEach(function (section) {
+              section.style.display =
+                filter === "all" || section.dataset.category === filter
+                  ? ""
+                  : "none";
+            });
+            this.scrollIntoView({
+              block: "nearest",
+              inline: "center",
+              behavior: "smooth",
+            });
+          });
+        });
+
+        window.scrollNav = function (dir) {
+          track.scrollLeft += dir * scrollAmt;
+        };
+
+        // decorative scrollbar removed
+      })();
+
+      // ─── SECTION DROPDOWNS ───
+      function toggleSectionDrop(id) {
+        var wrap = document.getElementById(id);
+        var isOpen = wrap.classList.contains("open");
+        document
+          .querySelectorAll(".section-dropdown-wrap")
+          .forEach(function (w) {
+            w.classList.remove("open");
+            w.querySelector(".section-dropdown-trigger").classList.remove(
+              "open",
+            );
+          });
+        if (!isOpen) {
+          wrap.classList.add("open");
+          wrap.querySelector(".section-dropdown-trigger").classList.add("open");
+        }
+      }
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest(".section-dropdown-wrap")) {
+          document
+            .querySelectorAll(".section-dropdown-wrap")
+            .forEach(function (w) {
+              w.classList.remove("open");
+              w.querySelector(".section-dropdown-trigger").classList.remove(
+                "open",
+              );
+            });
+        }
+      });
+
+      // ─── SCROLL TO CARD ───
+      function scrollToCard(cardId) {
+        var card = document.getElementById(cardId);
+        if (!card) return;
+        document
+          .querySelectorAll(".section-dropdown-wrap")
+          .forEach(function (w) {
+            w.classList.remove("open");
+            w.querySelector(".section-dropdown-trigger").classList.remove(
+              "open",
+            );
+          });
+        setTimeout(function () {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.style.transition = "box-shadow .3s";
+          card.style.boxShadow = "0 0 0 3px var(--blue)";
+          setTimeout(function () {
+            card.style.boxShadow = "";
+          }, 800);
+        }, 180);
+      }
+
+      // ─── DISMISS NOTIFICATION ───
+      function dismissNotif(id) {
+        var el = document.getElementById(id);
+        el.style.transition = "opacity .3s, transform .3s";
+        el.style.opacity = "0";
+        el.style.transform = "translateX(20px)";
+        setTimeout(function () {
+          el.remove();
+        }, 320);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,450 @@
+/* Login Page Styles */
+
+.login-page {
+  background: #f5f7fa;
+}
+
+.login-page .container {
+  display: flex;
+  width: 1500px;
+}
+
+/* Left Side - Building Background */
+.login-page .left-side {
+  flex: 1;
+  background: url("/assets/image_login.png") center/cover;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page .left-side::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  z-index: 1;
+}
+
+.login-page .left-content {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+}
+
+.login-page .left-logo {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+  z-index: 2;
+}
+
+.login-page .left-logo img {
+  width: 300px;
+}
+
+.login-page .left-logo .logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  color: white;
+}
+
+.login-page .left-title {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.6);
+  letter-spacing: -0.5px;
+}
+
+.login-page .left-description {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6);
+  font-weight: 400;
+}
+
+/* Right Side - Login Form */
+.login-page .right-side {
+  flex: 1;
+  background: #f8f9fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 80px;
+  position: relative;
+}
+
+.login-page .login-container {
+  width: 100%;
+  max-width: 460px;
+}
+
+
+/* Top Logo */
+.login-page .top-logo {
+  margin-bottom: 50px;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.login-page .top-logo img {
+ width: 300px;
+}
+
+.login-page .top-logo .logo-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.3px;
+}
+
+/* Login Header */
+.login-page .login-header {
+  margin-bottom: 35px;
+}
+
+.login-page .login-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.login-page .login-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Form Styling */
+.login-page form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-page .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 22px;
+}
+
+.login-page .form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.login-page .form-group input {
+  padding: 13px 16px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
+  color: #1a1a1a;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.login-page .form-group input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+.login-page .form-group input::placeholder {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* Input Wrapper for Password */
+.login-page .input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-page .input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.login-page .eye-icon {
+  position: absolute;
+  right: 14px;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 20px;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.login-page .eye-icon:hover {
+  color: #1a73e8;
+}
+
+/* Form Options */
+.login-page .form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.login-page .remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #4b5563;
+  user-select: none;
+  font-size: 14px;
+}
+
+.login-page .remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #4a90e2;
+}
+
+.login-page .forgot-password {
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.login-page .forgot-password:hover {
+  color: #1557b0;
+  text-decoration: underline;
+}
+
+/* Login Button */
+.login-page .login-button {
+  width: 100%;
+  padding: 14px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+}
+
+.login-page .login-button:hover {
+  background: #1557b0;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+.login-page .login-button:active {
+  transform: translateY(0);
+}
+
+/* Divider */
+.login-page .divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0 20px 0;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.login-page .divider::before,
+.login-page .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.login-page .divider span {
+  margin: 0 14px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Social Login Buttons */
+.login-page .microsoft-button,
+.login-page .google-button {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.login-page .google-button:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.login-page .google-button {
+  margin-bottom: 0;
+}
+
+.login-page .microsoft-icon,
+.login-page .google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.login-page .google-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Support Link */
+.login-page .support-link {
+  position: absolute;
+  bottom: 25px;
+  left: 80px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.login-page .support-link:hover {
+  color: #1a73e8;
+}
+
+.login-page .support-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .login-page .left-title {
+    font-size: 36px;
+  }
+
+  .login-page .left-description {
+    font-size: 14px;
+  }
+
+  .login-page .left-side {
+    padding: 40px 30px;
+  }
+
+  .login-page .right-side {
+    padding: 30px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-page .container {
+    flex-direction: column;
+  }
+
+  .login-page .left-side {
+    min-height: 40vh;
+    padding: 30px 20px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .login-page .left-content {
+    text-align: center;
+  }
+
+  .login-page .left-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+
+  .login-page .left-description {
+    font-size: 13px;
+  }
+
+  .login-page .right-side {
+    min-height: 60vh;
+    padding: 30px 20px;
+  }
+
+  .login-page .login-container {
+    max-width: 100%;
+  }
+
+  .login-page .language-selector {
+    top: 15px;
+    right: 15px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page .left-title {
+    font-size: 22px;
+  }
+
+  .login-page .login-header h1 {
+    font-size: 22px;
+  }
+
+  .login-page .left-description,
+  .login-page .login-header p {
+    font-size: 12px;
+  }
+
+  .login-page form {
+    margin-bottom: 20px;
+  }
+
+  .login-page .form-group {
+    margin-bottom: 16px;
+  }
+
+  .login-page .form-options {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}

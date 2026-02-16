@@ -1,0 +1,591 @@
+import { useState, useEffect } from "react";
+import "../../../styles/admin-dashboard.css";
+
+const MasterRoles = () => {
+  const [roles, setRoles] = useState([
+    {
+      id: 1,
+      name: "Admin",
+      code: "ADMIN",
+      description: "Full system access with all privileges",
+      permissions: [
+        "manage_users",
+        "manage_apps",
+        "manage_departments",
+        "view_sessions",
+        "broadcast",
+      ],
+      isActive: true,
+      userCount: 5,
+    },
+    {
+      id: 2,
+      name: "User",
+      code: "USER",
+      description: "Standard user access with limited privileges",
+      permissions: ["view_apps", "use_apps"],
+      isActive: true,
+      userCount: 156,
+    },
+  ]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    description: "",
+    permissions: [],
+    isActive: true,
+  });
+
+  const availablePermissions = [
+    { id: "manage_users", label: "Manage Users" },
+    { id: "manage_apps", label: "Manage Applications" },
+    { id: "manage_departments", label: "Manage Departments" },
+    { id: "view_sessions", label: "View Active Sessions" },
+    { id: "broadcast", label: "Send Broadcasts" },
+    { id: "view_apps", label: "View Applications" },
+    { id: "use_apps", label: "Use Applications" },
+  ];
+
+  const handleAdd = () => {
+    setSelectedRole(null);
+    setFormData({
+      name: "",
+      code: "",
+      description: "",
+      permissions: [],
+      isActive: true,
+    });
+    setShowModal(true);
+  };
+
+  const handleEdit = (role) => {
+    setSelectedRole(role);
+    setFormData({
+      name: role.name,
+      code: role.code,
+      description: role.description || "",
+      permissions: role.permissions || [],
+      isActive: role.isActive,
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = (role) => {
+    setSelectedRole(role);
+    setShowDeleteModal(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.code) {
+      alert("Name and code are required");
+      return;
+    }
+
+    if (selectedRole) {
+      // Update existing
+      setRoles((prev) =>
+        prev.map((role) =>
+          role.id === selectedRole.id ? { ...role, ...formData } : role,
+        ),
+      );
+      alert("Role updated successfully");
+    } else {
+      // Add new
+      const newRole = {
+        id: Math.max(...roles.map((r) => r.id), 0) + 1,
+        ...formData,
+        userCount: 0,
+      };
+      setRoles((prev) => [...prev, newRole]);
+      alert("Role added successfully");
+    }
+
+    setShowModal(false);
+  };
+
+  const confirmDelete = () => {
+    if (selectedRole.userCount > 0) {
+      alert(
+        `Cannot delete role "${selectedRole.name}" because ${selectedRole.userCount} users are assigned to this role.`,
+      );
+      return;
+    }
+
+    setRoles((prev) => prev.filter((role) => role.id !== selectedRole.id));
+    alert("Role deleted successfully");
+    setShowDeleteModal(false);
+  };
+
+  const toggleStatus = (role) => {
+    if (role.code === "ADMIN" || role.code === "USER") {
+      alert("Cannot deactivate default system roles (Admin and User)");
+      return;
+    }
+
+    setRoles((prev) =>
+      prev.map((r) => (r.id === role.id ? { ...r, isActive: !r.isActive } : r)),
+    );
+  };
+
+  const togglePermission = (permissionId) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(permissionId)
+        ? prev.permissions.filter((p) => p !== permissionId)
+        : [...prev.permissions, permissionId],
+    }));
+  };
+
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      role.code.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  return (
+    <div className="mastercard-wrapper">
+      <div className="section-header">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <h2>Master Roles</h2>
+      </div>
+
+      <div className="mastercard-header">
+        <div className="search-bar">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search roles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <button className="add-button" onClick={handleAdd}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Role
+        </button>
+      </div>
+
+      {filteredRoles.length === 0 ? (
+        <div className="empty-state">
+          {searchQuery ? "No roles found" : "No roles available"}
+        </div>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "60px" }}>ID</th>
+                <th>Role Name</th>
+                <th style={{ width: "120px" }}>Code</th>
+                <th>Permissions</th>
+                <th style={{ width: "100px", textAlign: "center" }}>Users</th>
+                <th style={{ width: "100px", textAlign: "center" }}>Status</th>
+                <th style={{ width: "180px", textAlign: "center" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRoles.map((role) => (
+                <tr key={role.id}>
+                  <td>{role.id}</td>
+                  <td>
+                    <div>
+                      <div style={{ fontWeight: "500" }}>{role.name}</div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#666",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {role.description}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="code-badge">{role.code}</span>
+                  </td>
+                  <td>
+                    <div
+                      style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}
+                    >
+                      {role.permissions.slice(0, 3).map((perm) => (
+                        <span
+                          key={perm}
+                          style={{
+                            backgroundColor: "#e8f4fd",
+                            color: "#4a90e2",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
+                            fontSize: "11px",
+                          }}
+                        >
+                          {availablePermissions.find((p) => p.id === perm)
+                            ?.label || perm}
+                        </span>
+                      ))}
+                      {role.permissions.length > 3 && (
+                        <span style={{ fontSize: "11px", color: "#666" }}>
+                          +{role.permissions.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: "center", fontWeight: "600" }}>
+                    {role.userCount}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    <span
+                      style={{
+                        backgroundColor: role.isActive ? "#27ae60" : "#95a5a6",
+                        color: "white",
+                        padding: "4px 8px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {role.isActive ? "ACTIVE" : "INACTIVE"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-toggle"
+                        onClick={() => toggleStatus(role)}
+                        style={{
+                          backgroundColor: role.isActive
+                            ? "#95a5a6"
+                            : "#27ae60",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {role.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEdit(role)}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Edit
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDelete(role)}
+                        disabled={role.code === "ADMIN" || role.code === "USER"}
+                        style={{
+                          opacity:
+                            role.code === "ADMIN" || role.code === "USER"
+                              ? 0.5
+                              : 1,
+                          cursor:
+                            role.code === "ADMIN" || role.code === "USER"
+                              ? "not-allowed"
+                              : "pointer",
+                        }}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ADD/EDIT MODAL */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "580px", maxWidth: "90vw" }}
+          >
+            <div className="modal-header">
+              <h3>{selectedRole ? "Edit Role" : "Add New Role"}</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-form-group">
+                <label>Role Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Manager"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="modal-form-group">
+                <label>Role Code *</label>
+                <input
+                  type="text"
+                  placeholder="e.g., MANAGER"
+                  value={formData.code}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      code: e.target.value.toUpperCase(),
+                    })
+                  }
+                  style={{ textTransform: "uppercase" }}
+                  disabled={
+                    selectedRole &&
+                    (selectedRole.code === "ADMIN" ||
+                      selectedRole.code === "USER")
+                  }
+                />
+                {selectedRole &&
+                  (selectedRole.code === "ADMIN" ||
+                    selectedRole.code === "USER") && (
+                    <small style={{ color: "#666", fontSize: "12px" }}>
+                      System roles cannot be renamed
+                    </small>
+                  )}
+              </div>
+
+              <div className="modal-form-group">
+                <label>Description</label>
+                <textarea
+                  placeholder="Role description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                    fontSize: "14px",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                  }}
+                />
+              </div>
+
+              <div className="modal-form-group">
+                <label>Permissions</label>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "8px",
+                    marginTop: "8px",
+                    padding: "12px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                  }}
+                >
+                  {availablePermissions.map((perm) => (
+                    <label
+                      key={perm.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        cursor: "pointer",
+                        padding: "6px",
+                        borderRadius: "4px",
+                        backgroundColor: formData.permissions.includes(perm.id)
+                          ? "#e8f4fd"
+                          : "transparent",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.permissions.includes(perm.id)}
+                        onChange={() => togglePermission(perm.id)}
+                      />
+                      <span style={{ fontSize: "13px" }}>{perm.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="modal-form-group">
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isActive: e.target.checked })
+                    }
+                  />
+                  Active
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn modal-btn-primary"
+                onClick={handleSave}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Save Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && selectedRole && (
+        <div
+          className="modal-overlay confirmation-modal"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "480px", maxWidth: "90vw" }}
+          >
+            <div className="modal-body">
+              <div className="confirmation-icon warning">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <h3>Delete Role?</h3>
+              <p>
+                Are you sure you want to delete{" "}
+                <strong>{selectedRole.name}</strong> role?
+                {selectedRole.userCount > 0 ? (
+                  <span style={{ color: "#e74c3c", fontWeight: "600" }}>
+                    <br />
+                    Warning: {selectedRole.userCount} users are currently
+                    assigned to this role.
+                  </span>
+                ) : (
+                  " This action cannot be undone."
+                )}
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn modal-btn-danger"
+                onClick={confirmDelete}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MasterRoles;
