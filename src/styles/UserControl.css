@@ -66,18 +66,18 @@
 }
 
 .user-control-tab .tab-count {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 2px 8px;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
+  display: inline;
+  margin-left: 4px;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 400;
   color: #7f8c9a;
 }
 
 .user-control-tab.active .tab-count {
-  background: rgba(74, 144, 226, 0.15);
+  background: none;
   color: var(--primary-color);
 }
 
@@ -166,19 +166,23 @@
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: #4a90e2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  letter-spacing: 0.3px;
 }
 
 .add-user-btn:hover {
-  background: #2980b9;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
+  transform: translateY(-2px);
 }
 
 /* User Table Specifics */
@@ -220,18 +224,29 @@
 }
 
 .role-badge.admin {
-  background: #fef3c7;
-  color: #92400e;
+  background: transparent;
+  color: #d4a017;
+  font-weight: 700;
 }
 
 .role-badge.user {
-  background: #f1f2f6;
+  background: transparent;
   color: #7f8c9a;
 }
 
 .role-badge.manager {
   background: #e3f2fd;
   color: #3498db;
+}
+
+.position-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #34495e;
+  background: transparent;
 }
 
 .dept-badge {
@@ -1165,4 +1180,27 @@
   background: #fdf2f2;
   color: #e74c3c;
   border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+/* Confirm Modal & Notification Animations */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

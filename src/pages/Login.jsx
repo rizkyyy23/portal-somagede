@@ -213,9 +213,16 @@ export default function Login() {
                   <span
                     className="eye-icon"
                     onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
                     <i
-                      className={`fas fa-eye${showPassword ? "-slash" : ""}`}
+                      className={
+                        showPassword ? "fas fa-eye" : "fas fa-eye-slash"
+                      }
                     ></i>
                   </span>
                 </div>

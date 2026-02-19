@@ -32,10 +32,14 @@ const UserControl = () => {
   // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deptFilter, setDeptFilter] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPrivilegeModal, setShowPrivilegeModal] = useState(false);
   const [showRoleConfirmModal, setShowRoleConfirmModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [notification, setNotification] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -59,44 +63,64 @@ const UserControl = () => {
     privilegeAccess: false,
   });
 
-  // Fetch users based on active tab
+  // Fetch all users and applications on component mount
   useEffect(() => {
-    fetchUsers();
-  }, [activeTab]);
+    fetchAllUsers();
+    // Fetch all applications
+    fetch(`${API_URL}/applications`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setApplications(data.data);
+      });
+  }, []);
 
-  const fetchUsers = async () => {
+  // Filter users based on active tab - this runs when tab changes
+  useEffect(() => {
+    filterUsersByTab();
+  }, [
+    activeTab,
+    users,
+    inactiveUsers,
+    privilegeUsers,
+    activeUsers,
+    adminUsers,
+  ]);
+
+  const fetchAllUsers = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      let endpoint = "/users";
-      if (activeTab === "inactive-users") {
-        endpoint = "/users/inactive";
-      } else if (activeTab === "privilege-users") {
-        endpoint = "/users/privilege";
-      } else if (activeTab === "active-users") {
-        endpoint = "/users"; // Filter active di frontend
-      } else if (activeTab === "admin-users") {
-        endpoint = "/users"; // Filter admin di frontend
-      }
+      // Fetch all users data in parallel from different endpoints for accuracy
+      const [allResponse, inactiveResponse, adminResponse, privilegeResponse] =
+        await Promise.all([
+          fetch(`${API_URL}/users`),
+          fetch(`${API_URL}/users/inactive`),
+          fetch(`${API_URL}/users/admins`),
+          fetch(`${API_URL}/users/privilege`),
+        ]);
 
-      const response = await fetch(`${API_URL}${endpoint}`);
-      const data = await response.json();
+      const allData = await allResponse.json();
+      const inactiveData = await inactiveResponse.json();
+      const adminData = await adminResponse.json();
+      const privilegeData = await privilegeResponse.json();
 
-      if (data.success) {
-        if (activeTab === "all-users") {
-          setUsers(data.data);
-        } else if (activeTab === "inactive-users") {
-          setInactiveUsers(data.data);
-        } else if (activeTab === "privilege-users") {
-          setPrivilegeUsers(data.data);
-        } else if (activeTab === "active-users") {
-          setActiveUsers(data.data.filter((u) => u.status === "active"));
-        } else if (activeTab === "admin-users") {
-          setAdminUsers(data.data.filter((u) => u.role === "Admin"));
-        }
+      if (
+        allData.success &&
+        inactiveData.success &&
+        adminData.success &&
+        privilegeData.success
+      ) {
+        // Set all users
+        setUsers(allData.data);
+
+        // Set users for each tab with correct data from respective endpoints
+        setInactiveUsers(inactiveData.data);
+        setActiveUsers(allData.data.filter((u) => u.status === "active"));
+        setAdminUsers(adminData.data);
+        setPrivilegeUsers(privilegeData.data);
       } else {
-        setError(data.message || "Failed to fetch users");
+        setError("Failed to fetch users data");
       }
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -104,6 +128,11 @@ const UserControl = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterUsersByTab = () => {
+    // This function is just for triggering re-render when tab changes
+    // Actual data is already loaded in fetchAllUsers
   };
 
   // Helper functions (getDeptType, getUserInitials, getInitialsColor, etc.)
@@ -117,6 +146,12 @@ const UserControl = () => {
       Sales: "sales",
     };
     return mapping[department] || "default";
+  };
+
+  const getDeptColor = (deptName) => {
+    if (!deptName) return "#94a3b8";
+    const dept = departments.find((d) => d.name === deptName);
+    return dept?.color || "#6366f1";
   };
 
   const getUserInitials = (name) => {
@@ -153,8 +188,9 @@ const UserControl = () => {
   const filteredUsers = getCurrentUsers()
     .filter(
       (user) =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+        (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+        (deptFilter === "" || user.department === deptFilter),
     )
     .sort((a, b) => {
       if (a.role === "Admin" && b.role !== "Admin") return -1;
@@ -198,52 +234,142 @@ const UserControl = () => {
         <div className="user-control-tabs">
           <button
             className={`user-control-tab${activeTab === "all-users" ? " active" : ""}`}
-            onClick={() => setActiveTab("all-users")}
+            onClick={() => {
+              setActiveTab("all-users");
+              setDeptFilter("");
+            }}
           >
-            All Users
+            <span>All</span>
+            <span
+              className="tab-count"
+              style={{ fontWeight: 400, marginLeft: 6 }}
+            >
+              ({users.length})
+            </span>
           </button>
           <button
             className={`user-control-tab${activeTab === "active-users" ? " active" : ""}`}
-            onClick={() => setActiveTab("active-users")}
+            onClick={() => {
+              setActiveTab("active-users");
+              setDeptFilter("");
+            }}
           >
-            Active Users
+            <span>Active Users</span>
+            <span
+              className="tab-count"
+              style={{ fontWeight: 400, marginLeft: 6 }}
+            >
+              ({activeUsers.length})
+            </span>
           </button>
           <button
             className={`user-control-tab${activeTab === "inactive-users" ? " active" : ""}`}
-            onClick={() => setActiveTab("inactive-users")}
+            onClick={() => {
+              setActiveTab("inactive-users");
+              setDeptFilter("");
+            }}
           >
-            Inactive Users
+            <span>Inactive Users</span>
+            <span
+              className="tab-count"
+              style={{ fontWeight: 400, marginLeft: 6 }}
+            >
+              ({inactiveUsers.length})
+            </span>
           </button>
           <button
             className={`user-control-tab${activeTab === "privilege-users" ? " active" : ""}`}
-            onClick={() => setActiveTab("privilege-users")}
+            onClick={() => {
+              setActiveTab("privilege-users");
+              setDeptFilter("");
+            }}
           >
-            Privilege Users
+            <span>Privilege Users</span>
+            <span
+              className="tab-count"
+              style={{ fontWeight: 400, marginLeft: 6 }}
+            >
+              ({privilegeUsers.length})
+            </span>
           </button>
           <button
             className={`user-control-tab${activeTab === "admin-users" ? " active" : ""}`}
-            onClick={() => setActiveTab("admin-users")}
+            onClick={() => {
+              setActiveTab("admin-users");
+              setDeptFilter("");
+            }}
           >
-            Admin Users
-          </button>
-        </div>
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: 8, borderRadius: 6, border: "1px solid #e1e8ed" }}
-          />
-          <button
-            className="add-user-btn"
-            onClick={() => setShowAddModal(true)}
-          >
-            + Add User
+            <span>Admin</span>
+            <span
+              className="tab-count"
+              style={{ fontWeight: 400, marginLeft: 6 }}
+            >
+              ({adminUsers.length})
+            </span>
           </button>
         </div>
       </div>
+      {activeTab !== "inactive-users" &&
+        activeTab !== "privilege-users" &&
+        activeTab !== "admin-users" && (
+          <div
+            style={{
+              margin: "18px 0 0 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  padding: 8,
+                  borderRadius: 6,
+                  border: "1px solid #e1e8ed",
+                  minWidth: 220,
+                }}
+              />
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  border: "1px solid #e1e8ed",
+                  fontSize: 13,
+                  color: deptFilter ? getDeptColor(deptFilter) : "#555",
+                  fontWeight: deptFilter ? 600 : 400,
+                  background: deptFilter
+                    ? `${getDeptColor(deptFilter)}12`
+                    : "#fff",
+                  cursor: "pointer",
+                  minWidth: 160,
+                }}
+              >
+                <option value="">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.name}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {activeTab === "all-users" && (
+              <button
+                className="add-user-btn"
+                onClick={() => setShowAddModal(true)}
+              >
+                + Add User
+              </button>
+            )}
+          </div>
+        )}
       <div style={{ marginTop: 24 }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "#7f8c9a" }}>
@@ -263,6 +389,7 @@ const UserControl = () => {
                   <th>Status</th>
                   <th>Position</th>
                   <th>Department</th>
+                  {activeTab === "privilege-users" && <th>Special Apps</th>}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -270,7 +397,8 @@ const UserControl = () => {
                 {filteredUsers.map((user) => {
                   const initials = getUserInitials(user.name);
                   const colors = getInitialsColor(user.name);
-                  const deptType = getDeptType(user.department);
+                  const extraCount = user.extra_app_count || 0;
+                  const limitCount = user.limit_app_count || 0;
                   return (
                     <tr
                       key={user.id}
@@ -312,34 +440,155 @@ const UserControl = () => {
                         </span>
                       </td>
                       <td>
-                        <span
-                          className={`role-badge ${user.position?.toLowerCase().replace(/\s/g, "-")}`}
-                        >
-                          {user.position}
-                        </span>
+                        <span className="position-badge">{user.position}</span>
                       </td>
                       <td>
-                        <span className={`dept-badge ${deptType}`}>
-                          {user.department}
-                        </span>
+                        {(() => {
+                          const deptColor = getDeptColor(user.department);
+                          return (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "4px 10px",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                background: `${deptColor}18`,
+                                color: deptColor,
+                                border: `1px solid ${deptColor}30`,
+                              }}
+                            >
+                              {user.department}
+                            </span>
+                          );
+                        })()}
                       </td>
+                      {activeTab === "privilege-users" && (
+                        <td>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 4,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            {extraCount > 0 && (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  padding: "3px 8px",
+                                  borderRadius: 5,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  background: "#e8f2ff",
+                                  color: "#2563eb",
+                                  border: "1px solid #bfdbfe",
+                                  letterSpacing: "0.2px",
+                                }}
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                >
+                                  <line x1="12" y1="5" x2="12" y2="19" />
+                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                Extra ({extraCount})
+                              </span>
+                            )}
+                            {limitCount > 0 && (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  padding: "3px 8px",
+                                  borderRadius: 5,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  background: "#fef2f2",
+                                  color: "#dc2626",
+                                  border: "1px solid #fecaca",
+                                  letterSpacing: "0.2px",
+                                }}
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                >
+                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                Limit ({limitCount})
+                              </span>
+                            )}
+                            {extraCount === 0 && limitCount === 0 && (
+                              <span style={{ color: "#bbb", fontSize: 12 }}>
+                                —
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      )}
                       <td>
                         <button
                           className="btn-edit"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setFormData({
-                              name: user.name,
-                              email: user.email,
-                              position: user.position,
-                              department: user.department,
-                              role: user.role,
-                              status: user.status,
-                              accountActive: user.accountActive,
-                              privilegeAccess: user.privilegeAccess,
-                              privileges: user.privileges || {},
-                            });
-                            setShowEditModal(true);
+                          onClick={async () => {
+                            if (activeTab === "privilege-users") {
+                              // Open privilege modal — fetch current app permissions
+                              setSelectedUser(user);
+                              setFormData({
+                                name: user.name,
+                                email: user.email,
+                                position: user.position,
+                                department: user.department,
+                                role: user.role,
+                                status: user.status,
+                                has_privilege: user.has_privilege,
+                              });
+                              try {
+                                const res = await fetch(
+                                  `${API_URL}/users/${user.id}/privileges`,
+                                );
+                                const data = await res.json();
+                                if (data.success) {
+                                  setSelectedApps(
+                                    data.data.map((a) => a.application_id),
+                                  );
+                                } else {
+                                  setSelectedApps([]);
+                                }
+                              } catch {
+                                setSelectedApps([]);
+                              }
+                              setShowPrivilegeModal(true);
+                            } else {
+                              setSelectedUser(user);
+                              setFormData({
+                                name: user.name,
+                                email: user.email,
+                                position: user.position,
+                                department: user.department,
+                                role: user.role,
+                                status: user.status,
+                                has_privilege: user.has_privilege,
+                                accountActive: user.accountActive,
+                                privilegeAccess: user.privilegeAccess,
+                                privileges: user.privileges || {},
+                              });
+                              setShowEditModal(true);
+                            }
                           }}
                         >
                           Edit
@@ -624,10 +873,18 @@ const UserControl = () => {
           <div
             className="modal-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 580, maxHeight: "80vh", overflowY: "auto" }}
+            style={{
+              maxWidth: selectedUser.status === "inactive" ? 420 : 560,
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
           >
             <div className="modal-header">
-              <h3>Edit User</h3>
+              <h3>
+                {selectedUser.status === "inactive"
+                  ? "Activate User"
+                  : "Edit User"}
+              </h3>
               <button
                 className="modal-close"
                 onClick={() => setShowEditModal(false)}
@@ -643,337 +900,678 @@ const UserControl = () => {
                 </svg>
               </button>
             </div>
-            <div className="modal-body" style={{ padding: "18px 16px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "14px",
-                  alignItems: "flex-start",
-                }}
-              >
-                {/* Avatar */}
+            <div
+              className="modal-body"
+              style={{
+                padding:
+                  selectedUser.status === "inactive"
+                    ? "24px 16px"
+                    : "18px 16px",
+              }}
+            >
+              {selectedUser.status === "inactive" ? (
+                // Inactive user modal - simplified view
                 <div
-                  className="modal-avatar-editor"
-                  style={{ flex: "0 0 auto" }}
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    alignItems: "center",
+                    padding: "16px",
+                    background:
+                      "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+                    borderRadius: "12px",
+                  }}
                 >
                   <div
                     className="modal-avatar-large"
                     style={{
                       background: getInitialsColor(formData.name).bg,
                       color: getInitialsColor(formData.name).color,
-                      width: 48,
-                      height: 48,
-                      fontSize: 18,
+                      width: 56,
+                      height: 56,
+                      fontSize: 20,
+                      flex: "0 0 auto",
                     }}
                   >
                     {getUserInitials(formData.name)}
                   </div>
-                </div>
-                {/* Name and Email - Read Only */}
-                <div
-                  style={{
-                    flex: "1",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
-                    <label
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#34495e",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      disabled
-                      style={{
-                        backgroundColor: "#f5f5f5",
-                        cursor: "not-allowed",
-                        color: "#666",
-                        fontSize: 14,
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                      }}
-                    />
-                  </div>
-                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
-                    <label
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#34495e",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      disabled
-                      style={{
-                        backgroundColor: "#f5f5f5",
-                        cursor: "not-allowed",
-                        color: "#666",
-                        fontSize: 14,
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-              {/* Job Information - Read Only */}
-              <div style={{ height: 16 }}></div>
-              <div className="modal-section" style={{ marginBottom: 12 }}>
-                <div
-                  className="modal-section-header"
-                  style={{ gap: 6, marginBottom: 8, paddingBottom: 4 }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    style={{ width: 16, height: 16 }}
-                  >
-                    <rect
-                      x="2"
-                      y="7"
-                      width="20"
-                      height="14"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                  </svg>
-                  <h4
+                  <div
                     style={{
-                      fontSize: 13,
-                      color: "#2c3e50",
-                      fontWeight: 600,
-                      margin: 0,
+                      flex: "1",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
                     }}
                   >
-                    Job Information
-                  </h4>
+                    <h4
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        margin: 0,
+                        color: "#2c3e50",
+                      }}
+                    >
+                      {formData.name}
+                    </h4>
+                    <p style={{ fontSize: 13, margin: 0, color: "#7f8c9a" }}>
+                      {formData.email}
+                    </p>
+                    <p style={{ fontSize: 12, margin: 0, color: "#7f8c9a" }}>
+                      {formData.position} • {formData.department}
+                    </p>
+                  </div>
                 </div>
-                <div className="modal-form-row" style={{ gap: 8 }}>
-                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
-                    <label
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#34495e",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Department
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.department}
-                      disabled
-                      style={{
-                        backgroundColor: "#f5f5f5",
-                        cursor: "not-allowed",
-                        color: "#666",
-                        fontSize: 14,
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                      }}
-                    />
-                    {/* Accessible Applications Info */}
+              ) : (
+                // Active user modal - full edit view
+                <>
+                  {/* User Profile Header */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 16,
+                      padding: "16px 20px",
+                      background:
+                        "linear-gradient(135deg, #f8f9fb 0%, #eef1f5 100%)",
+                      borderRadius: 12,
+                      marginBottom: 20,
+                    }}
+                  >
                     <div
+                      className="modal-avatar-large"
                       style={{
-                        marginTop: 8,
-                        fontSize: 12,
-                        background: "#f8fafc",
-                        borderRadius: 8,
-                        padding: "10px 12px",
-                        border: "1px solid #e1e8ed",
-                        boxShadow: "0 1px 2px rgba(74,144,226,0.04)",
+                        background: getInitialsColor(formData.name).bg,
+                        color: getInitialsColor(formData.name).color,
+                        width: 52,
+                        height: 52,
+                        fontSize: 18,
+                        flex: "0 0 auto",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                       }}
                     >
-                      <span
+                      {getUserInitials(formData.name)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h4
                         style={{
-                          color: "#4a90e2",
+                          fontSize: 16,
                           fontWeight: 700,
-                          fontSize: 13,
-                          marginBottom: 8,
-                          display: "block",
+                          margin: 0,
+                          color: "#2c3e50",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
-                        Accessible Applications:
+                        {formData.name}
+                      </h4>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          margin: "2px 0 0",
+                          color: "#7f8c9a",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {formData.email}
+                      </p>
+                    </div>
+                    {/* Account Status Toggle */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 4,
+                        flex: "0 0 auto",
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          const newStatus =
+                            formData.status === "active"
+                              ? "inactive"
+                              : "active";
+                          setFormData({ ...formData, status: newStatus });
+                        }}
+                        style={{
+                          width: 40,
+                          height: 24,
+                          borderRadius: 12,
+                          border: "none",
+                          background:
+                            formData.status === "active"
+                              ? "#27ae60"
+                              : "#bdc3c7",
+                          cursor: "pointer",
+                          position: "relative",
+                          transition: "all 0.3s ease",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "2px",
+                            left: formData.status === "active" ? "20px" : "2px",
+                            width: 20,
+                            height: 20,
+                            background: "white",
+                            borderRadius: "50%",
+                            transition: "left 0.3s ease",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                          }}
+                        />
+                      </button>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color:
+                            formData.status === "active"
+                              ? "#27ae60"
+                              : "#95a5a6",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        {formData.status === "active" ? "Active" : "Inactive"}
                       </span>
-                      {(() => {
-                        const department = formData.department;
-                        const departmentApps = {
-                          HSE: ["OPS", "PUNCH"],
-                          Finance: ["SGI_PLUS", "OODO", "OPS", "PUNCH", "2"],
-                          "Human Resource": ["OODO", "OPS", "PUNCH"],
-                        };
-                        const appData = {
-                          SGI_PLUS: { name: "SGI+", logo: "/assets/SGI+.png" },
-                          PUNCH: { name: "Punch", logo: "/assets/punch.png" },
-                          OODO: { name: "Oodo", logo: "/assets/oodo.png" },
-                          OPS: { name: "Ops", logo: "/assets/Ops.png" },
-                          2: { name: "Punch", logo: "/assets/punch.png" },
-                        };
-                        const apps = departmentApps[department] || [];
-                        if (apps.length > 0) {
-                          return (
-                            <ul
+                    </div>
+                  </div>
+
+                  {/* Two Column Layout */}
+                  <div style={{ display: "flex", gap: 16 }}>
+                    {/* Left Column - Job Info */}
+                    <div
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      <h4
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#95a5a6",
+                          margin: 0,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.8px",
+                        }}
+                      >
+                        Job Information
+                      </h4>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <label
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "#7f8c9a",
+                              marginBottom: 4,
+                              display: "block",
+                            }}
+                          >
+                            Department
+                          </label>
+                          <div
+                            style={{
+                              padding: "9px 12px",
+                              background: "#f8f9fa",
+                              borderRadius: 8,
+                              fontSize: 13,
+                              color: "#2c3e50",
+                              fontWeight: 500,
+                              border: "1px solid #eef0f2",
+                            }}
+                          >
+                            {formData.department}
+                          </div>
+                        </div>
+                        <div>
+                          <label
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "#7f8c9a",
+                              marginBottom: 4,
+                              display: "block",
+                            }}
+                          >
+                            Position
+                          </label>
+                          <div
+                            style={{
+                              padding: "9px 12px",
+                              background: "#f8f9fa",
+                              borderRadius: 8,
+                              fontSize: 13,
+                              color: "#2c3e50",
+                              fontWeight: 500,
+                              border: "1px solid #eef0f2",
+                            }}
+                          >
+                            {formData.position}
+                          </div>
+                        </div>
+                        <div>
+                          <label
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "#7f8c9a",
+                              marginBottom: 4,
+                              display: "block",
+                            }}
+                          >
+                            Role
+                          </label>
+                          <select
+                            name="role"
+                            value={formData.role}
+                            onChange={(e) =>
+                              setFormData({ ...formData, role: e.target.value })
+                            }
+                            style={{
+                              width: "100%",
+                              fontSize: 13,
+                              borderRadius: 8,
+                              padding: "9px 12px",
+                              border: "1px solid #dce1e6",
+                              color: "#2c3e50",
+                              fontWeight: 500,
+                              background: "#fff",
+                              cursor: "pointer",
+                              boxSizing: "border-box",
+                            }}
+                          >
+                            {(roles || []).map((role) => (
+                              <option key={role.id} value={role.name}>
+                                {role.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Applications */}
+                    <div
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      {formData.role === "Admin" ? (
+                        <>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="#d4a017"
+                              stroke="none"
+                            >
+                              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                            </svg>
+                            <h4
                               style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: "#d4a017",
                                 margin: 0,
-                                padding: 0,
-                                listStyle: "none",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.8px",
                               }}
                             >
-                              {apps.map((code) => (
-                                <li
-                                  key={code}
+                              Full Access — Admin
+                            </h4>
+                          </div>
+                          <div
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                              borderRadius: 10,
+                              padding: 12,
+                              border: "1px solid #f6dfa0",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                              flex: 1,
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 4,
+                              }}
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#b8860b"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              </svg>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: "#b8860b",
+                                }}
+                              >
+                                Admin has unrestricted access to all
+                                applications
+                              </span>
+                            </div>
+                            {applications
+                              .filter((app) => app.status === "active")
+                              .map((app) => (
+                                <div
+                                  key={app.id}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: 12,
-                                    background: "#fff",
-                                    borderRadius: 6,
-                                    padding: "7px 10px",
-                                    border: "1px solid #e1e8ed",
-                                    boxShadow:
-                                      "0 1px 2px rgba(74,144,226,0.03)",
-                                    minHeight: 32,
+                                    gap: 10,
+                                    background: "rgba(255,255,255,0.85)",
+                                    borderRadius: 8,
+                                    padding: "8px 10px",
+                                    border: "1px solid #f0e6c0",
                                   }}
                                 >
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      height: 24,
-                                      width: 24,
-                                    }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked
-                                      disabled
-                                      style={{
-                                        accentColor: "#4a90e2",
-                                        width: 18,
-                                        height: 18,
-                                        margin: 0,
-                                      }}
-                                    />
-                                  </div>
                                   <img
-                                    src={appData[code]?.logo}
-                                    alt={appData[code]?.name}
+                                    src={app.icon}
+                                    alt={app.name}
                                     style={{
-                                      width: 22,
-                                      height: 22,
+                                      width: 20,
+                                      height: 20,
                                       borderRadius: 4,
                                       objectFit: "contain",
-                                      background: "#fff",
-                                      border: "1px solid #e1e8ed",
                                     }}
                                   />
                                   <span
                                     style={{
-                                      color: "#34495e",
-                                      fontWeight: 600,
+                                      color: "#2c3e50",
+                                      fontWeight: 500,
                                       fontSize: 13,
                                     }}
                                   >
-                                    {appData[code]?.name || code}
+                                    {app.name}
                                   </span>
-                                </li>
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#d4a017"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{ marginLeft: "auto" }}
+                                  >
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                </div>
                               ))}
-                            </ul>
-                          );
-                        } else {
-                          return (
-                            <span
-                              style={{
-                                color: "#7f8c9a",
-                                fontSize: 12,
-                                marginLeft: 4,
-                              }}
-                            >
-                              No applications assigned
-                            </span>
-                          );
-                        }
-                      })()}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h4
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: "#95a5a6",
+                              margin: 0,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.8px",
+                            }}
+                          >
+                            Accessible Apps
+                          </h4>
+                          <div
+                            style={{
+                              background: "#f8f9fb",
+                              borderRadius: 10,
+                              padding: 12,
+                              border: "1px solid #eef0f2",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                              flex: 1,
+                            }}
+                          >
+                            {(() => {
+                              const dept = departments.find(
+                                (d) => d.name === formData.department,
+                              );
+                              let deptAppCodes = [];
+                              if (dept && dept.allowed_apps) {
+                                try {
+                                  const parsed =
+                                    typeof dept.allowed_apps === "string"
+                                      ? JSON.parse(dept.allowed_apps)
+                                      : dept.allowed_apps;
+                                  if (Array.isArray(parsed))
+                                    deptAppCodes = parsed;
+                                } catch {
+                                  deptAppCodes = String(dept.allowed_apps)
+                                    .split(",")
+                                    .map((s) => s.trim());
+                                }
+                              }
+                              const deptApps = applications.filter(
+                                (app) =>
+                                  deptAppCodes.includes(app.code) &&
+                                  app.status === "active",
+                              );
+                              if (deptApps.length > 0) {
+                                return deptApps.map((app) => (
+                                  <div
+                                    key={app.id}
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 10,
+                                      background: "#fff",
+                                      borderRadius: 8,
+                                      padding: "8px 10px",
+                                      border: "1px solid #eef0f2",
+                                    }}
+                                  >
+                                    <img
+                                      src={app.icon}
+                                      alt={app.name}
+                                      style={{
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: 4,
+                                        objectFit: "contain",
+                                      }}
+                                    />
+                                    <span
+                                      style={{
+                                        color: "#2c3e50",
+                                        fontWeight: 500,
+                                        fontSize: 13,
+                                      }}
+                                    >
+                                      {app.name}
+                                    </span>
+                                    <span
+                                      style={{
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        color: "#27ae60",
+                                        background: "#e8f8ef",
+                                        padding: "1px 6px",
+                                        borderRadius: 4,
+                                        marginLeft: "auto",
+                                      }}
+                                    >
+                                      default access
+                                    </span>
+                                  </div>
+                                ));
+                              } else {
+                                return (
+                                  <p
+                                    style={{
+                                      color: "#95a5a6",
+                                      fontSize: 12,
+                                      margin: "8px 0",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    No applications assigned
+                                  </p>
+                                );
+                              }
+                            })()}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
-                    <label
+
+                  {/* Privilege Access Toggle - hidden for Admin */}
+                  {formData.role !== "Admin" && (
+                    <div
                       style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#34495e",
-                        marginBottom: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        padding: "12px 16px",
+                        background: formData.has_privilege
+                          ? "rgba(52,152,219,0.06)"
+                          : "#f8f9fa",
+                        borderRadius: 10,
+                        border: `1px solid ${formData.has_privilege ? "rgba(52,152,219,0.2)" : "#eef0f2"}`,
+                        marginTop: 16,
+                        transition: "all 0.3s ease",
                       }}
                     >
-                      Position
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.position}
-                      disabled
-                      style={{
-                        backgroundColor: "#f5f5f5",
-                        cursor: "not-allowed",
-                        color: "#666",
-                        fontSize: 14,
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="modal-form-group" style={{ marginBottom: 8 }}>
-                  <label
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#34495e",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Role
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    style={{
-                      fontSize: 14,
-                      borderRadius: 8,
-                      padding: "8px 12px",
-                    }}
-                  >
-                    <option value="User">User</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Admin">Admin</option>
-                  </select>
-                </div>
-              </div>
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: formData.has_privilege
+                            ? "rgba(52,152,219,0.12)"
+                            : "rgba(0,0,0,0.04)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flex: "0 0 auto",
+                          transition: "all 0.3s ease",
+                        }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={
+                            formData.has_privilege ? "#3498db" : "#95a5a6"
+                          }
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            margin: 0,
+                            color: "#2c3e50",
+                          }}
+                        >
+                          Privilege Access
+                        </h4>
+                        <p
+                          style={{
+                            fontSize: 11,
+                            margin: "2px 0 0",
+                            color: "#95a5a6",
+                          }}
+                        >
+                          Grant special access rights
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            has_privilege: !formData.has_privilege,
+                          })
+                        }
+                        style={{
+                          width: 40,
+                          height: 24,
+                          borderRadius: 12,
+                          border: "none",
+                          background: formData.has_privilege
+                            ? "#3498db"
+                            : "#bdc3c7",
+                          cursor: "pointer",
+                          position: "relative",
+                          transition: "all 0.3s ease",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "2px",
+                            left: formData.has_privilege ? "20px" : "2px",
+                            width: 20,
+                            height: 20,
+                            background: "white",
+                            borderRadius: "50%",
+                            transition: "left 0.3s ease",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             <div className="modal-footer">
               <button
@@ -982,9 +1580,142 @@ const UserControl = () => {
               >
                 Cancel
               </button>
-              <button className="modal-btn modal-btn-primary">
-                Save Changes
-              </button>
+
+              {selectedUser.status === "inactive" ? (
+                <button
+                  className="modal-btn modal-btn-primary"
+                  style={{
+                    background: "linear-gradient(135deg, #27ae60, #2ecc71)",
+                    border: "none",
+                  }}
+                  onClick={() => {
+                    setConfirmAction({
+                      type: "activate",
+                      title: "Activate Account",
+                      message: `Are you sure you want to activate ${selectedUser.name}'s account?`,
+                      onConfirm: async () => {
+                        try {
+                          const response = await fetch(
+                            `${API_URL}/users/${selectedUser.id}`,
+                            {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ status: "active" }),
+                            },
+                          );
+                          if (response.ok) {
+                            await fetchAllUsers();
+                            setShowEditModal(false);
+                            setShowConfirmModal(false);
+                            setNotification({
+                              type: "success",
+                              message: `${selectedUser.name}'s account has been activated successfully`,
+                            });
+                            setTimeout(() => setNotification(null), 3500);
+                          } else {
+                            setShowConfirmModal(false);
+                            setNotification({
+                              type: "error",
+                              message:
+                                "Failed to activate account. Please try again.",
+                            });
+                            setTimeout(() => setNotification(null), 3500);
+                          }
+                        } catch (err) {
+                          console.error("Error activating user:", err);
+                          setShowConfirmModal(false);
+                          setNotification({
+                            type: "error",
+                            message:
+                              "Network error. Please check your connection.",
+                          });
+                          setTimeout(() => setNotification(null), 3500);
+                        }
+                      },
+                    });
+                    setShowConfirmModal(true);
+                  }}
+                >
+                  Activate Account
+                </button>
+              ) : (
+                (() => {
+                  const hasChanges =
+                    formData.status !== selectedUser.status ||
+                    formData.role !== selectedUser.role ||
+                    Boolean(formData.has_privilege) !==
+                      Boolean(selectedUser.has_privilege);
+                  return (
+                    <button
+                      className="modal-btn modal-btn-primary"
+                      disabled={!hasChanges}
+                      style={{
+                        background: hasChanges ? "#3a3f47" : "#c8ccd0",
+                        border: "none",
+                        color: hasChanges ? "#fff" : "#f0f0f0",
+                        cursor: hasChanges ? "pointer" : "not-allowed",
+                        opacity: hasChanges ? 1 : 0.6,
+                        transition: "all 0.3s ease",
+                      }}
+                      onClick={() => {
+                        setConfirmAction({
+                          type: "save",
+                          title: "Save Changes",
+                          message: `Are you sure you want to save changes for ${selectedUser.name}?`,
+                          onConfirm: async () => {
+                            try {
+                              const response = await fetch(
+                                `${API_URL}/users/${selectedUser.id}`,
+                                {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    status: formData.status,
+                                    has_privilege: formData.has_privilege,
+                                    role: formData.role,
+                                  }),
+                                },
+                              );
+                              if (response.ok) {
+                                await fetchAllUsers();
+                                setShowEditModal(false);
+                                setShowConfirmModal(false);
+                                setNotification({
+                                  type: "success",
+                                  message: "Changes saved successfully",
+                                });
+                                setTimeout(() => setNotification(null), 3500);
+                              } else {
+                                setShowConfirmModal(false);
+                                setNotification({
+                                  type: "error",
+                                  message:
+                                    "Failed to save changes. Please try again.",
+                                });
+                                setTimeout(() => setNotification(null), 3500);
+                              }
+                            } catch (err) {
+                              console.error("Error saving changes:", err);
+                              setShowConfirmModal(false);
+                              setNotification({
+                                type: "error",
+                                message:
+                                  "Network error. Please check your connection.",
+                              });
+                              setTimeout(() => setNotification(null), 3500);
+                            }
+                          },
+                        });
+                        setShowConfirmModal(true);
+                      }}
+                    >
+                      Save Changes
+                    </button>
+                  );
+                })()
+              )}
             </div>
           </div>
         </div>
@@ -999,10 +1730,16 @@ const UserControl = () => {
           <div
             className="modal-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 520, maxHeight: "80vh", overflowY: "auto" }}
+            style={{
+              maxWidth: 560,
+              maxHeight: "85vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
           >
             <div className="modal-header">
-              <h3>Manage Privileges</h3>
+              <h3>Manage Application Permissions</h3>
               <button
                 className="modal-close"
                 onClick={() => setShowPrivilegeModal(false)}
@@ -1018,61 +1755,333 @@ const UserControl = () => {
                 </svg>
               </button>
             </div>
-            <div className="modal-body">
-              <div className="modal-section">
-                <div className="modal-section-header">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <rect
-                      x="2"
-                      y="7"
-                      width="20"
-                      height="14"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                  </svg>
-                  <h4>Privileges</h4>
+            <div
+              className="modal-body"
+              style={{ overflowY: "auto", flex: 1, padding: "16px 20px" }}
+            >
+              {/* User Info Header */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "center",
+                  padding: 14,
+                  background:
+                    "linear-gradient(135deg, #f8f9fb 0%, #eef1f5 100%)",
+                  borderRadius: 12,
+                  marginBottom: 20,
+                  border: "1px solid #e1e8ed",
+                }}
+              >
+                <div
+                  style={{
+                    background: getInitialsColor(selectedUser.name).bg,
+                    color: getInitialsColor(selectedUser.name).color,
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    flex: "0 0 auto",
+                  }}
+                >
+                  {getUserInitials(selectedUser.name)}
                 </div>
-                <div className="modal-form-row">
-                  {privileges.map((priv) => (
-                    <div key={priv.key} className="modal-form-group">
-                      <label>{priv.label}</label>
-                      <div className="modal-toggle-group">
-                        <input
-                          type="checkbox"
-                          checked={formData.privileges[priv.key]}
-                          onChange={() => handlePrivilegeToggle(priv.key)}
-                        />
-                        <span
-                          className={
-                            formData.privileges[priv.key]
-                              ? "modal-badge-active"
-                              : "modal-badge-inactive"
-                          }
-                        >
-                          {formData.privileges[priv.key]
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      margin: 0,
+                      color: "#2c3e50",
+                    }}
+                  >
+                    {selectedUser.name}
+                  </h4>
+                  <p
+                    style={{
+                      fontSize: 12,
+                      margin: "2px 0 0",
+                      color: "#7f8c9a",
+                    }}
+                  >
+                    {selectedUser.position} • {selectedUser.department}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    padding: "5px 10px",
+                    background: "#d4edda",
+                    color: "#155724",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    flex: "0 0 auto",
+                    letterSpacing: "0.3px",
+                  }}
+                >
+                  PRIVILEGE
                 </div>
               </div>
+
+              {/* Application Permission List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#95a5a6",
+                    margin: "0 0 4px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.8px",
+                  }}
+                >
+                  Application Permissions
+                </h4>
+                {(() => {
+                  // Get department default app codes from departments state
+                  const dept = departments.find(
+                    (d) => d.name === selectedUser.department,
+                  );
+                  let deptAppCodes = [];
+                  if (dept && dept.allowed_apps) {
+                    try {
+                      const parsed =
+                        typeof dept.allowed_apps === "string"
+                          ? JSON.parse(dept.allowed_apps)
+                          : dept.allowed_apps;
+                      if (Array.isArray(parsed)) deptAppCodes = parsed;
+                    } catch {
+                      deptAppCodes = String(dept.allowed_apps)
+                        .split(",")
+                        .map((s) => s.trim());
+                    }
+                  }
+                  // Get dept default app IDs
+                  const deptAppIds = applications
+                    .filter((app) => deptAppCodes.includes(app.code))
+                    .map((app) => app.id);
+
+                  // Only show active applications
+                  const activeApps = applications.filter(
+                    (app) => app.status === "active",
+                  );
+
+                  return activeApps.map((app) => {
+                    const isDefault = deptAppIds.includes(app.id);
+                    const isSelected = selectedApps.includes(app.id);
+                    return (
+                      <label
+                        key={app.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "10px 14px",
+                          background: isSelected
+                            ? isDefault
+                              ? "#f0faf3"
+                              : "#eef6ff"
+                            : "#fafafa",
+                          borderRadius: 10,
+                          border: `1.5px solid ${isSelected ? (isDefault ? "#b8e6c8" : "#b8d4f0") : "#e8eaed"}`,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          userSelect: "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedApps((prev) =>
+                              prev.includes(app.id)
+                                ? prev.filter((id) => id !== app.id)
+                                : [...prev, app.id],
+                            );
+                          }}
+                          style={{
+                            width: 18,
+                            height: 18,
+                            accentColor: isDefault ? "#27ae60" : "#3498db",
+                            cursor: "pointer",
+                            flex: "0 0 auto",
+                          }}
+                        />
+                        <img
+                          src={app.icon}
+                          alt={app.name}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 6,
+                            objectFit: "contain",
+                            background: "#fff",
+                            border: "1px solid #eee",
+                            padding: 2,
+                            flex: "0 0 auto",
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: 14,
+                                color: "#2c3e50",
+                              }}
+                            >
+                              {app.name}
+                            </span>
+                            {isDefault && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  color: "#27ae60",
+                                  background: "#e8f8ef",
+                                  padding: "2px 7px",
+                                  borderRadius: 4,
+                                  letterSpacing: "0.3px",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                default access
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            style={{
+                              fontSize: 11,
+                              color: "#95a5a6",
+                              margin: "2px 0 0",
+                            }}
+                          >
+                            {app.description}
+                          </p>
+                        </div>
+                        <div
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: "50%",
+                            background: isSelected
+                              ? isDefault
+                                ? "#27ae60"
+                                : "#3498db"
+                              : "#ddd",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                            flex: "0 0 auto",
+                          }}
+                        >
+                          {isSelected && (
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  });
+                })()}
+              </div>
             </div>
-            <div className="modal-footer">
+            <div
+              className="modal-footer"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "14px 20px",
+                borderTop: "1px solid #eef0f2",
+              }}
+            >
               <button
                 className="modal-btn modal-btn-secondary"
                 onClick={() => setShowPrivilegeModal(false)}
+                style={{ flex: "0 0 auto" }}
               >
                 Cancel
               </button>
-              <button className="modal-btn modal-btn-primary">Save</button>
+              <button
+                className="modal-btn modal-btn-primary"
+                style={{
+                  background: "#3a3f47",
+                  border: "none",
+                  color: "#fff",
+                  flex: "0 0 auto",
+                }}
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `${API_URL}/users/${selectedUser.id}/privileges`,
+                      {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          application_ids: selectedApps,
+                          has_privilege: true,
+                        }),
+                      },
+                    );
+                    const data = await res.json();
+                    if (data.success) {
+                      setShowPrivilegeModal(false);
+                      fetchAllUsers();
+                      setNotification({
+                        type: "success",
+                        message: "Application permissions updated successfully",
+                      });
+                      setTimeout(() => setNotification(null), 3500);
+                    } else {
+                      setNotification({
+                        type: "error",
+                        message: data.message || "Failed to update permissions",
+                      });
+                      setTimeout(() => setNotification(null), 3500);
+                    }
+                  } catch (err) {
+                    console.error("Error updating privileges:", err);
+                    setNotification({
+                      type: "error",
+                      message: "Network error. Please check your connection.",
+                    });
+                    setTimeout(() => setNotification(null), 3500);
+                  }
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Save Permissions
+              </button>
             </div>
           </div>
         </div>
@@ -1140,6 +2149,237 @@ const UserControl = () => {
               <button className="modal-btn modal-btn-primary">Confirm</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL */}
+      {showConfirmModal && confirmAction && (
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 1100 }}
+          onClick={() => setShowConfirmModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: 380,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              overflow: "hidden",
+              animation: "fadeInScale 0.2s ease",
+            }}
+          >
+            <div style={{ padding: "28px 24px 20px", textAlign: "center" }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  background:
+                    confirmAction.type === "activate"
+                      ? "rgba(39,174,96,0.1)"
+                      : "rgba(52,152,219,0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={
+                    confirmAction.type === "activate" ? "#27ae60" : "#3498db"
+                  }
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
+              </div>
+              <h3
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  color: "#2c3e50",
+                  margin: "0 0 8px",
+                }}
+              >
+                {confirmAction.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#7f8c9a",
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                {confirmAction.message}
+              </p>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                padding: "0 24px 24px",
+                justifyContent: "center",
+              }}
+            >
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 10,
+                  border: "1px solid #e1e8ed",
+                  background: "#fff",
+                  color: "#5a6c7d",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmAction.onConfirm}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 10,
+                  border: "none",
+                  background:
+                    confirmAction.type === "activate"
+                      ? "linear-gradient(135deg, #27ae60, #2ecc71)"
+                      : "linear-gradient(135deg, #3498db, #2980b9)",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICATION TOAST */}
+      {notification && (
+        <div
+          style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "14px 20px",
+            borderRadius: 12,
+            background: notification.type === "success" ? "#fff" : "#fff",
+            border: `1px solid ${notification.type === "success" ? "#d4edda" : "#f5c6cb"}`,
+            boxShadow:
+              notification.type === "success"
+                ? "0 4px 20px rgba(39,174,96,0.15)"
+                : "0 4px 20px rgba(231,76,60,0.15)",
+            animation: "slideInRight 0.35s ease",
+            maxWidth: 380,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              background:
+                notification.type === "success"
+                  ? "rgba(39,174,96,0.1)"
+                  : "rgba(231,76,60,0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flex: "0 0 auto",
+            }}
+          >
+            {notification.type === "success" ? (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#27ae60"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#e74c3c"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                fontWeight: 600,
+                color: notification.type === "success" ? "#1e7e4a" : "#c0392b",
+              }}
+            >
+              {notification.type === "success" ? "Success" : "Error"}
+            </p>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#7f8c9a" }}>
+              {notification.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 4,
+              color: "#bdc3c7",
+              flex: "0 0 auto",
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       )}
     </div>

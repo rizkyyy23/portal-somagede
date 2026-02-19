@@ -2,34 +2,34 @@ import { useState, useEffect } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import "../../../styles/admin-dashboard.css";
 
+const API_URL = "http://localhost:3001/api";
+
 const MasterRoles = () => {
   const { showToast } = useToast();
-  const [roles, setRoles] = useState([
-    {
-      id: 1,
-      name: "Admin",
-      code: "ADMIN",
-      description: "Full system access with all privileges",
-      permissions: [
-        "manage_users",
-        "manage_apps",
-        "manage_departments",
-        "view_sessions",
-        "broadcast",
-      ],
-      isActive: true,
-      userCount: 5,
-    },
-    {
-      id: 2,
-      name: "User",
-      code: "USER",
-      description: "Standard user access with limited privileges",
-      permissions: ["view_apps", "use_apps"],
-      isActive: true,
-      userCount: 156,
-    },
-  ]);
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRoles = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/roles`);
+      const data = await res.json();
+      if (data.success) {
+        setRoles(data.data);
+      } else {
+        showToast("Failed to fetch roles", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      showToast("Failed to connect to server", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -83,35 +83,52 @@ const MasterRoles = () => {
     setShowDeleteModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.code) {
       showToast("Name and code are required", "warning");
       return;
     }
 
-    if (selectedRole) {
-      // Update existing
-      setRoles((prev) =>
-        prev.map((role) =>
-          role.id === selectedRole.id ? { ...role, ...formData } : role,
-        ),
-      );
-      showToast("Role updated successfully", "success");
-    } else {
-      // Add new
-      const newRole = {
-        id: Math.max(...roles.map((r) => r.id), 0) + 1,
-        ...formData,
-        userCount: 0,
-      };
-      setRoles((prev) => [...prev, newRole]);
-      showToast("Role added successfully", "success");
-    }
+    try {
+      if (selectedRole) {
+        // Update existing
+        const res = await fetch(`${API_URL}/roles/${selectedRole.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Role updated successfully", "success");
+        } else {
+          showToast(data.message || "Failed to update role", "error");
+          return;
+        }
+      } else {
+        // Add new
+        const res = await fetch(`${API_URL}/roles`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Role added successfully", "success");
+        } else {
+          showToast(data.message || "Failed to create role", "error");
+          return;
+        }
+      }
 
-    setShowModal(false);
+      setShowModal(false);
+      fetchRoles();
+    } catch (error) {
+      console.error("Error saving role:", error);
+      showToast("Failed to connect to server", "error");
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedRole.userCount > 0) {
       showToast(
         `Cannot delete role "${selectedRole.name}" because ${selectedRole.userCount} users are assigned to this role.`,
@@ -120,12 +137,25 @@ const MasterRoles = () => {
       return;
     }
 
-    setRoles((prev) => prev.filter((role) => role.id !== selectedRole.id));
-    showToast("Role deleted successfully", "success");
-    setShowDeleteModal(false);
+    try {
+      const res = await fetch(`${API_URL}/roles/${selectedRole.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Role deleted successfully", "success");
+        setShowDeleteModal(false);
+        fetchRoles();
+      } else {
+        showToast(data.message || "Failed to delete role", "error");
+      }
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      showToast("Failed to connect to server", "error");
+    }
   };
 
-  const toggleStatus = (role) => {
+  const toggleStatus = async (role) => {
     if (role.code === "ADMIN" || role.code === "USER") {
       showToast(
         "Cannot deactivate default system roles (Admin and User)",
@@ -134,9 +164,20 @@ const MasterRoles = () => {
       return;
     }
 
-    setRoles((prev) =>
-      prev.map((r) => (r.id === role.id ? { ...r, isActive: !r.isActive } : r)),
-    );
+    try {
+      const res = await fetch(`${API_URL}/roles/${role.id}/toggle`, {
+        method: "PATCH",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchRoles();
+      } else {
+        showToast(data.message || "Failed to toggle role status", "error");
+      }
+    } catch (error) {
+      console.error("Error toggling role status:", error);
+      showToast("Failed to connect to server", "error");
+    }
   };
 
   const togglePermission = (permissionId) => {
@@ -206,7 +247,9 @@ const MasterRoles = () => {
         </button>
       </div>
 
-      {filteredRoles.length === 0 ? (
+      {loading ? (
+        <div className="empty-state">Loading roles...</div>
+      ) : filteredRoles.length === 0 ? (
         <div className="empty-state">
           {searchQuery ? "No roles found" : "No roles available"}
         </div>

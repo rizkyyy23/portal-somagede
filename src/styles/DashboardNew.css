@@ -832,14 +832,13 @@ body {
    DEPARTMENT HEADER ENHANCEMENT
 ──────────────────────────────────────────── */
 .section-header.department-header {
-  margin-bottom: 8px; /* Standard margin */
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 16px;
   height: 32px;
 }
 
-/* Ensure the wrapper doesn't break alignment */
 .section-header.department-header .section-dropdown-wrap {
   display: flex;
   align-items: center;
@@ -868,12 +867,10 @@ body {
   margin-top: -2px;
 }
 
-/* Remove side bar */
 .section-header.department-header::before {
   content: none;
 }
 
-/* Adjust caret for this specific header */
 .section-header.department-header .trigger-caret {
   display: flex;
   align-items: center;
@@ -886,11 +883,10 @@ body {
   color: var(--blue);
 }
 
-/* Show and enhance the underline for this specific header */
 .section-header.department-header + .section-underline {
   display: block;
-  height: 4px; /* Thicker */
-  width: 60px; /* Longer */
+  height: 4px; 
+  width: 60px; 
   background: var(--blue);
   border-radius: 2px;
   margin-bottom: 24px;
@@ -904,7 +900,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--blue); /* Default to blue, JS will override */
+  border-left: 4px solid var(--blue); 
   padding: 18px;
   margin-bottom: 14px;
   transition:
@@ -917,7 +913,6 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-/* Priority Borders */
 .notif-card.priority-urgent {
   border-left-color: var(--red);
 }
@@ -946,7 +941,6 @@ body {
   justify-content: center;
 }
 
-/* Priority Avatars */
 .notif-card.priority-urgent .notif-avatar {
   background: var(--red-light);
   color: #b91c1c;
@@ -1041,7 +1035,6 @@ body {
   height: 16px;
 }
 
-/* RESPONSIVE – TABLET, MOBILE, EXTRA SMALL */
 
 /* =================================================
    TABLET
@@ -1066,7 +1059,6 @@ body {
    MOBILE
 ================================================= */
 @media (max-width: 620px) {
-  /* ===== HERO ===== */
   .hero {
     height: auto;
   }

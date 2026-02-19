@@ -201,6 +201,14 @@
   justify-content: center;
   width: 24px;
   height: 24px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.login-page .eye-icon i {
+  display: block;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .login-page .eye-icon:hover {
