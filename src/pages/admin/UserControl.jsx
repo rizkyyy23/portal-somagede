@@ -3,6 +3,33 @@ import { useState, useEffect } from "react";
 const API_URL = "http://localhost:3001/api";
 
 const UserControl = () => {
+  // State for departments, positions, roles
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [roles, setRoles] = useState([]);
+
+  // Fetch departments, positions, roles from database
+  useEffect(() => {
+    // Fetch departments
+    fetch(`${API_URL}/departments`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setDepartments(data.data);
+      });
+    // Fetch positions
+    fetch(`${API_URL}/positions`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setPositions(data.data.map((p) => p.name));
+      });
+    // Fetch roles
+    fetch(`${API_URL}/roles`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setRoles(data.data);
+      });
+  }, []);
+  // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -13,14 +40,11 @@ const UserControl = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [originalRole, setOriginalRole] = useState(null);
-
   const [users, setUsers] = useState([]);
   const [inactiveUsers, setInactiveUsers] = useState([]);
   const [privilegeUsers, setPrivilegeUsers] = useState([]);
   const [activeUsers, setActiveUsers] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
-
-  // Privilege modal states
   const [applications, setApplications] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
 
@@ -46,15 +70,14 @@ const UserControl = () => {
 
     try {
       let endpoint = "/users";
-
       if (activeTab === "inactive-users") {
         endpoint = "/users/inactive";
       } else if (activeTab === "privilege-users") {
         endpoint = "/users/privilege";
       } else if (activeTab === "active-users") {
-        endpoint = "/users"; // Filter active on frontend
+        endpoint = "/users"; // Filter active di frontend
       } else if (activeTab === "admin-users") {
-        endpoint = "/users"; // Filter admin on frontend
+        endpoint = "/users"; // Filter admin di frontend
       }
 
       const response = await fetch(`${API_URL}${endpoint}`);
@@ -83,6 +106,7 @@ const UserControl = () => {
     }
   };
 
+  // Helper functions (getDeptType, getUserInitials, getInitialsColor, etc.)
   const getDeptType = (department) => {
     const mapping = {
       Finance: "finance",
@@ -107,298 +131,15 @@ const UserControl = () => {
       { bg: "#e3f2fd", color: "#4a90e2" },
       { bg: "#ffebee", color: "#e74c3c" },
       { bg: "#e8f5e9", color: "#27ae60" },
-      { bg: "#f3e5f5", color: "#9b59b6" },
       { bg: "#fff3e0", color: "#f39c12" },
-      { bg: "#e0f7fa", color: "#00bcd4" },
+      { bg: "#ede7f6", color: "#8e44ad" },
+      { bg: "#f1f8e9", color: "#388e3c" },
+      { bg: "#fce4ec", color: "#d81b60" },
+      { bg: "#f9fbe7", color: "#cddc39" },
     ];
     let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  };
-
-  const handleEditUser = async (user) => {
-    setSelectedUser(user);
-    setOriginalRole(user.role || "User"); // Store original role for comparison
-
-    // NOTE: User data (name, email, department, position) comes from Third-Party API
-    // These fields are READ-ONLY and cannot be modified by admin
-    // Only 'role' field can be changed by admin
-    // TODO: Fetch latest user data from third-party API before editing
-    // const userData = await fetchUserDataFromThirdPartyAPI(user.id);
-
-    setFormData({
-      name: user.name, // READ-ONLY from API
-      email: user.email, // READ-ONLY from API
-      position: user.position, // READ-ONLY from API
-      department: user.department, // READ-ONLY from API
-      role: user.role || "User", // EDITABLE by admin
-      status: user.status,
-      accountActive: user.status === "active",
-      privilegeAccess: user.has_privilege === 1 || user.has_privilege === true,
-    });
-    setShowEditModal(true);
-  };
-
-  const handleAddUser = () => {
-    setFormData({
-      name: "",
-      email: "",
-      position: "Staff",
-      department: "Finance",
-      role: "User",
-      status: "active",
-      accountActive: true,
-      privilegeAccess: false,
-    });
-    setShowAddModal(true);
-  };
-
-  const handleSaveUser = async () => {
-    if (!formData.name || !formData.email) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    // Check if role is being changed to Admin
-    if (
-      showEditModal &&
-      selectedUser &&
-      originalRole !== "Admin" &&
-      formData.role === "Admin"
-    ) {
-      setShowRoleConfirmModal(true);
-      return; // Wait for confirmation
-    }
-
-    // Proceed with save
-    await saveUserToDatabase();
-  };
-
-  const saveUserToDatabase = async () => {
-    setLoading(true);
-
-    try {
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        position: formData.position,
-        department: formData.department,
-        role: formData.role,
-        status: formData.status,
-        has_privilege: formData.privilegeAccess ? 1 : 0,
-      };
-
-      let response;
-      if (showEditModal && selectedUser) {
-        // Update existing user
-        response = await fetch(`${API_URL}/users/${selectedUser.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        });
-      } else {
-        // Create new user
-        response = await fetch(`${API_URL}/users`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        });
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert(data.message || "User saved successfully!");
-        setShowEditModal(false);
-        setShowAddModal(false);
-        setShowRoleConfirmModal(false);
-        fetchUsers(); // Refresh the list
-      } else {
-        alert(data.message || "Failed to save user");
-      }
-    } catch (err) {
-      console.error("Error saving user:", err);
-      alert("Failed to save user. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Application mapping (matching the 4 applications in ApplicationManagement)
-  const getAppLogo = (code) => {
-    const logoMap = {
-      // Map backend codes to the 4 main applications
-      FIN_SYS: "/assets/SGI+.png", // Financial System → SGI+
-      HR_PORTAL: "/assets/punch.png", // HR Portal → Punch
-      WH_MGT: "/assets/oodo.png", // Warehouse → oodo
-      INV_CTL: "/assets/oodo.png", // Inventory → oodo
-      SALES_DB: "/assets/Ops.png", // Sales → OPS
-      CUST_PORTAL: "/assets/Ops.png", // Customer Portal → OPS
-      // Direct codes
-      SGI_PLUS: "/assets/SGI+.png",
-      PUNCH: "/assets/punch.png",
-      OODO: "/assets/oodo.png",
-      OPS: "/assets/Ops.png",
-    };
-    return logoMap[code] || "/assets/SGI+.png";
-  };
-
-  // Application name mapping
-  const getAppName = (code) => {
-    const nameMap = {
-      // Backend codes to display names
-      FIN_SYS: "SGI +",
-      HR_PORTAL: "Punch Coretation",
-      WH_MGT: "oodo",
-      INV_CTL: "oodo",
-      SALES_DB: "ops",
-      CUST_PORTAL: "ops",
-      // Direct codes
-      SGI_PLUS: "SGI +",
-      PUNCH: "Punch Coretation",
-      OODO: "oodo",
-      OPS: "ops",
-    };
-    return nameMap[code] || code;
-  };
-
-  const handleEditPrivilege = async (user) => {
-    setSelectedUser(user);
-    setLoading(true);
-
-    try {
-      // Fetch all applications
-      const appsResponse = await fetch(`${API_URL}/applications`);
-      const appsData = await appsResponse.json();
-
-      if (appsData.success) {
-        // Group to 4 main applications only
-        const mainApps = [
-          {
-            id: "sgi-plus",
-            code: "FIN_SYS",
-            name: "SGI +",
-            logo: "/assets/SGI+.png",
-          },
-          {
-            id: "punch",
-            code: "HR_PORTAL",
-            name: "Punch Coretation",
-            logo: "/assets/punch.png",
-          },
-          {
-            id: "oodo",
-            code: "WH_MGT",
-            name: "oodo",
-            logo: "/assets/oodo.png",
-          },
-          { id: "ops", code: "SALES_DB", name: "ops", logo: "/assets/Ops.png" },
-        ];
-
-        // Map database apps to main apps and get their actual DB IDs
-        const mappedApps = mainApps.map((mainApp) => {
-          const dbApp = appsData.data.find((app) => app.code === mainApp.code);
-          return {
-            id: dbApp ? dbApp.id : mainApp.id,
-            name: mainApp.name,
-            displayName: mainApp.name,
-            code: mainApp.code,
-            logo: mainApp.logo,
-          };
-        });
-
-        setApplications(mappedApps);
-      }
-
-      // Fetch user's current privileges
-      const privsResponse = await fetch(
-        `${API_URL}/users/${user.id}/privileges`,
-      );
-      const privsData = await privsResponse.json();
-
-      if (privsData.success) {
-        const appIds = privsData.data.map((p) => p.application_id);
-        setSelectedApps(appIds);
-      }
-
-      setShowPrivilegeModal(true);
-    } catch (err) {
-      console.error("Error loading privilege data:", err);
-      alert("Failed to load privilege data. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSavePrivilege = async () => {
-    if (!selectedUser) return;
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(
-        `${API_URL}/users/${selectedUser.id}/privileges`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            application_ids: selectedApps,
-            has_privilege: selectedApps.length > 0 ? 1 : 0,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert("Privilege settings saved successfully!");
-        setShowPrivilegeModal(false);
-        fetchUsers(); // Refresh user list
-      } else {
-        alert(
-          "Failed to save privileges: " + (data.message || "Unknown error"),
-        );
-      }
-    } catch (err) {
-      console.error("Error saving privileges:", err);
-      alert("Failed to save privileges. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleApp = (appId) => {
-    setSelectedApps((prev) => {
-      if (prev.includes(appId)) {
-        return prev.filter((id) => id !== appId);
-      } else {
-        return [...prev, appId];
-      }
-    });
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const toggleAccountStatus = () => {
-    setFormData((prev) => ({
-      ...prev,
-      accountActive: !prev.accountActive,
-      status: !prev.accountActive ? "active" : "inactive",
-    }));
-  };
-
-  const togglePrivilegeAccess = () => {
-    setFormData((prev) => ({
-      ...prev,
-      privilegeAccess: !prev.privilegeAccess,
-    }));
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    return colors[hash % colors.length];
   };
 
   const getCurrentUsers = () => {
@@ -416,12 +157,13 @@ const UserControl = () => {
         user.email.toLowerCase().includes(searchQuery.toLowerCase()),
     )
     .sort((a, b) => {
-      // Sort: Admin users first, then regular users
       if (a.role === "Admin" && b.role !== "Admin") return -1;
       if (a.role !== "Admin" && b.role === "Admin") return 1;
       return 0;
     });
 
+  // ...existing code...
+  // === UI START ===
   return (
     <div className="user-control-section">
       <div className="section-header">
@@ -438,7 +180,6 @@ const UserControl = () => {
         </svg>
         <h2>User Management</h2>
       </div>
-
       {error && (
         <div
           style={{
@@ -453,1190 +194,170 @@ const UserControl = () => {
           <strong>Error:</strong> {error}
         </div>
       )}
-
       <div className="control-header">
         <div className="user-control-tabs">
           <button
-            className={`user-control-tab ${activeTab === "all-users" ? "active" : ""}`}
+            className={`user-control-tab${activeTab === "all-users" ? " active" : ""}`}
             onClick={() => setActiveTab("all-users")}
           >
             All Users
           </button>
           <button
-            className={`user-control-tab ${activeTab === "active-users" ? "active" : ""}`}
+            className={`user-control-tab${activeTab === "active-users" ? " active" : ""}`}
             onClick={() => setActiveTab("active-users")}
           >
             Active Users
           </button>
           <button
-            className={`user-control-tab ${activeTab === "inactive-users" ? "active" : ""}`}
+            className={`user-control-tab${activeTab === "inactive-users" ? " active" : ""}`}
             onClick={() => setActiveTab("inactive-users")}
           >
             Inactive Users
           </button>
           <button
-            className={`user-control-tab ${activeTab === "privilege-users" ? "active" : ""}`}
+            className={`user-control-tab${activeTab === "privilege-users" ? " active" : ""}`}
             onClick={() => setActiveTab("privilege-users")}
           >
             Privilege Users
           </button>
           <button
-            className={`user-control-tab ${activeTab === "admin-users" ? "active" : ""}`}
+            className={`user-control-tab${activeTab === "admin-users" ? " active" : ""}`}
             onClick={() => setActiveTab("admin-users")}
           >
-            Admin
+            Admin Users
+          </button>
+        </div>
+        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search users..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ padding: 8, borderRadius: 6, border: "1px solid #e1e8ed" }}
+          />
+          <button
+            className="add-user-btn"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Add User
           </button>
         </div>
       </div>
-
-      {/* ALL USERS TAB */}
-      {activeTab === "all-users" && (
-        <div className="user-control-content active">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button className="add-user-btn" onClick={handleAddUser}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Add User
-            </button>
+      <div style={{ marginTop: 24 }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#7f8c9a" }}>
+            <p>Loading users...</p>
           </div>
-
-          {loading ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>Loading users...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>No users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Position</th>
-                      <th>Department</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => {
-                      const initials = getUserInitials(user.name);
-                      const colors = getInitialsColor(user.name);
-                      const deptType = getDeptType(user.department);
-                      return (
-                        <tr key={user.id} className="status-active">
-                          <td>
-                            <div className="user-cell">
-                              <div
-                                className="user-avatar"
-                                style={{
-                                  background: colors.bg,
-                                  color: colors.color,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div className="user-info">
-                                <h4>{user.name}</h4>
-                                <p>{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.role.toLowerCase()}`}
-                              style={{
-                                backgroundColor:
-                                  user.role === "Admin" ? "#fef3c7" : "#e0e7ff",
-                                color:
-                                  user.role === "Admin" ? "#92400e" : "#3730a3",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.role}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`status-badge ${user.status}`}
-                              style={{
-                                backgroundColor:
-                                  user.status === "active"
-                                    ? "#d1fae5"
-                                    : "#fee2e2",
-                                color:
-                                  user.status === "active"
-                                    ? "#065f46"
-                                    : "#991b1b",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.status.charAt(0).toUpperCase() +
-                                user.status.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.position.toLowerCase().replace(" ", "-")}`}
-                            >
-                              {user.position}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`dept-badge ${deptType}`}>
-                              {user.department}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-edit"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Showing {filteredUsers.length} of {users.length} users
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ACTIVE USERS TAB - Same as All Users */}
-      {activeTab === "active-users" && (
-        <div className="user-control-content active">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search active users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        ) : filteredUsers.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#7f8c9a" }}>
+            <p>No users found.</p>
           </div>
-
-          {loading ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>Loading active users...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>No active users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Position</th>
-                      <th>Department</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => {
-                      const initials = getUserInitials(user.name);
-                      const colors = getInitialsColor(user.name);
-                      const deptType = getDeptType(user.department);
-                      return (
-                        <tr key={user.id} className="status-active">
-                          <td>
-                            <div className="user-cell">
-                              <div
-                                className="user-avatar"
-                                style={{
-                                  background: colors.bg,
-                                  color: colors.color,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div className="user-info">
-                                <h4>{user.name}</h4>
-                                <p>{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.role.toLowerCase()}`}
-                              style={{
-                                backgroundColor:
-                                  user.role === "Admin" ? "#fef3c7" : "#e0e7ff",
-                                color:
-                                  user.role === "Admin" ? "#92400e" : "#3730a3",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.role}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`status-badge ${user.status}`}
-                              style={{
-                                backgroundColor: "#d1fae5",
-                                color: "#065f46",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.status.charAt(0).toUpperCase() +
-                                user.status.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.position.toLowerCase().replace(" ", "-")}`}
-                            >
-                              {user.position}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`dept-badge ${deptType}`}>
-                              {user.department}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-edit"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Showing {filteredUsers.length} of {activeUsers.length} active
-                  users
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ADMIN TAB - Same as All Users */}
-      {activeTab === "admin-users" && (
-        <div className="user-control-content active">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search admin users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {loading ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>Loading admin users...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>No admin users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Position</th>
-                      <th>Department</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => {
-                      const initials = getUserInitials(user.name);
-                      const colors = getInitialsColor(user.name);
-                      const deptType = getDeptType(user.department);
-                      return (
-                        <tr key={user.id} className="status-active">
-                          <td>
-                            <div className="user-cell">
-                              <div
-                                className="user-avatar"
-                                style={{
-                                  background: colors.bg,
-                                  color: colors.color,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div className="user-info">
-                                <h4>{user.name}</h4>
-                                <p>{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.role.toLowerCase()}`}
-                              style={{
-                                backgroundColor: "#fef3c7",
-                                color: "#92400e",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.role}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`status-badge ${user.status}`}
-                              style={{
-                                backgroundColor:
-                                  user.status === "active"
-                                    ? "#d1fae5"
-                                    : "#fee2e2",
-                                color:
-                                  user.status === "active"
-                                    ? "#065f46"
-                                    : "#991b1b",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {user.status.charAt(0).toUpperCase() +
-                                user.status.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.position.toLowerCase().replace(" ", "-")}`}
-                            >
-                              {user.position}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`dept-badge ${deptType}`}>
-                              {user.department}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-edit"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Showing {filteredUsers.length} of {adminUsers.length} admin
-                  users
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* INACTIVE USERS TAB */}
-      {activeTab === "inactive-users" && (
-        <div className="user-control-content active">
-          {loading ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>Loading inactive users...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>No inactive users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Position</th>
-                      <th>Department</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => {
-                      const initials = getUserInitials(user.name);
-                      const colors = getInitialsColor(user.name);
-                      const deptType = getDeptType(user.department);
-                      return (
-                        <tr key={user.id}>
-                          <td>
-                            <div className="user-cell">
-                              <div
-                                className="user-avatar"
-                                style={{
-                                  background: colors.bg,
-                                  color: colors.color,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div className="user-info">
-                                <h4>{user.name}</h4>
-                                <p>{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.position.toLowerCase().replace(" ", "-")}`}
-                            >
-                              {user.position}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`dept-badge ${deptType}`}>
-                              {user.department}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`status-badge ${user.status}`}>
-                              Inactive
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-edit"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              Edit
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Showing {filteredUsers.length} of {inactiveUsers.length}{" "}
-                  inactive users
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* PRIVILEGE USERS TAB */}
-      {activeTab === "privilege-users" && (
-        <div className="user-control-content active">
-          <div className="special-privileges-header"></div>
-
-          {loading ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>Loading privilege users...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-gray)",
-              }}
-            >
-              <p>No privilege users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-container">
-                <table className="privileges-table">
-                  <thead>
-                    <tr>
-                      <th>USER</th>
-                      <th>POSITION</th>
-                      <th>DEPARTMENT</th>
-                      <th>SPECIAL APPS</th>
-                      <th>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => {
-                      const initials = getUserInitials(user.name);
-                      const colors = getInitialsColor(user.name);
-                      const deptType = getDeptType(user.department);
-                      return (
-                        <tr key={user.id} className="default-privilege-row">
-                          <td>
-                            <div className="user-cell">
-                              <div
-                                className="user-avatar"
-                                style={{
-                                  background: colors.bg,
-                                  color: colors.color,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div className="user-info">
-                                <h4>{user.name}</h4>
-                                <p>{user.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`role-badge ${user.position.toLowerCase().replace(" ", "-")}`}
-                            >
-                              {user.position}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`dept-badge ${deptType}`}>
-                              {user.department}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="override-badges">
-                              <span
-                                className="override-badge"
-                                style={{
-                                  background: "#e1f5fe",
-                                  color: "#0277bd",
-                                }}
-                              >
-                                📊 {user.overrides || 0} Override
-                                {(user.overrides || 0) > 1 ? "s" : ""}
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-edit"
-                              onClick={() => handleEditPrivilege(user)}
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Showing {filteredUsers.length} of {privilegeUsers.length}{" "}
-                  special privilege grants
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* EDIT USER MODAL - CONDITIONAL VERSION */}
-      {showEditModal && selectedUser && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "580px", maxHeight: "80vh", overflowY: "auto" }}
-          >
-            <div className="modal-header">
-              <h3>
-                {activeTab === "inactive-users" ? "Activate User" : "Edit User"}
-              </h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowEditModal(false)}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-
-            {/* SIMPLIFIED MODAL FOR INACTIVE USERS */}
-            {activeTab === "inactive-users" ? (
-              <>
-                <div className="modal-body">
-                  {/* User Info */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                      padding: "20px",
-                      background: "#f8f9fa",
-                      borderRadius: "12px",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    <div
-                      className="user-avatar"
-                      style={{
-                        background: getInitialsColor(selectedUser.name).bg,
-                        color: getInitialsColor(selectedUser.name).color,
-                        width: "64px",
-                        height: "64px",
-                        fontSize: "24px",
-                        flexShrink: 0,
-                      }}
+        ) : (
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Position</th>
+                  <th>Department</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => {
+                  const initials = getUserInitials(user.name);
+                  const colors = getInitialsColor(user.name);
+                  const deptType = getDeptType(user.department);
+                  return (
+                    <tr
+                      key={user.id}
+                      className={
+                        user.status === "active"
+                          ? "status-active"
+                          : "status-inactive"
+                      }
                     >
-                      {getUserInitials(selectedUser.name)}
-                    </div>
-                    <div>
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: "18px",
-                          color: "#2c3e50",
-                        }}
-                      >
-                        {selectedUser.name}
-                      </h3>
-                      <p
-                        style={{
-                          margin: "4px 0 0",
-                          fontSize: "14px",
-                          color: "#7f8c9a",
-                        }}
-                      >
-                        {selectedUser.email}
-                      </p>
-                      <div
-                        style={{
-                          marginTop: "8px",
-                          display: "flex",
-                          gap: "8px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            background: "#fee2e2",
-                            color: "#991b1b",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          Inactive
-                        </span>
-                        <span
-                          style={{
-                            background: "#f0f3f7",
-                            color: "#2c3e50",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                          }}
-                        >
-                          {selectedUser.department} • {selectedUser.position}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Activate Account Message */}
-                  <div
-                    style={{
-                      padding: "16px",
-                      background: "#fff9db",
-                      borderLeft: "4px solid #f1c40f",
-                      borderRadius: "8px",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    <p
-                      style={{ margin: 0, fontSize: "14px", color: "#856404" }}
-                    >
-                      ⚠️ This account is currently inactive. Click the button
-                      below to activate this user's account and grant them
-                      access to the system.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    className="modal-btn modal-btn-secondary"
-                    onClick={() => setShowEditModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="modal-btn modal-btn-primary"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        accountActive: true,
-                        status: "active",
-                      }));
-                      handleSaveUser();
-                    }}
-                    disabled={loading}
-                    style={{
-                      background: "#27ae60",
-                      borderColor: "#27ae60",
-                    }}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    {loading ? "Activating..." : "Activate Account"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              /* FULL MODAL FOR ACTIVE/ALL/ADMIN/PRIVILEGE USERS */
-              <>
-                <div className="modal-body">
-                  {/* Account Status */}
-                  <div className="modal-account-status">
-                    <div className="modal-account-status-info">
-                      <h4>Account Status</h4>
-                      <p>Blocked users cannot log in.</p>
-                    </div>
-                    <div
-                      className={`toggle-switch ${formData.accountActive ? "active" : ""}`}
-                      onClick={toggleAccountStatus}
-                    ></div>
-                  </div>
-
-                  {/* Personal Information - Horizontal Layout */}
-                  <div className="modal-section">
-                    <div className="modal-section-header">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                      <h4>Personal Information</h4>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "20px",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      {/* Avatar */}
-                      <div
-                        className="modal-avatar-editor"
-                        style={{ flex: "0 0 auto" }}
-                      >
-                        <div
-                          className="modal-avatar-large"
-                          style={{
-                            background: getInitialsColor(formData.name).bg,
-                            color: getInitialsColor(formData.name).color,
-                          }}
-                        >
-                          {getUserInitials(formData.name)}
-                        </div>
-                      </div>
-
-                      {/* Name and Email - Read Only */}
-                      <div
-                        style={{
-                          flex: "1",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "16px",
-                        }}
-                      >
-                        <div className="modal-form-group">
-                          <label>Full Name</label>
-                          <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            disabled
+                      <td>
+                        <div className="user-cell">
+                          <div
+                            className="user-avatar"
                             style={{
-                              backgroundColor: "#f5f5f5",
-                              cursor: "not-allowed",
-                              color: "#666",
+                              background: colors.bg,
+                              color: colors.color,
                             }}
-                          />
+                          >
+                            {initials}
+                          </div>
+                          <div className="user-info">
+                            <h4>{user.name}</h4>
+                            <p>{user.email}</p>
+                          </div>
                         </div>
-
-                        <div className="modal-form-group">
-                          <label>Corporate Email</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            disabled
-                            style={{
-                              backgroundColor: "#f5f5f5",
-                              cursor: "not-allowed",
-                              color: "#666",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        padding: "12px",
-                        backgroundColor: "#fff3cd",
-                        borderLeft: "4px solid #ffc107",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "13px",
-                          color: "#856404",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        These fields are synced from third-party API and cannot
-                        be edited manually.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Job Information - Read Only */}
-                  <div className="modal-section">
-                    <div className="modal-section-header">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect
-                          x="2"
-                          y="7"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        ></rect>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                      </svg>
-                      <h4>Job Information</h4>
-                    </div>
-
-                    <div className="modal-form-row">
-                      <div className="modal-form-group">
-                        <label>Department</label>
-                        <input
-                          type="text"
-                          value={formData.department}
-                          disabled
-                          style={{
-                            backgroundColor: "#f5f5f5",
-                            cursor: "not-allowed",
-                            color: "#666",
-                          }}
-                        />
-                      </div>
-                      <div className="modal-form-group">
-                        <label>Position</label>
-                        <input
-                          type="text"
-                          value={formData.position}
-                          disabled
-                          style={{
-                            backgroundColor: "#f5f5f5",
-                            cursor: "not-allowed",
-                            color: "#666",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="modal-form-group">
-                      <label>Role</label>
-                      <select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleFormChange}
-                      >
-                        <option value="User">User</option>
-                        <option value="Admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Privilege Access Toggle */}
-                  <div className="modal-section">
-                    <div className="modal-privilege-toggle">
-                      <div className="modal-privilege-toggle-info">
-                        <h4>Privilege Access</h4>
-                        <p>Enable special application permissions</p>
-                      </div>
-                      <div className="privilege-status">
+                      </td>
+                      <td>
                         <span
-                          className={`privilege-status-badge yellow ${formData.privilegeAccess ? "enabled" : "disabled"}`}
+                          className={`role-badge ${user.role?.toLowerCase()}`}
                         >
-                          {formData.privilegeAccess ? "Enabled" : "Disabled"}
+                          {user.role}
                         </span>
-                        <div
-                          className={`toggle-switch yellow ${formData.privilegeAccess ? "active" : ""}`}
-                          onClick={togglePrivilegeAccess}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="yellow-banner"
-                      style={{
-                        marginTop: "12px",
-                        padding: "12px",
-                        backgroundColor: "#fff9db",
-                        borderLeft: "4px solid #f1c40f",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "13px",
-                          color: "#856404",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${user.status === "active" ? "active" : "inactive"}`}
                         >
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        Use Privilege Users tab to manage which applications
-                        this user can access.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    className="modal-btn modal-btn-secondary"
-                    onClick={() => setShowEditModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="modal-btn modal-btn-primary"
-                    onClick={handleSaveUser}
-                    disabled={loading}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    {loading ? "Saving..." : "Save Changes"}
-                  </button>
-                </div>
-              </>
-            )}
+                          {user.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`role-badge ${user.position?.toLowerCase().replace(/\s/g, "-")}`}
+                        >
+                          {user.position}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`dept-badge ${deptType}`}>
+                          {user.department}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn-edit"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setFormData({
+                              name: user.name,
+                              email: user.email,
+                              position: user.position,
+                              department: user.department,
+                              role: user.role,
+                              status: user.status,
+                              accountActive: user.accountActive,
+                              privilegeAccess: user.privilegeAccess,
+                              privileges: user.privileges || {},
+                            });
+                            setShowEditModal(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ADD USER MODAL */}
+      {/* ADD USER MODAL - BACKUP DESIGN */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "580px", maxHeight: "80vh", overflowY: "auto" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
                 <svg
@@ -1650,7 +371,7 @@ const UserControl = () => {
                   <line x1="20" y1="8" x2="20" y2="14"></line>
                   <line x1="23" y1="11" x2="17" y2="11"></line>
                 </svg>
-                Add New User
+                Add User
               </h3>
               <button
                 className="modal-close"
@@ -1667,9 +388,7 @@ const UserControl = () => {
                 </svg>
               </button>
             </div>
-
             <div className="modal-body">
-              {/* Personal Information */}
               <div className="modal-section">
                 <div className="modal-section-header">
                   <svg
@@ -1683,31 +402,136 @@ const UserControl = () => {
                   </svg>
                   <h4>Personal Information</h4>
                 </div>
-
-                <div className="modal-form-group">
-                  <label className="required">Full Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Enter user's full name"
-                    value={formData.name}
-                    onChange={handleFormChange}
-                  />
-                </div>
-
-                <div className="modal-form-group">
-                  <label className="required">Corporate Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="user@somagede.com"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                  />
+                <div className="modal-form-row">
+                  <div className="modal-form-group">
+                    <label className="required">Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Full name..."
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="modal-form-group">
+                    <label className="required">Corporate Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Enter email..."
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="modal-form-group">
+                    <label className="required">Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Password..."
+                      value={formData.password || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="modal-form-group">
+                    <label>Photo</label>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 16 }}
+                    >
+                      <div
+                        style={{
+                          position: "relative",
+                          width: 64,
+                          height: 64,
+                          borderRadius: "50%",
+                          background: getInitialsColor(formData.name).bg,
+                          color: getInitialsColor(formData.name).color,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 22,
+                          fontWeight: 700,
+                          boxShadow: "0 2px 8px rgba(74,144,226,0.08)",
+                        }}
+                      >
+                        {formData.avatar ? (
+                          <img
+                            src={URL.createObjectURL(formData.avatar)}
+                            alt="Avatar Preview"
+                            style={{
+                              width: 64,
+                              height: 64,
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                              border: "2px solid #e1e8ed",
+                            }}
+                          />
+                        ) : (
+                          getUserInitials(formData.name)
+                        )}
+                        <label
+                          htmlFor="avatar-upload"
+                          style={{
+                            position: "absolute",
+                            bottom: -8,
+                            right: -8,
+                            background: "#4a90e2",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            width: 28,
+                            height: 28,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 1px 4px rgba(74,144,226,0.12)",
+                            fontSize: 16,
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M16.24 7.76a6 6 0 1 1-8.48 0" />
+                          </svg>
+                        </label>
+                        <input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/*"
+                          name="avatar"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFormData({
+                                ...formData,
+                                avatar: e.target.files[0],
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+                      <span style={{ color: "#7f8c9a", fontSize: 13 }}>
+                        Upload photo (jpg, png, max 2MB)
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Job Information */}
               <div className="modal-section">
                 <div className="modal-section-header">
                   <svg
@@ -1724,48 +548,425 @@ const UserControl = () => {
                       rx="2"
                       ry="2"
                     ></rect>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                   </svg>
                   <h4>Job Information</h4>
                 </div>
-
                 <div className="modal-form-row">
                   <div className="modal-form-group">
-                    <label className="required">Department</label>
+                    <label>Department</label>
                     <select
                       name="department"
                       value={formData.department}
-                      onChange={handleFormChange}
+                      onChange={(e) =>
+                        setFormData({ ...formData, department: e.target.value })
+                      }
                     >
-                      <option value="Finance">Finance</option>
-                      <option value="Human Resources">Human Resources</option>
-                      <option value="Warehouse">Warehouse</option>
-                      <option value="IT Department">IT Department</option>
-                      <option value="Marketing">Marketing</option>
-                      <option value="Sales">Sales</option>
+                      {(departments || []).map((dept) => (
+                        <option key={dept.id} value={dept.name}>
+                          {dept.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="modal-form-group">
-                    <label className="required">Position</label>
+                    <label>Position</label>
                     <select
                       name="position"
                       value={formData.position}
-                      onChange={handleFormChange}
+                      onChange={(e) =>
+                        setFormData({ ...formData, position: e.target.value })
+                      }
                     >
-                      <option value="Staff">Staff</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Senior Manager">Senior Manager</option>
-                      <option value="Director">Director</option>
+                      {(positions || []).map((pos, idx) => (
+                        <option key={idx} value={pos}>
+                          {pos}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="modal-form-group">
+                    <label>Role</label>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value })
+                      }
+                    >
+                      {(roles || []).map((role) => (
+                        <option key={role.id} value={role.name}>
+                          {role.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="modal-btn modal-btn-primary">
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div className="modal-form-group">
-                  <label>Role</label>
+      {/* EDIT USER MODAL - FULL DESIGN */}
+      {showEditModal && selectedUser && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 580, maxHeight: "80vh", overflowY: "auto" }}
+          >
+            <div className="modal-header">
+              <h3>Edit User</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowEditModal(false)}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: "18px 16px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "14px",
+                  alignItems: "flex-start",
+                }}
+              >
+                {/* Avatar */}
+                <div
+                  className="modal-avatar-editor"
+                  style={{ flex: "0 0 auto" }}
+                >
+                  <div
+                    className="modal-avatar-large"
+                    style={{
+                      background: getInitialsColor(formData.name).bg,
+                      color: getInitialsColor(formData.name).color,
+                      width: 48,
+                      height: 48,
+                      fontSize: 18,
+                    }}
+                  >
+                    {getUserInitials(formData.name)}
+                  </div>
+                </div>
+                {/* Name and Email - Read Only */}
+                <div
+                  style={{
+                    flex: "1",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
+                    <label
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#34495e",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      disabled
+                      style={{
+                        backgroundColor: "#f5f5f5",
+                        cursor: "not-allowed",
+                        color: "#666",
+                        fontSize: 14,
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                      }}
+                    />
+                  </div>
+                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
+                    <label
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#34495e",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      disabled
+                      style={{
+                        backgroundColor: "#f5f5f5",
+                        cursor: "not-allowed",
+                        color: "#666",
+                        fontSize: 14,
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Job Information - Read Only */}
+              <div style={{ height: 16 }}></div>
+              <div className="modal-section" style={{ marginBottom: 12 }}>
+                <div
+                  className="modal-section-header"
+                  style={{ gap: 6, marginBottom: 8, paddingBottom: 4 }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ width: 16, height: 16 }}
+                  >
+                    <rect
+                      x="2"
+                      y="7"
+                      width="20"
+                      height="14"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                  </svg>
+                  <h4
+                    style={{
+                      fontSize: 13,
+                      color: "#2c3e50",
+                      fontWeight: 600,
+                      margin: 0,
+                    }}
+                  >
+                    Job Information
+                  </h4>
+                </div>
+                <div className="modal-form-row" style={{ gap: 8 }}>
+                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
+                    <label
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#34495e",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.department}
+                      disabled
+                      style={{
+                        backgroundColor: "#f5f5f5",
+                        cursor: "not-allowed",
+                        color: "#666",
+                        fontSize: 14,
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                      }}
+                    />
+                    {/* Accessible Applications Info */}
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 12,
+                        background: "#f8fafc",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        border: "1px solid #e1e8ed",
+                        boxShadow: "0 1px 2px rgba(74,144,226,0.04)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#4a90e2",
+                          fontWeight: 700,
+                          fontSize: 13,
+                          marginBottom: 8,
+                          display: "block",
+                        }}
+                      >
+                        Accessible Applications:
+                      </span>
+                      {(() => {
+                        const department = formData.department;
+                        const departmentApps = {
+                          HSE: ["OPS", "PUNCH"],
+                          Finance: ["SGI_PLUS", "OODO", "OPS", "PUNCH", "2"],
+                          "Human Resource": ["OODO", "OPS", "PUNCH"],
+                        };
+                        const appData = {
+                          SGI_PLUS: { name: "SGI+", logo: "/assets/SGI+.png" },
+                          PUNCH: { name: "Punch", logo: "/assets/punch.png" },
+                          OODO: { name: "Oodo", logo: "/assets/oodo.png" },
+                          OPS: { name: "Ops", logo: "/assets/Ops.png" },
+                          2: { name: "Punch", logo: "/assets/punch.png" },
+                        };
+                        const apps = departmentApps[department] || [];
+                        if (apps.length > 0) {
+                          return (
+                            <ul
+                              style={{
+                                margin: 0,
+                                padding: 0,
+                                listStyle: "none",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 6,
+                              }}
+                            >
+                              {apps.map((code) => (
+                                <li
+                                  key={code}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 12,
+                                    background: "#fff",
+                                    borderRadius: 6,
+                                    padding: "7px 10px",
+                                    border: "1px solid #e1e8ed",
+                                    boxShadow:
+                                      "0 1px 2px rgba(74,144,226,0.03)",
+                                    minHeight: 32,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      height: 24,
+                                      width: 24,
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked
+                                      disabled
+                                      style={{
+                                        accentColor: "#4a90e2",
+                                        width: 18,
+                                        height: 18,
+                                        margin: 0,
+                                      }}
+                                    />
+                                  </div>
+                                  <img
+                                    src={appData[code]?.logo}
+                                    alt={appData[code]?.name}
+                                    style={{
+                                      width: 22,
+                                      height: 22,
+                                      borderRadius: 4,
+                                      objectFit: "contain",
+                                      background: "#fff",
+                                      border: "1px solid #e1e8ed",
+                                    }}
+                                  />
+                                  <span
+                                    style={{
+                                      color: "#34495e",
+                                      fontWeight: 600,
+                                      fontSize: 13,
+                                    }}
+                                  >
+                                    {appData[code]?.name || code}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        } else {
+                          return (
+                            <span
+                              style={{
+                                color: "#7f8c9a",
+                                fontSize: 12,
+                                marginLeft: 4,
+                              }}
+                            >
+                              No applications assigned
+                            </span>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+                  <div className="modal-form-group" style={{ marginBottom: 8 }}>
+                    <label
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#34495e",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Position
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.position}
+                      disabled
+                      style={{
+                        backgroundColor: "#f5f5f5",
+                        cursor: "not-allowed",
+                        color: "#666",
+                        fontSize: 14,
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="modal-form-group" style={{ marginBottom: 8 }}>
+                  <label
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#34495e",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Role
+                  </label>
                   <select
                     name="role"
                     value={formData.role}
-                    onChange={handleFormChange}
+                    onChange={(e) =>
+                      setFormData({ ...formData, role: e.target.value })
+                    }
+                    style={{
+                      fontSize: 14,
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                    }}
                   >
                     <option value="User">User</option>
                     <option value="Manager">Manager</option>
@@ -1774,37 +975,22 @@ const UserControl = () => {
                 </div>
               </div>
             </div>
-
             <div className="modal-footer">
               <button
                 className="modal-btn modal-btn-secondary"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setShowEditModal(false)}
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSaveUser}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Creating..." : "Create User"}
+              <button className="modal-btn modal-btn-primary">
+                Save Changes
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* EDIT PRIVILEGE MODAL */}
+      {/* PRIVILEGE MODAL */}
       {showPrivilegeModal && selectedUser && (
         <div
           className="modal-overlay"
@@ -1813,29 +999,10 @@ const UserControl = () => {
           <div
             className="modal-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "580px", maxHeight: "80vh", overflowY: "auto" }}
+            style={{ maxWidth: 520, maxHeight: "80vh", overflowY: "auto" }}
           >
             <div className="modal-header">
-              <h3 style={{ fontSize: "18px", margin: 0 }}>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  style={{ width: "18px", height: "18px" }}
-                >
-                  <rect
-                    x="3"
-                    y="11"
-                    width="18"
-                    height="11"
-                    rx="2"
-                    ry="2"
-                  ></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                Manage Special Privileges
-              </h3>
+              <h3>Manage Privileges</h3>
               <button
                 className="modal-close"
                 onClick={() => setShowPrivilegeModal(false)}
@@ -1851,324 +1018,116 @@ const UserControl = () => {
                 </svg>
               </button>
             </div>
-            <div className="modal-body" style={{ padding: "20px" }}>
-              <div
-                style={{
-                  marginBottom: "16px",
-                  padding: "14px",
-                  background: "#f8f9fa",
-                  border: "1px solid #e1e8ed",
-                  borderRadius: "12px",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  <div
-                    className="user-avatar"
-                    style={{
-                      background: getInitialsColor(selectedUser.name).bg,
-                      color: getInitialsColor(selectedUser.name).color,
-                      width: "44px",
-                      height: "44px",
-                      fontSize: "16px",
-                    }}
+            <div className="modal-body">
+              <div className="modal-section">
+                <div className="modal-section-header">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    {getUserInitials(selectedUser.name)}
-                  </div>
-                  <div>
-                    <h4
-                      style={{
-                        margin: 0,
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      {selectedUser.name}
-                    </h4>
-                    <p
-                      style={{
-                        margin: "4px 0 0",
-                        fontSize: "12px",
-                        color: "#7f8c9a",
-                      }}
-                    >
-                      {selectedUser.email}
-                    </p>
-                  </div>
+                    <rect
+                      x="2"
+                      y="7"
+                      width="20"
+                      height="14"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                  </svg>
+                  <h4>Privileges</h4>
                 </div>
-              </div>
-
-              <div
-                className="modal-form-group"
-                style={{ marginBottom: "12px" }}
-              >
-                <p
-                  style={{
-                    margin: "0 0 4px 0",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    color: "var(--text-dark)",
-                  }}
-                >
-                  📱 Application Access
-                </p>
-                <small
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontSize: "10px",
-                    color: "#7f8c9a",
-                  }}
-                >
-                  Select which applications this user can access
-                </small>
-                <div
-                  style={{
-                    display: "grid",
-                    gap: "6px",
-                    maxHeight: "250px",
-                    overflowY: "auto",
-                  }}
-                >
-                  {applications.length === 0 ? (
-                    <p
-                      style={{
-                        color: "#7f8c9a",
-                        fontSize: "11px",
-                        fontStyle: "italic",
-                        textAlign: "center",
-                        padding: "20px",
-                      }}
-                    >
-                      Loading applications...
-                    </p>
-                  ) : (
-                    applications.map((app) => (
-                      <div
-                        key={app.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "12px 14px",
-                          background: "white",
-                          border: "1px solid #e8eef7",
-                          borderRadius: "10px",
-                          transition: "all 0.2s ease",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#f8fafb";
-                          e.currentTarget.style.borderColor = "#d4ddf8";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "white";
-                          e.currentTarget.style.borderColor = "#e8eef7";
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "14px",
-                            flex: 1,
-                          }}
+                <div className="modal-form-row">
+                  {privileges.map((priv) => (
+                    <div key={priv.key} className="modal-form-group">
+                      <label>{priv.label}</label>
+                      <div className="modal-toggle-group">
+                        <input
+                          type="checkbox"
+                          checked={formData.privileges[priv.key]}
+                          onChange={() => handlePrivilegeToggle(priv.key)}
+                        />
+                        <span
+                          className={
+                            formData.privileges[priv.key]
+                              ? "modal-badge-active"
+                              : "modal-badge-inactive"
+                          }
                         >
-                          <div
-                            style={{
-                              width: "40px",
-                              height: "40px",
-                              borderRadius: "10px",
-                              overflow: "hidden",
-                              background:
-                                "linear-gradient(135deg, #f5f7fa 0%, #e8eef7 100%)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            <img
-                              src={app.logo}
-                              alt={app.displayName || app.name}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                              }}
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                                e.target.parentElement.innerHTML =
-                                  '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#667eea">📱</div>';
-                              }}
-                            />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: "600",
-                                color: "#2c3e50",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
-                            >
-                              {app.displayName || app.name}
-                              {selectedApps.includes(app.id) && (
-                                <span className="privilege-access-badge-yellow">
-                                  PRIVILEGE
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <label
-                          style={{
-                            position: "relative",
-                            display: "inline-block",
-                            width: "36px",
-                            height: "20px",
-                            flexShrink: 0,
-                            cursor: "pointer",
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            style={{ opacity: 0, width: 0, height: 0 }}
-                            checked={selectedApps.includes(app.id)}
-                            onChange={() => handleToggleApp(app.id)}
-                          />
-                          <span
-                            style={{
-                              position: "absolute",
-                              cursor: "pointer",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: selectedApps.includes(app.id)
-                                ? "#27ae60"
-                                : "#e0e0e0",
-                              borderRadius: "10px",
-                              transition: "0.3s",
-                            }}
-                          >
-                            <span
-                              style={{
-                                position: "absolute",
-                                content: '""',
-                                height: "16px",
-                                width: "16px",
-                                left: "2px",
-                                bottom: "2px",
-                                backgroundColor: "white",
-                                borderRadius: "50%",
-                                transition: "0.3s",
-                                transform: selectedApps.includes(app.id)
-                                  ? "translateX(16px)"
-                                  : "translateX(0)",
-                                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
-                              }}
-                            />
-                          </span>
-                        </label>
+                          {formData.privileges[priv.key]
+                            ? "Active"
+                            : "Inactive"}
+                        </span>
                       </div>
-                    ))
-                  )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              <div
-                style={{
-                  marginTop: "12px",
-                  padding: "10px 12px",
-                  background: "#f0f4ff",
-                  border: "1px solid #d4ddf8",
-                  borderRadius: "8px",
-                }}
-              >
-                <p style={{ margin: 0, fontSize: "11px", color: "#4a90e2" }}>
-                  <strong>{selectedApps.length} application(s) selected</strong>
-                  {selectedApps.length === 0 &&
-                    " - User will have no special privileges"}
-                </p>
               </div>
             </div>
-            <div
-              className="modal-footer"
-              style={{
-                justifyContent: "space-between",
-                gap: "8px",
-                marginTop: "12px",
-              }}
-            >
+            <div className="modal-footer">
               <button
                 className="modal-btn modal-btn-secondary"
                 onClick={() => setShowPrivilegeModal(false)}
-                style={{ padding: "7px 12px", fontSize: "12px", flex: "0.8" }}
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSavePrivilege}
-                disabled={loading}
-                style={{ padding: "7px 12px", fontSize: "12px", flex: "1" }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Saving..." : "Save Privileges"}
-              </button>
+              <button className="modal-btn modal-btn-primary">Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ROLE CHANGE CONFIRMATION MODAL */}
+      {/* ROLE CONFIRMATION MODAL */}
       {showRoleConfirmModal && selectedUser && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="modal-overlay"
           onClick={() => setShowRoleConfirmModal(false)}
         >
           <div
             className="modal-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
+            style={{ maxWidth: 420 }}
           >
-            <div className="modal-body">
-              <div className="confirmation-icon warning">
+            <div className="modal-header">
+              <h3>Confirm Role Change</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowRoleConfirmModal(false)}
+              >
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                 >
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-              </div>
-              <h3>Promote User to Admin?</h3>
-              <p style={{ fontSize: "14px", color: "#555", lineHeight: "1.6" }}>
-                Are you sure you want to promote{" "}
-                <strong>{selectedUser.name}</strong> to <strong>Admin</strong>{" "}
-                role? This will grant them full administrative privileges
-                including user management, application permissions, and system
-                configuration access.
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{ textAlign: "center", padding: "32px 0" }}
+            >
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#e67e22"
+                strokeWidth="2"
+                style={{ marginBottom: 16 }}
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12" y2="16" />
+              </svg>
+              <p style={{ fontWeight: 600, fontSize: 16 }}>
+                Are you sure you want to change this user's role?
+              </p>
+              <p style={{ color: "#7f8c9a", fontSize: 13, marginTop: 8 }}>
+                This action may affect user permissions and access.
               </p>
             </div>
             <div className="modal-footer">
@@ -2178,24 +1137,7 @@ const UserControl = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={saveUserToDatabase}
-                disabled={loading}
-                style={{ backgroundColor: "#f39c12", borderColor: "#f39c12" }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Saving..." : "Confirm Promotion"}
-              </button>
+              <button className="modal-btn modal-btn-primary">Confirm</button>
             </div>
           </div>
         </div>
@@ -2205,3 +1147,4 @@ const UserControl = () => {
 };
 
 export default UserControl;
+import "../../styles/UserControl.css";
