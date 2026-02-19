@@ -27,12 +27,12 @@ export default function Login() {
     try {
       // Lookup user from database with password verification
       const response = await fetch(`${API_URL}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: emailInput,
-          password: formData.password 
-        })
+          password: formData.password,
+        }),
       });
       const result = await response.json();
 
@@ -54,36 +54,36 @@ export default function Login() {
       }
 
       // Determine user type based on role
-      const userType = (userData.role === 'Admin' || isAdmin) ? 'admin' : 'user';
+      const userType = userData.role === "Admin" || isAdmin ? "admin" : "user";
 
       // Store user data
       localStorage.setItem("userType", userType);
       localStorage.setItem("userEmail", userData.email);
       localStorage.setItem(
         "user",
-        JSON.stringify({ 
+        JSON.stringify({
           id: userData.id,
-          name: userData.name, 
-          role: userData.role?.toUpperCase() || (isAdmin ? 'ADMIN' : 'USER'),
+          name: userData.name,
+          role: userData.role?.toUpperCase() || (isAdmin ? "ADMIN" : "USER"),
           department: userData.department,
-          position: userData.position
-        })
+          position: userData.position,
+        }),
       );
 
       // Create active session
       try {
         await fetch(`${API_URL}/sessions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userData.id || null,
             user_name: userData.name,
             user_email: userData.email,
             department: userData.department,
-            role: userData.role || (isAdmin ? 'Admin' : 'User'),
-            ip_address: '0.0.0.0',
-            app_name: 'Portal'
-          })
+            role: userData.role || (isAdmin ? "Admin" : "User"),
+            ip_address: "0.0.0.0",
+            app_name: "Portal",
+          }),
         });
       } catch (sessionError) {
         console.error("Session creation failed:", sessionError);
@@ -155,19 +155,28 @@ export default function Login() {
 
             <form onSubmit={handleSubmit}>
               {error && (
-                <div style={{
-                  padding: "10px 14px",
-                  background: "#fee2e2",
-                  border: "1px solid #fecaca",
-                  borderRadius: "8px",
-                  color: "#dc2626",
-                  fontSize: "13px",
-                  marginBottom: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px"
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "#fee2e2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "8px",
+                    color: "#dc2626",
+                    fontSize: "13px",
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="15" y1="9" x2="9" y2="15"></line>
                     <line x1="9" y1="9" x2="15" y2="15"></line>
@@ -227,8 +236,12 @@ export default function Login() {
                 </a>
               </div>
 
-              <button type="submit" className="login-button" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+              <button
+                type="submit"
+                className="login-button"
+                disabled={isLoading}
+              >
+                Login
               </button>
 
               <div className="divider">
@@ -268,6 +281,16 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Full Page Loading Overlay */}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner-container">
+            <div className="loading-spinner"></div>
+            <p className="loading-text">Logging in...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

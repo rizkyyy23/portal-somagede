@@ -17,9 +17,9 @@ const Broadcast = () => {
     message: "",
     priority: "normal", // normal, high, urgent
     target_audience: "all",
-    expires_at: ""
+    expires_at: "",
   });
-  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
+  const [activeTab, setActiveTab] = useState("active"); // 'active' or 'history'
 
   useEffect(() => {
     fetchBroadcasts();
@@ -53,13 +53,19 @@ const Broadcast = () => {
       const response = await fetch(`${API_URL}/broadcasts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, admin_id: user.id })
+        body: JSON.stringify({ ...formData, admin_id: user.id }),
       });
       const result = await response.json();
-      
+
       if (result.success) {
         showToast("Broadcast sent successfully!", "success");
-        setFormData({ title: "", message: "", priority: "normal", target_audience: "all", expires_at: "" });
+        setFormData({
+          title: "",
+          message: "",
+          priority: "normal",
+          target_audience: "all",
+          expires_at: "",
+        });
         fetchBroadcasts();
       } else {
         showToast(result.message || "Failed to send broadcast", "error");
@@ -79,9 +85,12 @@ const Broadcast = () => {
 
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await fetch(`${API_URL}/broadcasts/${deleteCandidate}?admin_id=${user.id}`, {
-        method: "DELETE"
-      });
+      const response = await fetch(
+        `${API_URL}/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
+        {
+          method: "DELETE",
+        },
+      );
       const result = await response.json();
       if (result.success) {
         showToast("Broadcast deleted successfully", "success");
@@ -96,16 +105,30 @@ const Broadcast = () => {
     }
   };
 
-
   const getPriorityConfig = (priority) => {
     switch (priority) {
-      case 'urgent':
-        return { color: '#e74c3c', bg: '#feeff0', icon: LucideIcons.Megaphone, label: 'Urgent' };
-      case 'high':
-        return { color: '#f1c40f', bg: '#fef9e7', icon: LucideIcons.AlertTriangle, label: 'High Priority' };
-      case 'normal':
+      case "urgent":
+        return {
+          color: "#e74c3c",
+          bg: "#feeff0",
+          icon: LucideIcons.AlertTriangle,
+          label: "Urgent",
+        };
+      case "high":
+        return {
+          color: "#f1c40f",
+          bg: "#fef9e7",
+          icon: LucideIcons.Info,
+          label: "High Priority",
+        };
+      case "normal":
       default:
-        return { color: '#2ecc71', bg: '#e8f8f5', icon: LucideIcons.Info, label: 'Normal' };
+        return {
+          color: "#2ecc71",
+          bg: "#e8f8f5",
+          icon: LucideIcons.Megaphone,
+          label: "Normal",
+        };
     }
   };
 
@@ -115,19 +138,20 @@ const Broadcast = () => {
         <LucideIcons.Radio size={28} />
         <div>
           <h2 className="broadcast-main-title">Broadcast Center</h2>
-          <p className="broadcast-main-subtitle">Manage and send system-wide announcements</p>
+          <p className="broadcast-main-subtitle">
+            Manage and send system-wide announcements
+          </p>
         </div>
       </div>
 
       <div className="broadcast-grid">
-        
         {/* COMPOSE SECTION */}
         <div className="broadcast-composer">
           <h3 className="broadcast-section-title">
             <LucideIcons.Edit3 size={20} />
             Compose New Message
           </h3>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="broadcast-form-group">
               <label className="broadcast-label">
@@ -135,19 +159,24 @@ const Broadcast = () => {
               </label>
               <input
                 type="text"
-                placeholder="Ex: System Maintenance Notice"
+                placeholder="Title..."
                 className="broadcast-input"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
               />
             </div>
 
-            <div className="broadcast-form-group" style={{ marginBottom: "24px" }}>
+            <div
+              className="broadcast-form-group"
+              style={{ marginBottom: "24px" }}
+            >
               <label className="broadcast-label">
                 Priority Level <span style={{ color: "red" }}>*</span>
               </label>
               <div className="priority-selector">
-                {['normal', 'high', 'urgent'].map((p) => {
+                {["normal", "high", "urgent"].map((p) => {
                   const config = getPriorityConfig(p);
                   const isSelected = formData.priority === p;
                   const Icon = config.icon;
@@ -155,20 +184,21 @@ const Broadcast = () => {
                     <div
                       key={p}
                       onClick={() => setFormData({ ...formData, priority: p })}
-                      className={`priority-option ${isSelected ? 'selected' : ''}`}
+                      className={`priority-option ${isSelected ? "selected" : ""}`}
                       data-priority={p}
                     >
-                      <Icon size={24} />
-                      <span className="priority-label">
-                        {config.label}
-                      </span>
+                      <Icon size={18} />
+                      <span className="priority-label">{config.label}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="broadcast-form-group" style={{ marginBottom: "24px" }}>
+            <div
+              className="broadcast-form-group"
+              style={{ marginBottom: "24px" }}
+            >
               <label className="broadcast-label">
                 Message Content <span style={{ color: "red" }}>*</span>
               </label>
@@ -176,38 +206,52 @@ const Broadcast = () => {
                 placeholder="Type your message here..."
                 className="broadcast-textarea"
                 value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, message: e.target.value })
+                }
                 rows={6}
               />
             </div>
 
-            <div className="broadcast-form-group" style={{ marginBottom: "32px" }}>
-               <label className="broadcast-label">
-                Target Audience
-              </label>
-              <select 
+            <div
+              className="broadcast-form-group"
+              style={{ marginBottom: "32px" }}
+            >
+              <label className="broadcast-label">Target Audience</label>
+              <select
                 className="broadcast-select"
                 value={formData.target_audience}
-                onChange={(e) => setFormData({ ...formData, target_audience: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, target_audience: e.target.value })
+                }
               >
-                  <option value="all">All Users (Everyone)</option>
-                  <option value="admin">Admins Only</option>
-                  <option value="staff">Staff Only</option>
+                <option value="all">All Users (Everyone)</option>
+                <option value="admin">Admins Only</option>
+                <option value="staff">Staff Only</option>
               </select>
             </div>
 
-            <div className="broadcast-form-group" style={{ marginBottom: "32px" }}>
-               <label className="broadcast-label">
-                Expiration Date <span style={{ fontWeight: "400", color: "#7f8c8d" }}>(Optional)</span>
+            <div
+              className="broadcast-form-group"
+              style={{ marginBottom: "32px" }}
+            >
+              <label className="broadcast-label">
+                Expiration Date{" "}
+                <span style={{ fontWeight: "400", color: "#7f8c8d" }}>
+                  (Optional)
+                </span>
               </label>
-              <input 
+              <input
                 type="datetime-local"
                 className="broadcast-input"
                 value={formData.expires_at}
-                onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, expires_at: e.target.value })
+                }
               />
               <p className="broadcast-help-text">
-                If set, the broadcast will automatically disappear from user view after this time.
+                If set, the broadcast will automatically disappear from user
+                view after this time.
               </p>
             </div>
 
@@ -226,15 +270,15 @@ const Broadcast = () => {
           </h3>
 
           <div className="broadcast-tabs">
-            <button 
-              onClick={() => setActiveTab('active')}
-              className={`broadcast-tab-btn ${activeTab === 'active' ? 'active' : ''}`}
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`broadcast-tab-btn ${activeTab === "active" ? "active" : ""}`}
             >
               Active
             </button>
-            <button 
-              onClick={() => setActiveTab('history')}
-              className={`broadcast-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`broadcast-tab-btn ${activeTab === "history" ? "active" : ""}`}
             >
               History
             </button>
@@ -242,11 +286,12 @@ const Broadcast = () => {
 
           <div className="broadcast-history-list">
             {loading ? (
-                <p className="broadcast-empty">Loading...</p>
-            ) : (() => {
+              <p className="broadcast-empty">Loading...</p>
+            ) : (
+              (() => {
                 const now = new Date();
-                const filteredBroadcasts = broadcasts.filter(b => {
-                  if (activeTab === 'active') {
+                const filteredBroadcasts = broadcasts.filter((b) => {
+                  if (activeTab === "active") {
                     return !b.expires_at || new Date(b.expires_at) > now;
                   } else {
                     return true;
@@ -254,71 +299,110 @@ const Broadcast = () => {
                 });
 
                 if (filteredBroadcasts.length === 0) {
-                     return (
-                        <div className="broadcast-empty">
-                            <LucideIcons.Inbox size={48} style={{ opacity: 0.5, marginBottom: "10px" }} />
-                            <p>No {activeTab} broadcasts</p>
-                        </div>
-                    );
+                  return (
+                    <div className="broadcast-empty">
+                      <LucideIcons.Inbox
+                        size={48}
+                        style={{ opacity: 0.5, marginBottom: "10px" }}
+                      />
+                      <p>No {activeTab} broadcasts</p>
+                    </div>
+                  );
                 }
 
                 return filteredBroadcasts.map((item) => {
-                    const config = getPriorityConfig(item.priority);
-                    const Icon = config.icon;
-                    const isExpired = item.expires_at && new Date(item.expires_at) < now;
-                    
-                    return (
-                        <div key={item.id} className="broadcast-item" style={{ 
-                            opacity: isExpired && activeTab === 'history' ? 0.7 : 1
-                        }}>
-                            <div className="broadcast-item-header">
-                                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                                    <div className="broadcast-item-icon" data-priority={item.priority}>
-                                        <Icon size={16} />
-                                    </div>
-                                    <div>
-                                        <div className="broadcast-item-title-row">
-                                          <h4 className="broadcast-item-title">{item.title}</h4>
-                                          {activeTab === 'history' && (
-                                          <span className="broadcast-status-pill" data-status={isExpired ? 'expired' : 'active'}>
-                                              {isExpired ? 'Expired' : 'Active'}
-                                          </span>
-                                          )}
-                                        </div>
-                                        <span className="broadcast-time">
-                                            {new Date(item.created_at).toLocaleDateString()} • {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                        </span>
-                                        {item.expires_at && (
-                                          <div className="broadcast-expiry" data-expired={isExpired}>
-                                            <LucideIcons.Clock size={12} />
-                                            {isExpired ? 'Expired at: ' : 'Expires: '}{new Date(item.expires_at).toLocaleString()}
-                                          </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => handleDelete(item.id)}
-                                    className="btn-delete-broadcast"
-                                    title="Delete"
+                  const config = getPriorityConfig(item.priority);
+                  const Icon = config.icon;
+                  const isExpired =
+                    item.expires_at && new Date(item.expires_at) < now;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="broadcast-item"
+                      style={{
+                        opacity: isExpired && activeTab === "history" ? 0.7 : 1,
+                      }}
+                    >
+                      <div className="broadcast-item-header">
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            alignItems: "center",
+                          }}
+                        >
+                          <div
+                            className="broadcast-item-icon"
+                            data-priority={item.priority}
+                          >
+                            <Icon size={16} />
+                          </div>
+                          <div>
+                            <div className="broadcast-item-title-row">
+                              <h4 className="broadcast-item-title">
+                                {item.title}
+                              </h4>
+                              {activeTab === "history" && (
+                                <span
+                                  className="broadcast-status-pill"
+                                  data-status={isExpired ? "expired" : "active"}
                                 >
-                                    <LucideIcons.Trash2 size={16} />
-                                </button>
-                            </div>
-                            <p className="broadcast-message-preview">
-                                {item.message}
-                            </p>
-                            <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
-                                <span className="broadcast-audience-tag">
-                                    To: {item.target_audience === 'all' ? 'Everyone' : item.target_audience}
+                                  {isExpired ? "Expired" : "Active"}
                                 </span>
+                              )}
                             </div>
+                            <span className="broadcast-time">
+                              {new Date(item.created_at).toLocaleDateString()} •{" "}
+                              {new Date(item.created_at).toLocaleTimeString(
+                                [],
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </span>
+                            {item.expires_at && (
+                              <div
+                                className="broadcast-expiry"
+                                data-expired={isExpired}
+                              >
+                                <LucideIcons.Clock size={12} />
+                                {isExpired ? "Expired at: " : "Expires: "}
+                                {new Date(item.expires_at).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                    );
-                })
-            })()}
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="btn-delete-broadcast"
+                          title="Delete"
+                        >
+                          <LucideIcons.Trash2 size={16} />
+                        </button>
+                      </div>
+                      <p className="broadcast-message-preview">
+                        {item.message}
+                      </p>
+                      <div
+                        style={{
+                          marginTop: "12px",
+                          display: "flex",
+                          gap: "8px",
+                        }}
+                      >
+                        <span className="broadcast-audience-tag">
+                          To:{" "}
+                          {item.target_audience === "all"
+                            ? "Everyone"
+                            : item.target_audience}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                });
+              })()
+            )}
           </div>
         </div>
-
       </div>
       {/* DELETE CONFIRMATION MODAL */}
       {deleteCandidate && (
@@ -326,19 +410,25 @@ const Broadcast = () => {
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div className="confirmation-icon danger">
-                <LucideIcons.Trash2 size={24} />
+                <LucideIcons.Trash2 />
               </div>
               <h3>Delete Broadcast?</h3>
               <p>
-                Are you sure you want to delete this broadcast message? 
-                This action cannot be undone.
+                Are you sure you want to delete this broadcast message? This
+                action cannot be undone.
               </p>
             </div>
             <div className="modal-footer">
-              <button className="modal-btn modal-btn-secondary" onClick={() => setDeleteCandidate(null)}>
+              <button
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setDeleteCandidate(null)}
+              >
                 Cancel
               </button>
-              <button className="modal-btn modal-btn-danger" onClick={confirmDelete}>
+              <button
+                className="modal-btn modal-btn-danger"
+                onClick={confirmDelete}
+              >
                 Delete
               </button>
             </div>

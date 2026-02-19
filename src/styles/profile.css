@@ -1,1 +1,1022 @@
 /* Profile styles */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+.profile-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 16px;
+}
+
+/* ============= HEADER ============= */
+.profile-header {
+  background: rgb(225, 236, 255);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.page-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.company-logo {
+  height: auto;
+  width: 220px;
+}
+
+/* ============= MAIN CONTENT ============= */
+.profile-main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 40px 20px;
+}
+
+/* ============= PROFILE CARD TOP ============= */
+.profile-card-top {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.profile-avatar-section {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar-img,
+.profile-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+.profile-info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profile-main .profile-name {
+  font-family: "Poppins", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.profile-position {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 12px 0;
+}
+
+.profile-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #dcfce7;
+  border-radius: 16px;
+}
+
+.badge-internship {
+  font-family: "Poppins", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.status-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+}
+
+/* ============= TABS ============= */
+.profile-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  font-family: "Poppins", sans-serif;
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tab-btn:hover {
+  color: #1e293b;
+}
+
+.tab-btn.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+/* ============= TAB CONTENT ============= */
+.tab-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.info-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.section-header svg {
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+}
+
+.section-header h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.field-row:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-family: "Poppins", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.field-value {
+  font-family: "Poppins", sans-serif !important;
+  font-size: 14px !important;
+  color: #1e293b !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+}
+
+/* ============= JOB DETAILS CARD ============= */
+.job-details-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  max-width: 600px;
+}
+
+.job-details-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.job-details-header svg {
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+}
+
+.job-details-header h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.job-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.job-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-field-full {
+  grid-column: 1 / -1;
+}
+
+.job-label {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.job-value {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.job-value.employee-id {
+  color: #64748b;
+  font-size: 15px;
+}
+
+/* ============= QUICK TIP BOX ============= */
+.quick-tip-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.tip-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e40af;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.tip-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1e40af;
+  margin: 0;
+}
+
+/* ============= HR SUPPORT BOX ============= */
+.hr-support-box {
+  background: linear-gradient(135deg, #4866a7 0%, #5e78cf 100%);
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 280px;
+  margin-top: 20px;
+  margin-right: 20px;
+}
+
+.hr-support-box::before {
+  content: "?";
+  position: absolute;
+  right: 50%;
+  bottom: -10px;
+  transform: translateX(50%);
+  font-size: 100px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.08);
+  font-family: "Poppins", sans-serif;
+}
+
+.hr-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 8px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.hr-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 14px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.hr-contact-btn {
+  background: white;
+  color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.hr-contact-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hr-contact-btn:active {
+  transform: translateY(0);
+}
+
+/* ============= SETTINGS TAB ============= */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+}
+
+.settings-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.settings-card-header svg {
+  color: #3b82f6;
+  width: 16px;
+  height: 16px;
+}
+
+.settings-card-header h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.view-all-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.view-all-btn:hover {
+  color: #2563eb;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.settings-item-info {
+  flex: 1;
+}
+
+.settings-item-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.settings-item-desc {
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.settings-btn-primary {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.settings-btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.settings-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Login Activity */
+.login-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.login-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.login-item.current {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.login-item svg {
+  color: #64748b;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.login-item.current svg {
+  color: #22c55e;
+}
+
+.login-item-info {
+  flex: 1;
+}
+
+.login-device {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 3px;
+}
+
+.login-details {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.current-badge {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #22c55e;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #22c55e;
+  white-space: nowrap;
+}
+
+/* Account Recovery */
+.account-recovery {
+  padding: 14px;
+}
+
+.recovery-label {
+  font-family: "Poppins", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.recovery-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.recovery-item:last-child {
+  border-bottom: none;
+}
+
+.recovery-icon {
+  width: 32px;
+  height: 32px;
+  background: #eff6ff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recovery-icon svg {
+  color: #3b82f6;
+  width: 14px;
+  height: 14px;
+}
+
+.recovery-info {
+  flex: 1;
+}
+
+.recovery-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.recovery-value {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.recovery-change-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.recovery-change-btn:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* IT Support Box */
+.it-support-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 7px;
+  padding: 12px;
+}
+
+.it-support-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+  text-align: center;
+}
+
+.it-support-text strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* ============= FOOTER ============= */
+.profile-footer {
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 40px;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: #3b82f6;
+}
+
+/* ============= LOGIN ACTIVITY MODAL ============= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.login-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.login-modal-header {
+  background: linear-gradient(135deg, #5b93c7 0%, #4a7ba7 100%);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-icon svg {
+  color: #5b93c7;
+}
+
+.login-modal-header h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  opacity: 0.8;
+}
+
+.modal-close-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.login-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-login-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.modal-login-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.modal-login-item.current {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.modal-login-item svg {
+  color: #64748b;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.modal-login-item.current svg {
+  color: #22c55e;
+}
+
+.modal-login-info {
+  flex: 1;
+}
+
+.modal-login-device {
+  font-family: "Poppins", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.modal-login-details {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.modal-current-badge {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #22c55e;
+  background: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #22c55e;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal-logout-btn {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal-logout-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* ============= RESPONSIVE ============= */
+@media (max-width: 1024px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    padding: 16px 20px;
+  }
+
+  .profile-main {
+    padding: 24px 20px 60px;
+  }
+
+  .profile-card-top {
+    flex-direction: column;
+    padding: 24px;
+  }
+
+  .profile-info-section {
+    gap: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .profile-badges {
+    justify-content: center;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .job-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

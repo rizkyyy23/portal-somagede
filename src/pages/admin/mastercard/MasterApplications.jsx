@@ -368,17 +368,28 @@ const MasterApplications = () => {
       {/* ADD/EDIT MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "580px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
                 {selectedApp ? "Edit Application" : "Add New Application"}
               </h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ×
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowModal(false)}
+                title="Close"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
@@ -526,21 +537,6 @@ const MasterApplications = () => {
                   }}
                 />
               </div>
-
-              <div className="modal-form-group">
-                <label
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isActive: e.target.checked })
-                    }
-                  />
-                  Active
-                </label>
-              </div>
             </div>
 
             <div className="modal-footer">
@@ -578,16 +574,10 @@ const MasterApplications = () => {
           className="modal-overlay confirmation-modal"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div className="confirmation-icon warning">
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -619,8 +609,6 @@ const MasterApplications = () => {
                 disabled={loading}
               >
                 <svg
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -642,18 +630,12 @@ const MasterApplications = () => {
           className="modal-overlay confirmation-modal"
           onClick={() => setShowStatusModal(false)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div
                 className={`confirmation-icon ${selectedApp.isActive ? "warning" : "info"}`}
               >
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -698,8 +680,6 @@ const MasterApplications = () => {
                 disabled={loading}
               >
                 <svg
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

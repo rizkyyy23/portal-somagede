@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useToast } from "../../../contexts/ToastContext";
 import "../../../styles/admin-dashboard.css";
 
 const MasterRoles = () => {
+  const { showToast } = useToast();
   const [roles, setRoles] = useState([
     {
       id: 1,
@@ -83,7 +85,7 @@ const MasterRoles = () => {
 
   const handleSave = () => {
     if (!formData.name || !formData.code) {
-      alert("Name and code are required");
+      showToast("Name and code are required", "warning");
       return;
     }
 
@@ -94,7 +96,7 @@ const MasterRoles = () => {
           role.id === selectedRole.id ? { ...role, ...formData } : role,
         ),
       );
-      alert("Role updated successfully");
+      showToast("Role updated successfully", "success");
     } else {
       // Add new
       const newRole = {
@@ -103,7 +105,7 @@ const MasterRoles = () => {
         userCount: 0,
       };
       setRoles((prev) => [...prev, newRole]);
-      alert("Role added successfully");
+      showToast("Role added successfully", "success");
     }
 
     setShowModal(false);
@@ -111,20 +113,24 @@ const MasterRoles = () => {
 
   const confirmDelete = () => {
     if (selectedRole.userCount > 0) {
-      alert(
+      showToast(
         `Cannot delete role "${selectedRole.name}" because ${selectedRole.userCount} users are assigned to this role.`,
+        "error",
       );
       return;
     }
 
     setRoles((prev) => prev.filter((role) => role.id !== selectedRole.id));
-    alert("Role deleted successfully");
+    showToast("Role deleted successfully", "success");
     setShowDeleteModal(false);
   };
 
   const toggleStatus = (role) => {
     if (role.code === "ADMIN" || role.code === "USER") {
-      alert("Cannot deactivate default system roles (Admin and User)");
+      showToast(
+        "Cannot deactivate default system roles (Admin and User)",
+        "warning",
+      );
       return;
     }
 
@@ -358,15 +364,26 @@ const MasterRoles = () => {
       {/* ADD/EDIT MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "580px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedRole ? "Edit Role" : "Add New Role"}</h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ×
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowModal(false)}
+                title="Close"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
@@ -434,56 +451,23 @@ const MasterRoles = () => {
 
               <div className="modal-form-group">
                 <label>Permissions</label>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "8px",
-                    marginTop: "8px",
-                    padding: "12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                  }}
-                >
+                <div className="modal-permission-grid">
                   {availablePermissions.map((perm) => (
                     <label
                       key={perm.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        cursor: "pointer",
-                        padding: "6px",
-                        borderRadius: "4px",
-                        backgroundColor: formData.permissions.includes(perm.id)
-                          ? "#e8f4fd"
-                          : "transparent",
-                      }}
+                      className={`modal-permission-item ${
+                        formData.permissions.includes(perm.id) ? "selected" : ""
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={formData.permissions.includes(perm.id)}
                         onChange={() => togglePermission(perm.id)}
                       />
-                      <span style={{ fontSize: "13px" }}>{perm.label}</span>
+                      <span>{perm.label}</span>
                     </label>
                   ))}
                 </div>
-              </div>
-
-              <div className="modal-form-group">
-                <label
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isActive: e.target.checked })
-                    }
-                  />
-                  Active
-                </label>
               </div>
             </div>
 
@@ -521,16 +505,10 @@ const MasterRoles = () => {
           className="modal-overlay confirmation-modal"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div className="confirmation-icon warning">
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -568,8 +546,6 @@ const MasterRoles = () => {
                 onClick={confirmDelete}
               >
                 <svg
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

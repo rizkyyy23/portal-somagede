@@ -5,6 +5,8 @@ const AdminSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [expandedMenus, setExpandedMenus] = useState({ mastercard: false });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -176,10 +178,22 @@ const AdminSidebar = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem("user");
-      navigate("/login");
-    }
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+    // Simulate logout process (untuk animasi)
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("adminWelcomeShown");
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
+    navigate("/login");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const getUserInitials = (name) => {
@@ -195,122 +209,183 @@ const AdminSidebar = () => {
   );
 
   return (
-    <aside className={`admin-sidebar ${isCollapsed ? "collapsed" : ""}`}>
-      <div className="logo-section">
-        <div className="logo">
-          <img
-            src="/assets/logo somagede black.png"
-            alt="Somagede Logo"
-            className="logo-full"
-          />
-          <img
-            src="/assets/logo somagede only.png"
-            alt="Somagede"
-            className="logo-icon"
-          />
+    <>
+      <aside className={`admin-sidebar ${isCollapsed ? "collapsed" : ""}`}>
+        <div className="logo-section">
+          <div className="logo">
+            <img
+              src="/assets/logo somagede black.png"
+              alt="Somagede Logo"
+              className="logo-full"
+            />
+            <img
+              src="/assets/logo somagede only.png"
+              alt="Somagede"
+              className="logo-icon"
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="sidebar-header">
-        <div className="sidebar-title">ADMIN PANEL</div>
-        <button
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label="Toggle Sidebar"
-        >
-          <svg
-            className="icon-close"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        <div className="sidebar-header">
+          <div className="sidebar-title">ADMIN PANEL</div>
+          <button
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label="Toggle Sidebar"
           >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          <svg
-            className="icon-open"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <ul className="nav-menu">
-        {menuItems.map((item) => (
-          <li key={item.id}>
-            <div
-              className={`nav-item ${activeSection === item.id ? "active" : ""} ${item.hasSubmenu ? "has-submenu" : ""}`}
-              onClick={() => handleNavigation(item)}
-              data-tooltip={item.label}
+            <svg
+              className="icon-close"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              {item.icon}
-              <span>{item.label}</span>
-              {item.hasSubmenu && (
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <svg
+              className="icon-open"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <ul className="nav-menu">
+          {menuItems.map((item) => (
+            <li key={item.id}>
+              <div
+                className={`nav-item ${activeSection === item.id ? "active" : ""} ${item.hasSubmenu ? "has-submenu" : ""}`}
+                onClick={() => handleNavigation(item)}
+                data-tooltip={item.label}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+                {item.hasSubmenu && (
+                  <svg
+                    className={`submenu-arrow ${expandedMenus[item.id] ? "expanded" : ""}`}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                )}
+              </div>
+              {item.hasSubmenu && expandedMenus[item.id] && (
+                <ul className="submenu">
+                  {item.submenu.map((subItem) => (
+                    <li
+                      key={subItem.id}
+                      className={`submenu-item ${activeSection === subItem.id ? "active" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSubmenuNavigation(item, subItem);
+                      }}
+                    >
+                      <span>{subItem.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <div className="user-profile">
+          <div className="profile-card">
+            <div className="profile-avatar">{getUserInitials(user.name)}</div>
+            <div className="profile-info">
+              <div className="profile-name">{user.name}</div>
+              <div className="profile-role">{user.role}</div>
+            </div>
+          </div>
+          <button className="logout-btn" onClick={handleLogout}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+          <div className="logout-modal-overlay" onClick={cancelLogout}>
+            <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="logout-modal-icon">
                 <svg
-                  className={`submenu-arrow ${expandedMenus[item.id] ? "expanded" : ""}`}
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                 >
-                  <polyline points="6 9 12 15 18 9"></polyline>
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
                 </svg>
-              )}
-            </div>
-            {item.hasSubmenu && expandedMenus[item.id] && (
-              <ul className="submenu">
-                {item.submenu.map((subItem) => (
-                  <li
-                    key={subItem.id}
-                    className={`submenu-item ${activeSection === subItem.id ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSubmenuNavigation(item, subItem);
-                    }}
+              </div>
+              <h3>Logout Confirmation</h3>
+              <p>Are you sure you want to logout from admin panel?</p>
+              <div className="logout-modal-buttons">
+                <button
+                  className="logout-btn-cancel"
+                  onClick={cancelLogout}
+                  disabled={isLoggingOut}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="logout-btn-confirm"
+                  onClick={confirmLogout}
+                  disabled={isLoggingOut}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <span>{subItem.label}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <div className="user-profile">
-        <div className="profile-card">
-          <div className="profile-avatar">{getUserInitials(user.name)}</div>
-          <div className="profile-info">
-            <div className="profile-name">{user.name}</div>
-            <div className="profile-role">{user.role}</div>
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Yes, Logout
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+        )}
+
+        {/* Full Page Loading Overlay */}
+        {isLoggingOut && (
+          <div className="loading-overlay">
+            <div className="loading-spinner-container">
+              <div className="loading-spinner"></div>
+              <p className="loading-text">Logging out...</p>
+            </div>
+          </div>
+        )}
+      </aside>
+    </>
   );
 };
 

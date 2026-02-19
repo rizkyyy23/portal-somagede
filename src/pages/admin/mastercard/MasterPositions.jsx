@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useToast } from "../../../contexts/ToastContext";
 import "../../../styles/admin-dashboard.css";
 
 const API_URL = "http://localhost:3001/api";
 
 const MasterPositions = () => {
+  const { showToast } = useToast();
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +34,7 @@ const MasterPositions = () => {
       }
     } catch (error) {
       console.error("Error fetching positions:", error);
-      alert("Failed to load positions");
+      showToast("Failed to load positions", "error");
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ const MasterPositions = () => {
 
   const handleSave = async () => {
     if (!formData.name || !formData.code) {
-      alert("Name and code are required");
+      showToast("Name and code are required", "warning");
       return;
     }
 
@@ -87,15 +89,15 @@ const MasterPositions = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert(data.message || "Position saved successfully");
+        showToast(data.message || "Position saved successfully", "success");
         setShowModal(false);
         fetchPositions();
       } else {
-        alert(data.message || "Failed to save position");
+        showToast(data.message || "Failed to save position", "error");
       }
     } catch (error) {
       console.error("Error saving position:", error);
-      alert("Failed to save position");
+      showToast("Failed to save position", "error");
     } finally {
       setLoading(false);
     }
@@ -114,15 +116,15 @@ const MasterPositions = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert(data.message || "Position deleted successfully");
+        showToast(data.message || "Position deleted successfully", "success");
         setShowDeleteModal(false);
         fetchPositions();
       } else {
-        alert(data.message || "Failed to delete position");
+        showToast(data.message || "Failed to delete position", "error");
       }
     } catch (error) {
       console.error("Error deleting position:", error);
-      alert("Failed to delete position");
+      showToast("Failed to delete position", "error");
     } finally {
       setLoading(false);
     }
@@ -140,11 +142,11 @@ const MasterPositions = () => {
       if (data.success) {
         fetchPositions();
       } else {
-        alert(data.message || "Failed to toggle status");
+        showToast(data.message || "Failed to toggle status", "error");
       }
     } catch (error) {
       console.error("Error toggling status:", error);
-      alert("Failed to toggle status");
+      showToast("Failed to toggle status", "error");
     } finally {
       setLoading(false);
     }
@@ -349,15 +351,26 @@ const MasterPositions = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "540px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedPosition ? "Edit Position" : "Add New Position"}</h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ×
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowModal(false)}
+                title="Close"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
@@ -410,27 +423,6 @@ const MasterPositions = () => {
                   }}
                 />
               </div>
-
-              <div className="modal-form-group">
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isActive: e.target.checked })
-                    }
-                    style={{ cursor: "pointer" }}
-                  />
-                  <span>Active Status</span>
-                </label>
-              </div>
             </div>
 
             <div className="modal-footer">
@@ -468,16 +460,10 @@ const MasterPositions = () => {
           className="modal-overlay confirmation-modal"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div className="confirmation-icon warning">
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -498,10 +484,11 @@ const MasterPositions = () => {
                       color: "#e74c3c",
                       display: "block",
                       marginTop: "8px",
+                      fontWeight: "600",
                     }}
                   >
-                    ⚠️ Warning: {selectedPosition.userCount} user(s) are
-                    currently assigned to this position.
+                    Warning: {selectedPosition.userCount} user(s) are currently
+                    assigned to this position.
                   </span>
                 )}
               </p>
@@ -519,8 +506,6 @@ const MasterPositions = () => {
                 disabled={loading}
               >
                 <svg
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

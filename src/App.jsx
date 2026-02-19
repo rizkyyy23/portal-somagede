@@ -9,7 +9,6 @@ import AdminLayout from "./components/AdminLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
 import DashboardAdmin from "./pages/admin/DashboardAdmin";
 import ActiveSession from "./pages/admin/ActiveSession";
 import ApplicationManagement from "./pages/admin/ApplicationManagement";
@@ -32,7 +31,6 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
         </Route>
 
         {/* Protected Admin Routes */}

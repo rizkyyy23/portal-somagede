@@ -35,7 +35,7 @@ export const getApplications = async (req, res) => {
 // Get applications by category/department
 export const getApplicationsByCategory = async (req, res) => {
   try {
-    // Get all applications and categorize them
+    // Get all applications (both active and inactive) and categorize them
     const [rows] = await db.execute(`
       SELECT 
         id,

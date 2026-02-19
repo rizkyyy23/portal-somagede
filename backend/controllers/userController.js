@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs';
-import pool from '../config/database.js';
-import { logActivity, logAudit } from '../utils/logger.js';
+import bcrypt from "bcryptjs";
+import pool from "../config/database.js";
+import { logActivity, logAudit } from "../utils/logger.js";
 
 // Get all users (active and inactive)
 export const getAllUsers = async (req, res) => {
@@ -25,17 +25,17 @@ export const getAllUsers = async (req, res) => {
       LEFT JOIN user_privileges up ON u.id = up.user_id
       ORDER BY u.name ASC
     `);
-    
+
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error("Error fetching users:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching users',
-      error: error.message
+      message: "Error fetching users",
+      error: error.message,
     });
   }
 };
@@ -64,17 +64,17 @@ export const getActiveUsers = async (req, res) => {
       WHERE u.status = 'active'
       ORDER BY name ASC
     `);
-    
+
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
-    console.error('Error fetching active users:', error);
+    console.error("Error fetching active users:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching active users',
-      error: error.message
+      message: "Error fetching active users",
+      error: error.message,
     });
   }
 };
@@ -104,17 +104,17 @@ export const getInactiveUsers = async (req, res) => {
       WHERE u.status = 'inactive'
       ORDER BY name ASC
     `);
-    
+
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
-    console.error('Error fetching inactive users:', error);
+    console.error("Error fetching inactive users:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching inactive users',
-      error: error.message
+      message: "Error fetching inactive users",
+      error: error.message,
     });
   }
 };
@@ -135,14 +135,14 @@ export const getAdminUsers = async (req, res) => {
       WHERE u.role = 'Admin'
       ORDER BY u.name ASC
     `);
-    
+
     res.json({ success: true, data: rows });
   } catch (error) {
-    console.error('Error fetching admin users:', error);
+    console.error("Error fetching admin users:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching admin users',
-      error: error.message
+      message: "Error fetching admin users",
+      error: error.message,
     });
   }
 };
@@ -166,16 +166,20 @@ export const getPrivilegeUsers = async (req, res) => {
     `);
 
     // Map to ensure boolean type for has_privilege and calculate overrides
-    const result = rows.map(user => ({
+    const result = rows.map((user) => ({
       ...user,
-      has_privilege: user.has_privilege == 1 || user.has_privilege === 'true',
-      overrides: user.extra_application_ids ? user.extra_application_ids.split(',').length : 0
+      has_privilege: user.has_privilege == 1 || user.has_privilege === "true",
+      overrides: user.extra_application_ids
+        ? user.extra_application_ids.split(",").length
+        : 0,
     }));
 
     res.json({ success: true, data: result });
   } catch (error) {
-    console.error('Error fetching privilege users:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch privilege users' });
+    console.error("Error fetching privilege users:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch privilege users" });
   }
 };
 
@@ -183,12 +187,15 @@ export const getPrivilegeUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const [rows] = await pool.query(`
+
+    const [rows] = await pool.query(
+      `
       SELECT 
         id,
+        employee_id,
         name,
         email,
+        phone,
         position,
         department,
         role,
@@ -198,25 +205,27 @@ export const getUserById = async (req, res) => {
         updated_at
       FROM users 
       WHERE id = ?
-    `, [id]);
-    
+    `,
+      [id],
+    );
+
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
-    
+
     res.json({
       success: true,
-      data: rows[0]
+      data: rows[0],
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error("Error fetching user:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching user',
-      error: error.message
+      message: "Error fetching user",
+      error: error.message,
     });
   }
 };
@@ -224,52 +233,66 @@ export const getUserById = async (req, res) => {
 // Create new user
 export const createUser = async (req, res) => {
   try {
-    const { name, email, position, department, role, status, password } = req.body;
-    
+    const { name, email, position, department, role, status, password } =
+      req.body;
+
     const avatar = req.file ? `/uploads/icons/${req.file.filename}` : null;
-    
+
     // Validate required fields
     if (!name || !email || !department) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, and department are required'
+        message: "Name, email, and department are required",
       });
     }
 
     // Hash password if provided, otherwise set default
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = password ? await bcrypt.hash(password, salt) : null;
-    
-    const [result] = await pool.query(`
+
+    const [result] = await pool.query(
+      `
       INSERT INTO users (name, email, position, department, role, status, avatar, password)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, email, position || 'Staff', department, role || 'User', status || 'active', avatar, hashedPassword]);
-    
+    `,
+      [
+        name,
+        email,
+        position || "Staff",
+        department,
+        role || "User",
+        status || "active",
+        avatar,
+        hashedPassword,
+      ],
+    );
+
     res.status(201).json({
       success: true,
-      message: 'User created successfully',
+      message: "User created successfully",
       data: {
         id: result.insertId,
         name,
         email,
-        position: position || 'Staff',
+        position: position || "Staff",
         department,
-        role: role || 'User',
-        status: status || 'active',
+        role: role || "User",
+        status: status || "active",
 
-        avatar
-      }
+        avatar,
+      },
     });
 
     // unexpected: just fire and forget syncing accessible apps
-    syncUserAccessibleApps(result.insertId).catch(err => console.error('Error syncing initial apps:', err));
-
+    syncUserAccessibleApps(result.insertId).catch((err) =>
+      console.error("Error syncing initial apps:", err),
+    );
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error("Error creating user:", error);
     res.status(500).json({
       success: false,
-      message: 'Error creating user',
-      error: error.message
+      message: "Error creating user",
+      error: error.message,
     });
   }
 };
@@ -281,102 +304,134 @@ export const syncUserAccessibleApps = async (userId) => {
     `SELECT u.department, up.default_application_ids, up.default_application_codes, up.extra_application_ids, up.extra_application_codes 
      FROM users u
      LEFT JOIN user_privileges up ON u.id = up.user_id
-     WHERE u.id = ?`, 
-    [userId]
+     WHERE u.id = ?`,
+    [userId],
   );
-  
+
   if (rows.length === 0) return;
 
   const row = rows[0];
   let accessibleAppIds = [];
   let accessibleAppCodes = [];
-  
+
   let limitAppIdsStr = null;
   let limitAppCodesStr = null;
   let limitAppCount = 0;
 
   // 1. Resolve Defaults
   if (row.default_application_ids !== null) {
-      // User has specific defaults set (Active Defaults)
-      accessibleAppIds = row.default_application_ids ? row.default_application_ids.split(',').map(Number) : [];
-      accessibleAppCodes = row.default_application_codes ? row.default_application_codes.split(',') : [];
-  } 
+    // User has specific defaults set (Active Defaults)
+    accessibleAppIds = row.default_application_ids
+      ? row.default_application_ids.split(",").map(Number)
+      : [];
+    accessibleAppCodes = row.default_application_codes
+      ? row.default_application_codes.split(",")
+      : [];
+  }
 
   // Calculate Limits by comparing Active Defaults with Full Dept Defaults
   // Fetch Dept Defaults
-  const [deptRows] = await pool.query('SELECT allowed_apps FROM departments WHERE name = ?', [row.department]);
+  const [deptRows] = await pool.query(
+    "SELECT allowed_apps FROM departments WHERE name = ?",
+    [row.department],
+  );
   if (deptRows.length > 0 && deptRows[0].allowed_apps) {
-      const rawApps = deptRows[0].allowed_apps;
-      let parsedApps = [];
-      try { parsedApps = JSON.parse(rawApps); } 
-      catch (e) { parsedApps = rawApps.split(',').map(c => c.trim()); }
+    const rawApps = deptRows[0].allowed_apps;
+    let parsedApps = [];
+    try {
+      parsedApps = JSON.parse(rawApps);
+    } catch (e) {
+      parsedApps = rawApps.split(",").map((c) => c.trim());
+    }
 
-      let fullDefIds = [];
-      let fullDefCodes = [];
+    let fullDefIds = [];
+    let fullDefCodes = [];
 
-      if (Array.isArray(parsedApps) && parsedApps.length > 0) {
-         const isIds = parsedApps.every(item => !isNaN(Number(item)));
-         
-         if (isIds) {
-             fullDefIds = parsedApps.map(Number);
-             const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?)', [fullDefIds]);
-             fullDefCodes = apps.map(a => a.code);
-         } else {
-             const [apps] = await pool.query('SELECT id, code FROM applications WHERE code IN (?)', [parsedApps]);
-             fullDefIds = apps.map(a => a.id);
-             fullDefCodes = apps.map(a => a.code);
-         }
-      }
+    if (Array.isArray(parsedApps) && parsedApps.length > 0) {
+      const isIds = parsedApps.every((item) => !isNaN(Number(item)));
 
-      // If user has NO row or default__ids is NULL, they get FULL defaults
-      if (row.default_application_ids === null) {
-         accessibleAppIds = fullDefIds;
-         accessibleAppCodes = fullDefCodes;
-         // Limits = 0
-         limitAppCount = 0;
+      if (isIds) {
+        fullDefIds = parsedApps.map(Number);
+        const [apps] = await pool.query(
+          "SELECT code FROM applications WHERE id IN (?)",
+          [fullDefIds],
+        );
+        fullDefCodes = apps.map((a) => a.code);
       } else {
-         // Calculate Limits: Full Defaults - Active Defaults
-         const activeIds = accessibleAppIds.map(Number);
-         const limitIds = fullDefIds.filter(id => !activeIds.includes(id));
-         
-         if (limitIds.length > 0) {
-            limitAppCount = limitIds.length;
-            limitAppIdsStr = limitIds.sort((a,b)=>a-b).join(',');
-            // Get codes for limitIds
-            const [lApps] = await pool.query('SELECT code FROM applications WHERE id IN (?)', [limitIds]);
-            limitAppCodesStr = lApps.map(a=>a.code).sort().join(',');
-         }
+        const [apps] = await pool.query(
+          "SELECT id, code FROM applications WHERE code IN (?)",
+          [parsedApps],
+        );
+        fullDefIds = apps.map((a) => a.id);
+        fullDefCodes = apps.map((a) => a.code);
       }
+    }
+
+    // If user has NO row or default__ids is NULL, they get FULL defaults
+    if (row.default_application_ids === null) {
+      accessibleAppIds = fullDefIds;
+      accessibleAppCodes = fullDefCodes;
+      // Limits = 0
+      limitAppCount = 0;
+    } else {
+      // Calculate Limits: Full Defaults - Active Defaults
+      const activeIds = accessibleAppIds.map(Number);
+      const limitIds = fullDefIds.filter((id) => !activeIds.includes(id));
+
+      if (limitIds.length > 0) {
+        limitAppCount = limitIds.length;
+        limitAppIdsStr = limitIds.sort((a, b) => a - b).join(",");
+        // Get codes for limitIds
+        const [lApps] = await pool.query(
+          "SELECT code FROM applications WHERE id IN (?)",
+          [limitIds],
+        );
+        limitAppCodesStr = lApps
+          .map((a) => a.code)
+          .sort()
+          .join(",");
+      }
+    }
   }
 
   // 2. Add Extras
   if (row.extra_application_ids) {
-      const extraIds = row.extra_application_ids.split(',').map(Number);
-      const extraCodes = row.extra_application_codes ? row.extra_application_codes.split(',') : [];
-      accessibleAppIds = [...new Set([...accessibleAppIds, ...extraIds])];
-      accessibleAppCodes = [...new Set([...accessibleAppCodes, ...extraCodes])];
+    const extraIds = row.extra_application_ids.split(",").map(Number);
+    const extraCodes = row.extra_application_codes
+      ? row.extra_application_codes.split(",")
+      : [];
+    accessibleAppIds = [...new Set([...accessibleAppIds, ...extraIds])];
+    accessibleAppCodes = [...new Set([...accessibleAppCodes, ...extraCodes])];
   }
 
   // Sort and join for storage
-  const finalAccessibleAppIds = accessibleAppIds.sort((a, b) => a - b).join(',') || null;
-  const finalAccessibleAppCodes = accessibleAppCodes.sort().join(',') || null;
+  const finalAccessibleAppIds =
+    accessibleAppIds.sort((a, b) => a - b).join(",") || null;
+  const finalAccessibleAppCodes = accessibleAppCodes.sort().join(",") || null;
   const finalAccessibleAppCount = accessibleAppIds.length;
 
   // We also need to update limit columns if row exists
   // Currently sync assumes row might not exist?
   // If row doesn't exist, we can't update up.* columns easily unless we INSERT?
-  // But we only sync if user has privileges usually? 
+  // But we only sync if user has privileges usually?
   // Wait, I said earlier "syncUserAccessibleApps will only work for privileged users".
   // But I removed the check?
   // Logic: "UPDATE user_privileges ... WHERE user_id = ?"
   // If no row, it updates nothing.
-  
+
   await pool.query(
     `UPDATE user_privileges 
      SET accessible_app_count = ?, accessible_app_codes = ?,
          limit_app_count = ?, limit_application_ids = ?, limit_application_codes = ?
      WHERE user_id = ?`,
-    [finalAccessibleAppCount, finalAccessibleAppCodes, limitAppCount, limitAppIdsStr, limitAppCodesStr, userId]
+    [
+      finalAccessibleAppCount,
+      finalAccessibleAppCodes,
+      limitAppCount,
+      limitAppIdsStr,
+      limitAppCodesStr,
+      userId,
+    ],
   );
 };
 
@@ -384,79 +439,139 @@ export const syncUserAccessibleApps = async (userId) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, position, department, role, status, has_privilege, password } = req.body;
+    const {
+      name,
+      email,
+      position,
+      department,
+      role,
+      status,
+      has_privilege,
+      password,
+    } = req.body;
     const avatar = req.file ? `/uploads/icons/${req.file.filename}` : undefined;
 
     // Build SET clauses dynamically to avoid trailing comma issues
     const setClauses = [];
     const params = [];
 
-    if (name !== undefined) { setClauses.push('name = ?'); params.push(name); }
-    if (email !== undefined) { setClauses.push('email = ?'); params.push(email); }
-    if (position !== undefined) { setClauses.push('position = ?'); params.push(position); }
-    if (department !== undefined) { setClauses.push('department = ?'); params.push(department); }
-    if (role !== undefined) { setClauses.push('role = ?'); params.push(role); }
-    if (status !== undefined) { setClauses.push('status = ?'); params.push(status); }
-    if (has_privilege !== undefined) { setClauses.push('has_privilege = ?'); params.push(has_privilege); }
-    if (avatar !== undefined) { setClauses.push('avatar = ?'); params.push(avatar); }
-    
+    if (name !== undefined) {
+      setClauses.push("name = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      setClauses.push("email = ?");
+      params.push(email);
+    }
+    if (position !== undefined) {
+      setClauses.push("position = ?");
+      params.push(position);
+    }
+    if (department !== undefined) {
+      setClauses.push("department = ?");
+      params.push(department);
+    }
+    if (role !== undefined) {
+      setClauses.push("role = ?");
+      params.push(role);
+    }
+    if (status !== undefined) {
+      setClauses.push("status = ?");
+      params.push(status);
+    }
+    if (has_privilege !== undefined) {
+      setClauses.push("has_privilege = ?");
+      params.push(has_privilege);
+    }
+    if (avatar !== undefined) {
+      setClauses.push("avatar = ?");
+      params.push(avatar);
+    }
+
     // Hash password if provided
     if (password) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-      setClauses.push('password = ?');
+      setClauses.push("password = ?");
       params.push(hashedPassword);
     }
 
-    setClauses.push('updated_at = CURRENT_TIMESTAMP');
+    setClauses.push("updated_at = CURRENT_TIMESTAMP");
 
     if (setClauses.length === 1) {
       // Only updated_at, nothing to update
-      return res.status(400).json({ success: false, message: 'No fields to update' });
+      return res
+        .status(400)
+        .json({ success: false, message: "No fields to update" });
     }
 
-    const query = `UPDATE users SET ${setClauses.join(', ')} WHERE id = ?`;
+    const query = `UPDATE users SET ${setClauses.join(", ")} WHERE id = ?`;
     params.push(id);
 
     const [result] = await pool.query(query, params);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Auto-sync user_privileges when has_privilege is toggled
     if (has_privilege !== undefined) {
-      const privEnabled = has_privilege === 1 || has_privilege === '1' || has_privilege === true;
-      
+      const privEnabled =
+        has_privilege === 1 || has_privilege === "1" || has_privilege === true;
+
       if (privEnabled) {
         // Fetch department default apps
-        const [deptRows] = await pool.query('SELECT allowed_apps FROM departments WHERE name = ?', [department]);
+        const [deptRows] = await pool.query(
+          "SELECT allowed_apps FROM departments WHERE name = ?",
+          [department],
+        );
         let defIdsStr = null;
         let defCodesStr = null;
 
         if (deptRows.length > 0 && deptRows[0].allowed_apps) {
           const rawApps = deptRows[0].allowed_apps;
           let parsedApps = [];
-          try { parsedApps = JSON.parse(rawApps); } 
-          catch (e) { parsedApps = rawApps.split(',').map(c => c.trim()); }
+          try {
+            parsedApps = JSON.parse(rawApps);
+          } catch (e) {
+            parsedApps = rawApps.split(",").map((c) => c.trim());
+          }
 
           if (Array.isArray(parsedApps) && parsedApps.length > 0) {
-             const isIds = parsedApps.every(item => !isNaN(Number(item)));
-             if (isIds) {
-                 const defIds = parsedApps.map(Number);
-                 const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?)', [defIds]);
-                 defIdsStr = defIds.sort((a,b) => a-b).join(',');
-                 defCodesStr = apps.map(a => a.code).sort().join(',');
-             } else {
-                 const [apps] = await pool.query('SELECT id, code FROM applications WHERE code IN (?)', [parsedApps]);
-                 defIdsStr = apps.map(a => a.id).sort((a,b) => a-b).join(',');
-                 defCodesStr = apps.map(a => a.code).sort().join(',');
-             }
+            const isIds = parsedApps.every((item) => !isNaN(Number(item)));
+            if (isIds) {
+              const defIds = parsedApps.map(Number);
+              const [apps] = await pool.query(
+                "SELECT code FROM applications WHERE id IN (?)",
+                [defIds],
+              );
+              defIdsStr = defIds.sort((a, b) => a - b).join(",");
+              defCodesStr = apps
+                .map((a) => a.code)
+                .sort()
+                .join(",");
+            } else {
+              const [apps] = await pool.query(
+                "SELECT id, code FROM applications WHERE code IN (?)",
+                [parsedApps],
+              );
+              defIdsStr = apps
+                .map((a) => a.id)
+                .sort((a, b) => a - b)
+                .join(",");
+              defCodesStr = apps
+                .map((a) => a.code)
+                .sort()
+                .join(",");
+            }
           }
         }
 
         // Create user_privileges row with defaults, but NO EXTRA apps (extra_* = NULL)
-        await pool.query(`
+        await pool.query(
+          `
           INSERT INTO user_privileges (
             user_id, 
             extra_application_ids, extra_application_codes, extra_app_count,
@@ -465,10 +580,12 @@ export const updateUser = async (req, res) => {
           ON DUPLICATE KEY UPDATE 
             default_application_ids = VALUES(default_application_ids),
             default_application_codes = VALUES(default_application_codes)
-        `, [id, defIdsStr, defCodesStr]);
+        `,
+          [id, defIdsStr, defCodesStr],
+        );
       } else {
         // Remove privilege row when toggled OFF
-        await pool.query('DELETE FROM user_privileges WHERE user_id = ?', [id]);
+        await pool.query("DELETE FROM user_privileges WHERE user_id = ?", [id]);
       }
     }
 
@@ -479,21 +596,21 @@ export const updateUser = async (req, res) => {
     if (req.body.admin_id) {
       await logAudit({
         admin_id: req.body.admin_id,
-        action_type: 'UPDATE',
-        target_type: 'USER',
+        action_type: "UPDATE",
+        target_type: "USER",
         target_id: id,
-        details: `Updated user profile/role for ${name || id}. Fields: ${setClauses.filter(c => !c.includes('updated_at')).join(', ')}`,
-        ip_address: req.ip
+        details: `Updated user profile/role for ${name || id}. Fields: ${setClauses.filter((c) => !c.includes("updated_at")).join(", ")}`,
+        ip_address: req.ip,
       });
     }
 
-    res.json({ success: true, message: 'User updated successfully' });
+    res.json({ success: true, message: "User updated successfully" });
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error("Error updating user:", error);
     res.status(500).json({
       success: false,
-      message: 'Error updating user',
-      error: error.message
+      message: "Error updating user",
+      error: error.message,
     });
   }
 };
@@ -502,26 +619,26 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
-    
+
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
+
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
-    
+
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: "User deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error("Error deleting user:", error);
     res.status(500).json({
       success: false,
-      message: 'Error deleting user',
-      error: error.message
+      message: "Error deleting user",
+      error: error.message,
     });
   }
 };
@@ -530,15 +647,18 @@ export const deleteUser = async (req, res) => {
 export const getUserPrivileges = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get user dept and privileges in one go
-    const [rows] = await pool.query(`
+    const [rows] = await pool.query(
+      `
       SELECT u.department, up.default_application_ids, up.extra_application_ids
       FROM users u
       LEFT JOIN user_privileges up ON u.id = up.user_id
       WHERE u.id = ?
-    `, [id]);
-    
+    `,
+      [id],
+    );
+
     if (rows.length === 0) {
       // User not found, return empty
       return res.json({ success: true, data: [] });
@@ -546,53 +666,70 @@ export const getUserPrivileges = async (req, res) => {
 
     const row = rows[0];
     let appIds = [];
-    
+
     // 1. Resolve Defaults
     // If default_application_ids is NOT NULL, use it (empty string means "None", populated means "Some")
     // If it IS NULL (Legacy or No Row), use All Department Defaults
     if (row.default_application_ids !== null) {
-       appIds = row.default_application_ids ? row.default_application_ids.split(',').map(Number) : [];
+      appIds = row.default_application_ids
+        ? row.default_application_ids.split(",").map(Number)
+        : [];
     } else {
-       // Fetch Dept Defaults
-       // Fetch Dept Defaults
-       const [deptRows] = await pool.query('SELECT allowed_apps FROM departments WHERE name = ?', [row.department]);
-       if (deptRows.length > 0 && deptRows[0].allowed_apps) {
-          const rawApps = deptRows[0].allowed_apps;
-          let parsedApps = [];
-          
-          // Try JSON first (likely [1,2])
-          try {
-             parsedApps = JSON.parse(rawApps);
-          } catch (e) {
-             parsedApps = rawApps.split(',').map(c => c.trim());
-          }
+      // Fetch Dept Defaults
+      // Fetch Dept Defaults
+      const [deptRows] = await pool.query(
+        "SELECT allowed_apps FROM departments WHERE name = ?",
+        [row.department],
+      );
+      if (deptRows.length > 0 && deptRows[0].allowed_apps) {
+        const rawApps = deptRows[0].allowed_apps;
+        let parsedApps = [];
 
-          if (Array.isArray(parsedApps) && parsedApps.length > 0) {
-             // Check if mostly numbers (IDs)
-             const isIds = parsedApps.every(item => !isNaN(Number(item)));
+        // Try JSON first (likely [1,2])
+        try {
+          parsedApps = JSON.parse(rawApps);
+        } catch (e) {
+          parsedApps = rawApps.split(",").map((c) => c.trim());
+        }
 
-             if (isIds) {
-                // Direct IDs
-                appIds = parsedApps.map(Number);
-             } else {
-                // Codes
-                const [apps] = await pool.query('SELECT id FROM applications WHERE code IN (?)', [parsedApps]);
-                appIds = apps.map(a => a.id);
-             }
+        if (Array.isArray(parsedApps) && parsedApps.length > 0) {
+          // Check if mostly numbers (IDs)
+          const isIds = parsedApps.every((item) => !isNaN(Number(item)));
+
+          if (isIds) {
+            // Direct IDs
+            appIds = parsedApps.map(Number);
+          } else {
+            // Codes
+            const [apps] = await pool.query(
+              "SELECT id FROM applications WHERE code IN (?)",
+              [parsedApps],
+            );
+            appIds = apps.map((a) => a.id);
           }
-       }
+        }
+      }
     }
 
     // 2. Add Extras
     if (row.extra_application_ids) {
-       const extras = row.extra_application_ids.split(',').map(Number);
-       appIds = [...new Set([...appIds, ...extras])];
+      const extras = row.extra_application_ids.split(",").map(Number);
+      appIds = [...new Set([...appIds, ...extras])];
     }
-    
-    res.json({ success: true, data: appIds.map(appId => ({ application_id: appId })) });
+
+    res.json({
+      success: true,
+      data: appIds.map((appId) => ({ application_id: appId })),
+    });
   } catch (error) {
-    console.error('Error fetching user privileges:', error);
-    res.status(500).json({ success: false, message: 'Error fetching user privileges', error: error.message });
+    console.error("Error fetching user privileges:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error fetching user privileges",
+        error: error.message,
+      });
   }
 };
 
@@ -601,112 +738,146 @@ export const updateUserPrivileges = async (req, res) => {
   try {
     const { id } = req.params;
     const { application_ids, has_privilege } = req.body;
-    
+
     // Update has_privilege flag on users table
-    await pool.query('UPDATE users SET has_privilege = ? WHERE id = ?', [has_privilege || false, id]);
+    await pool.query("UPDATE users SET has_privilege = ? WHERE id = ?", [
+      has_privilege || false,
+      id,
+    ]);
 
     // Fetch department defaults for this user
-    const [userRows] = await pool.query('SELECT department FROM users WHERE id = ?', [id]);
-    if (userRows.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
-    
+    const [userRows] = await pool.query(
+      "SELECT department FROM users WHERE id = ?",
+      [id],
+    );
+    if (userRows.length === 0)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
     const departmentName = userRows[0].department;
-    
+
     // Get department default apps
-    const [deptRows] = await pool.query('SELECT allowed_apps FROM departments WHERE name = ?', [departmentName]);
+    const [deptRows] = await pool.query(
+      "SELECT allowed_apps FROM departments WHERE name = ?",
+      [departmentName],
+    );
     let defIds = [];
     let defCodes = [];
-    
+
     if (deptRows.length > 0 && deptRows[0].allowed_apps) {
       const rawApps = deptRows[0].allowed_apps;
       let parsedApps = [];
-      try { parsedApps = JSON.parse(rawApps); } 
-      catch (e) { parsedApps = rawApps.split(',').map(c => c.trim()); }
+      try {
+        parsedApps = JSON.parse(rawApps);
+      } catch (e) {
+        parsedApps = rawApps.split(",").map((c) => c.trim());
+      }
 
       if (Array.isArray(parsedApps) && parsedApps.length > 0) {
-         const isIds = parsedApps.every(item => !isNaN(Number(item)));
-         
-         if (isIds) {
-             // IDs
-             defIds = parsedApps.map(Number);
-             const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?)', [defIds]);
-             defCodes = apps.map(a => a.code);
-         } else {
-             // Codes
-             const [apps] = await pool.query('SELECT id, code FROM applications WHERE code IN (?)', [parsedApps]);
-             defIds = apps.map(a => a.id).sort((a,b) => a-b);
-             defCodes = apps.map(a => a.code).sort();
-         }
+        const isIds = parsedApps.every((item) => !isNaN(Number(item)));
+
+        if (isIds) {
+          // IDs
+          defIds = parsedApps.map(Number);
+          const [apps] = await pool.query(
+            "SELECT code FROM applications WHERE id IN (?)",
+            [defIds],
+          );
+          defCodes = apps.map((a) => a.code);
+        } else {
+          // Codes
+          const [apps] = await pool.query(
+            "SELECT id, code FROM applications WHERE code IN (?)",
+            [parsedApps],
+          );
+          defIds = apps.map((a) => a.id).sort((a, b) => a - b);
+          defCodes = apps.map((a) => a.code).sort();
+        }
       }
     }
-    
-    const defIdsStr = defIds.join(',') || null;
-    const defCodesStr = defCodes.join(',') || null;
+
+    const defIdsStr = defIds.join(",") || null;
+    const defCodesStr = defCodes.join(",") || null;
 
     let logExtraCount = 0;
     let logLimitCount = 0;
 
     if (has_privilege) {
       // 1. Calculate Extras
-      const submittedIds = Array.isArray(application_ids) 
-        ? application_ids.map(Number) 
-        : (application_ids ? application_ids.split(',').map(Number) : []);
-      
+      const submittedIds = Array.isArray(application_ids)
+        ? application_ids.map(Number)
+        : application_ids
+          ? application_ids.split(",").map(Number)
+          : [];
+
       // 2. Identify Enabled Defaults vs Extras vs Limits
-      const enabledDefIds = submittedIds.filter(id => defIds.includes(id));
-      const extraIds = submittedIds.filter(id => !defIds.includes(id));
-      const limitIds = defIds.filter(id => !enabledDefIds.includes(id));
+      const enabledDefIds = submittedIds.filter((id) => defIds.includes(id));
+      const extraIds = submittedIds.filter((id) => !defIds.includes(id));
+      const limitIds = defIds.filter((id) => !enabledDefIds.includes(id));
 
       // Get codes
       let enabledDefCodes = [];
       if (enabledDefIds.length > 0) {
-        const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?) ORDER BY code', [enabledDefIds]);
-        enabledDefCodes = apps.map(a => a.code);
+        const [apps] = await pool.query(
+          "SELECT code FROM applications WHERE id IN (?) ORDER BY code",
+          [enabledDefIds],
+        );
+        enabledDefCodes = apps.map((a) => a.code);
       }
 
       let extraCodes = [];
       if (extraIds.length > 0) {
-        const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?) ORDER BY code', [extraIds]);
-        extraCodes = apps.map(a => a.code);
+        const [apps] = await pool.query(
+          "SELECT code FROM applications WHERE id IN (?) ORDER BY code",
+          [extraIds],
+        );
+        extraCodes = apps.map((a) => a.code);
       }
-      
+
       let limitCodes = [];
       if (limitIds.length > 0) {
-        const [apps] = await pool.query('SELECT code FROM applications WHERE id IN (?) ORDER BY code', [limitIds]);
-        limitCodes = apps.map(a => a.code);
+        const [apps] = await pool.query(
+          "SELECT code FROM applications WHERE id IN (?) ORDER BY code",
+          [limitIds],
+        );
+        limitCodes = apps.map((a) => a.code);
       }
-      
-      // Format strings (Default used ('') in original but better to use (',') if DB is TEXT? 
-      // Original code used ('') which is weird if IDs are > 9? 11,12 -> 1112? 
-      // Wait. `join('')`?? 
+
+      // Format strings (Default used ('') in original but better to use (',') if DB is TEXT?
+      // Original code used ('') which is weird if IDs are > 9? 11,12 -> 1112?
+      // Wait. `join('')`??
       // If IDs are [1, 2], join('') is "12".
       // If IDs are [10, 11], join('') is "1011".
       // This seems like a BUG in original code!
       // But I am rewriting it now. I will use `join(',')`.
       // Legacy data might be broken if I don't fix it?
       // I'll use `join(',')` which is safe.
-      
-      const enabledDefIdsStr = enabledDefIds.sort((a,b) => a-b).join(',') || null;
-      const enabledDefCodesStr = enabledDefCodes.sort().join(',') || null;
 
-      const extraIdsStr = extraIds.sort((a,b) => a-b).join(',') || null;
-      const extraCodesStr = extraCodes.sort().join(',') || null;
+      const enabledDefIdsStr =
+        enabledDefIds.sort((a, b) => a - b).join(",") || null;
+      const enabledDefCodesStr = enabledDefCodes.sort().join(",") || null;
+
+      const extraIdsStr = extraIds.sort((a, b) => a - b).join(",") || null;
+      const extraCodesStr = extraCodes.sort().join(",") || null;
       const extraCount = extraIds.length;
-      
-      const limitIdsStr = limitIds.sort((a,b) => a-b).join(',') || null;
-      const limitCodesStr = limitCodes.sort().join(',') || null;
+
+      const limitIdsStr = limitIds.sort((a, b) => a - b).join(",") || null;
+      const limitCodesStr = limitCodes.sort().join(",") || null;
       const limitCount = limitIds.length;
-      
+
       logExtraCount = extraCount;
       logLimitCount = limitCount;
-      
+
       // Accessible Count
       const accessibleAppIds = [...enabledDefIds, ...extraIds];
       const accessibleAppCodes = [...enabledDefCodes, ...extraCodes];
       const accessibleAppCount = accessibleAppIds.length;
-      const accessibleAppCodesStr = accessibleAppCodes.sort().join(',') || null;
+      const accessibleAppCodesStr = accessibleAppCodes.sort().join(",") || null;
 
       // Upsert
-      await pool.query(`
+      await pool.query(
+        `
         INSERT INTO user_privileges (
           user_id, 
           extra_application_ids, extra_application_codes, extra_app_count, 
@@ -727,38 +898,54 @@ export const updateUserPrivileges = async (req, res) => {
           accessible_app_count = VALUES(accessible_app_count),
           accessible_app_codes = VALUES(accessible_app_codes),
           updated_at = CURRENT_TIMESTAMP
-      `, [
-          id, 
-          extraIdsStr, extraCodesStr, extraCount, 
-          enabledDefIdsStr, enabledDefCodesStr,
-          limitIdsStr, limitCodesStr, limitCount,
-          accessibleAppCount, accessibleAppCodesStr
-      ]);
-
+      `,
+        [
+          id,
+          extraIdsStr,
+          extraCodesStr,
+          extraCount,
+          enabledDefIdsStr,
+          enabledDefCodesStr,
+          limitIdsStr,
+          limitCodesStr,
+          limitCount,
+          accessibleAppCount,
+          accessibleAppCodesStr,
+        ],
+      );
     } else {
       // No privileges — remove the row (or keep it with nulls? Current logic removes it)
-      await pool.query('DELETE FROM user_privileges WHERE user_id = ?', [id]);
+      await pool.query("DELETE FROM user_privileges WHERE user_id = ?", [id]);
     }
 
     // Sync accessible_app_count and accessible_app_codes
     await syncUserAccessibleApps(id);
-    
+
     // Log admin action
     if (req.body.admin_id) {
       await logAudit({
         admin_id: req.body.admin_id,
-        action_type: 'UPDATE',
-        target_type: 'PRIVILEGE',
+        action_type: "UPDATE",
+        target_type: "PRIVILEGE",
         target_id: id,
-        details: `Updated privileges for user ${id}. Privilege Status: ${has_privilege ? 'Enabled' : 'Disabled'}, Extra Apps: ${logExtraCount}, Limit Apps: ${logLimitCount}`,
-        ip_address: req.ip
+        details: `Updated privileges for user ${id}. Privilege Status: ${has_privilege ? "Enabled" : "Disabled"}, Extra Apps: ${logExtraCount}, Limit Apps: ${logLimitCount}`,
+        ip_address: req.ip,
       });
     }
 
-    res.json({ success: true, message: 'User privileges updated successfully' });
+    res.json({
+      success: true,
+      message: "User privileges updated successfully",
+    });
   } catch (error) {
-    console.error('Error updating user privileges:', error);
-    res.status(500).json({ success: false, message: 'Error updating user privileges', error: error.message });
+    console.error("Error updating user privileges:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error updating user privileges",
+        error: error.message,
+      });
   }
 };
 
@@ -766,20 +953,22 @@ export const updateUserPrivileges = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
     }
 
     const [rows] = await pool.query(
       'SELECT id, name, email, password, position, department, role, status FROM users WHERE email = ? AND status = "active"',
-      [email]
+      [email],
     );
 
     if (rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or account is inactive'
+        message: "Invalid email or account is inactive",
       });
     }
 
@@ -788,11 +977,15 @@ export const loginUser = async (req, res) => {
     // If user has a password set, verify it
     if (user.password) {
       if (!password) {
-        return res.status(400).json({ success: false, message: 'Password is required' });
+        return res
+          .status(400)
+          .json({ success: false, message: "Password is required" });
       }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({ success: false, message: 'Invalid password' });
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid password" });
       }
     }
 
@@ -800,11 +993,11 @@ export const loginUser = async (req, res) => {
     try {
       await logActivity({
         user_id: user.id,
-        activity_type: 'LOGIN',
-        details: `User logged in from ${req.ip || 'unknown'}`
+        activity_type: "LOGIN",
+        details: `User logged in from ${req.ip || "unknown"}`,
       });
     } catch (logError) {
-      console.error('Failed to log activity (non-critical):', logError.message);
+      console.error("Failed to log activity (non-critical):", logError.message);
     }
 
     // Remove password from response
@@ -813,18 +1006,18 @@ export const loginUser = async (req, res) => {
     res.json({
       success: true,
       found: true,
-      data: userData
+      data: userData,
     });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ success: false, message: 'Login failed' });
+    console.error("Error during login:", error);
+    res.status(500).json({ success: false, message: "Login failed" });
   }
 };
 
 // Sync all users metrics (Temporary/Admin tool)
 export const syncAllUsers = async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT id FROM users');
+    const [users] = await pool.query("SELECT id FROM users");
     let count = 0;
     for (const user of users) {
       await syncUserAccessibleApps(user.id);
@@ -832,8 +1025,7 @@ export const syncAllUsers = async (req, res) => {
     }
     res.json({ success: true, message: `Synced ${count} users successfully` });
   } catch (error) {
-    console.error('Error syncing all users:', error);
+    console.error("Error syncing all users:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
-

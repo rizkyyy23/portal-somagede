@@ -480,17 +480,28 @@ const MasterDepartments = () => {
       {/* ADD/EDIT MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "580px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
                 {selectedDepartment ? "Edit Department" : "Add New Department"}
               </h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ×
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowModal(false)}
+                title="Close"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
@@ -499,7 +510,6 @@ const MasterDepartments = () => {
                 <label>Department Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g., Human Resources"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -511,7 +521,6 @@ const MasterDepartments = () => {
                 <label>Department Code *</label>
                 <input
                   type="text"
-                  placeholder="e.g., HR"
                   value={formData.code}
                   onChange={(e) =>
                     setFormData({
@@ -549,7 +558,7 @@ const MasterDepartments = () => {
                       transition: "all 0.2s",
                     }}
                   >
-                    📋 Choose Icon
+                    Choose Icon
                   </button>
                   <button
                     type="button"
@@ -570,7 +579,7 @@ const MasterDepartments = () => {
                       transition: "all 0.2s",
                     }}
                   >
-                    📤 Upload Icon
+                    Upload Icon
                   </button>
                 </div>
 
@@ -664,9 +673,26 @@ const MasterDepartments = () => {
                       ) : (
                         <div>
                           <div
-                            style={{ fontSize: "32px", marginBottom: "8px" }}
+                            style={{
+                              fontSize: "32px",
+                              marginBottom: "8px",
+                              display: "flex",
+                              justifyContent: "center",
+                              color: "#94a3b8",
+                            }}
                           >
-                            📁
+                            <svg
+                              width="48"
+                              height="48"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                            >
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="17 8 12 3 7 8"></polyline>
+                              <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
                           </div>
                           <p
                             style={{
@@ -698,60 +724,106 @@ const MasterDepartments = () => {
                 <div
                   style={{
                     display: "flex",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                    marginBottom: "12px",
+                    alignItems: "center",
+                    gap: "16px",
+                    padding: "20px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "12px",
+                    background: "#fafafa",
                   }}
                 >
-                  {DEPARTMENT_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, color })}
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "8px",
-                        border:
-                          formData.color === color
-                            ? "3px solid #333"
-                            : "1px solid #ddd",
-                        background: color,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        boxShadow:
-                          formData.color === color
-                            ? "0 2px 8px rgba(0,0,0,0.2)"
-                            : "none",
-                      }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      color: "#666",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Selected:
-                  </span>
                   <div
                     style={{
-                      width: "32px",
-                      height: "32px",
-                      backgroundColor: formData.color,
-                      borderRadius: "6px",
-                      border: "1px solid rgba(0,0,0,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      flex: 1,
                     }}
-                  />
-                  <span style={{ fontSize: "13px", color: "#666" }}>
-                    {formData.color}
-                  </span>
+                  >
+                    <label
+                      htmlFor="color-picker"
+                      style={{
+                        width: "80px",
+                        height: "80px",
+                        borderRadius: "12px",
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        border: "3px solid #e0e0e0",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        transition: "all 0.2s ease",
+                        position: "relative",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(0,0,0,0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.boxShadow =
+                          "0 2px 8px rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      <input
+                        type="color"
+                        id="color-picker"
+                        value={formData.color || "#3498db"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, color: e.target.value })
+                        }
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </label>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: "13px",
+                          color: "#666",
+                          fontWeight: "600",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Selected Color:
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.color || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.match(/^#[0-9A-Fa-f]{0,6}$/)) {
+                            setFormData({ ...formData, color: value });
+                          }
+                        }}
+                        placeholder="#1c40f"
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "8px",
+                          fontSize: "16px",
+                          fontFamily: "monospace",
+                          fontWeight: "600",
+                          color: "#333",
+                          background: "white",
+                          textTransform: "uppercase",
+                        }}
+                      />
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#999",
+                          marginTop: "6px",
+                        }}
+                      >
+                        Click the color box or enter hex code
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -812,16 +884,10 @@ const MasterDepartments = () => {
           className="modal-overlay confirmation-modal"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "480px", maxWidth: "90vw" }}
-          >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-body">
               <div className="confirmation-icon warning">
                 <svg
-                  width="32"
-                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -853,8 +919,6 @@ const MasterDepartments = () => {
                 disabled={loading}
               >
                 <svg
-                  width="16"
-                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
