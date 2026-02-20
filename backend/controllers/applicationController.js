@@ -35,7 +35,6 @@ export const getApplications = async (req, res) => {
 // Get applications by category/department
 export const getApplicationsByCategory = async (req, res) => {
   try {
-    // Get all applications (both active and inactive) and categorize them
     const [rows] = await db.execute(`
       SELECT 
         id,
@@ -45,25 +44,13 @@ export const getApplicationsByCategory = async (req, res) => {
         icon,
         url,
         status,
-        created_at,
-        CASE 
-          WHEN code IN ('FIN_SYS', 'SALES_DB', 'CUST_PORTAL') THEN 'Finance'
-          WHEN code IN ('HR_PORTAL') THEN 'HR'  
-          WHEN code IN ('WH_MGT', 'INV_CTL') THEN 'Warehouse'
-          ELSE 'Other'
-        END as category
+        created_at
       FROM applications 
-      ORDER BY category ASC, name ASC
+      ORDER BY name ASC
     `);
 
-    // Group applications by category
-    const groupedApplications = rows.reduce((acc, app) => {
-      if (!acc[app.category]) {
-        acc[app.category] = [];
-      }
-      acc[app.category].push(app);
-      return acc;
-    }, {});
+    // Group all applications under 'All' since categories are dynamic
+    const groupedApplications = { All: rows };
 
     res.json({
       success: true,
@@ -86,7 +73,7 @@ export const getApplicationById = async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      "SELECT id, name, code, description, icon, created_at FROM applications WHERE id = ?",
+      "SELECT id, name, code, description, icon, url, status, created_at FROM applications WHERE id = ?",
       [id],
     );
 
@@ -118,7 +105,7 @@ export const getApplicationByCode = async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      "SELECT id, name, code, description, icon, created_at FROM applications WHERE code = ?",
+      "SELECT id, name, code, description, icon, url, status, created_at FROM applications WHERE code = ?",
       [code.toUpperCase()],
     );
 

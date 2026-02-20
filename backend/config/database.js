@@ -9,7 +9,14 @@ const __dirname = path.dirname(__filename);
 // Load .env from backend root (one level up from config)
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-console.log('Database Config - Host:', process.env.DB_HOST, 'DB:', process.env.DB_NAME);
+if (process.env.NODE_ENV !== "production") {
+  console.log(
+    "Database Config - Host:",
+    process.env.DB_HOST,
+    "DB:",
+    process.env.DB_NAME,
+  );
+}
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",

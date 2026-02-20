@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import Toast from '../components/Toast';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import Toast from "../components/Toast";
 
 const ToastContext = createContext();
 
@@ -7,14 +7,14 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   // Add a new toast
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
+  const showToast = useCallback((message, type = "info", duration = 3000) => {
     const id = Date.now();
     setToasts((prevToasts) => [...prevToasts, { id, message, type, duration }]);
 
     // Auto-remove after duration
     if (duration > 0) {
       setTimeout(() => {
-        removeToast(id);
+        setToasts((prev) => prev.filter((t) => t.id !== id));
       }, duration);
     }
   }, []);
@@ -44,7 +44,7 @@ export const ToastProvider = ({ children }) => {
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
 };

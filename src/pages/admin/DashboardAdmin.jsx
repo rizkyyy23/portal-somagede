@@ -10,19 +10,14 @@ import {
   Clock,
   UserCheck,
   Activity,
-  ChevronRight,
   Monitor,
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -73,7 +68,7 @@ const DashboardAdmin = () => {
     }
     // Show welcome notification after a short delay for better UX
     const timer = setTimeout(() => {
-      showToast(`Selamat datang di admin panel, ${adminName}!`, "success");
+      showToast(`Selamat datang di admin panel, ${adminName}!`, "dark");
     }, 500);
     return () => clearTimeout(timer);
   }, [showToast]);
@@ -227,16 +222,6 @@ const DashboardAdmin = () => {
   const getDeptColor = (deptName) => {
     const dept = departments.find((d) => d.name === deptName);
     return dept?.color || "#6366f1"; // Default to Indigo if not found
-  };
-
-  const getDeptType = (dept) => {
-    const types = {
-      Finance: "finance",
-      "IT Department": "it",
-      Warehouse: "warehouse",
-      "Human Resources": "hr",
-    };
-    return types[dept] || "default";
   };
 
   const formatTime = (dateStr) => {
@@ -757,11 +742,30 @@ const DashboardAdmin = () => {
                     <tr key={session.id}>
                       <td>
                         <div className="user-cell">
+                          {session.user_avatar ? (
+                            <img
+                              src={session.user_avatar}
+                              alt={session.user_name}
+                              className="user-avatar"
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                e.target.nextElementSibling.style.display =
+                                  "flex";
+                              }}
+                            />
+                          ) : null}
                           <div
                             className="user-avatar"
                             style={{
                               background: colors.bg,
                               color: colors.color,
+                              display: session.user_avatar ? "none" : "flex",
                             }}
                           >
                             {initials}
@@ -826,12 +830,12 @@ const DashboardAdmin = () => {
       {/* FORCE LOGOUT CONFIRMATION MODAL */}
       {logoutCandidate && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setLogoutCandidate(null)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon danger">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon danger">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -850,15 +854,15 @@ const DashboardAdmin = () => {
                 <strong>{logoutCandidate.ip_address}</strong>.
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setLogoutCandidate(null)}
               >
                 Cancel
               </button>
               <button
-                className="modal-btn modal-btn-danger"
+                className="cd-btn cd-btn-danger"
                 onClick={confirmForceLogout}
               >
                 Force Logout

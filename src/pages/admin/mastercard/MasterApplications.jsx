@@ -398,7 +398,7 @@ const MasterApplications = () => {
                 <label>Application Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g., SGI+"
+                  placeholder="Masukkan nama aplikasi..."
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -410,7 +410,7 @@ const MasterApplications = () => {
                 <label>Application Code *</label>
                 <input
                   type="text"
-                  placeholder="e.g., SGI_PLUS"
+                  placeholder="Masukkan kode aplikasi..."
                   value={formData.code}
                   onChange={(e) =>
                     setFormData({
@@ -469,7 +469,7 @@ const MasterApplications = () => {
                         }}
                       />
                       <span style={{ fontSize: "13px", color: "#3498db" }}>
-                        Click to change icon
+                        Klik untuk ganti ikon
                       </span>
                     </div>
                   ) : (
@@ -495,10 +495,10 @@ const MasterApplications = () => {
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                       </svg>
                       <span style={{ fontSize: "14px" }}>
-                        Click to upload icon
+                        Klik untuk upload ikon
                       </span>
                       <span style={{ fontSize: "12px", color: "#95a5a6" }}>
-                        PNG, JPG, GIF up to 5MB
+                        PNG, JPG, GIF maksimal 5MB
                       </span>
                     </div>
                   )}
@@ -509,7 +509,7 @@ const MasterApplications = () => {
                 <label>Application URL</label>
                 <input
                   type="text"
-                  placeholder="https://app.example.com"
+                  placeholder="Masukkan URL aplikasi..."
                   value={formData.url}
                   onChange={(e) =>
                     setFormData({ ...formData, url: e.target.value })
@@ -520,7 +520,7 @@ const MasterApplications = () => {
               <div className="modal-form-group">
                 <label>Description</label>
                 <textarea
-                  placeholder="Application description"
+                  placeholder="Masukkan deskripsi aplikasi..."
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -571,12 +571,12 @@ const MasterApplications = () => {
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && selectedApp && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon warning">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon warning">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -596,19 +596,21 @@ const MasterApplications = () => {
                 access to this application.
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="modal-btn modal-btn-danger"
+                className="cd-btn cd-btn-danger"
                 onClick={confirmDelete}
                 disabled={loading}
               >
                 <svg
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -627,13 +629,13 @@ const MasterApplications = () => {
       {/* STATUS CONFIRMATION MODAL */}
       {showStatusModal && selectedApp && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setShowStatusModal(false)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
               <div
-                className={`confirmation-icon ${selectedApp.isActive ? "warning" : "info"}`}
+                className={`confirm-dialog-icon ${selectedApp.isActive ? "warning" : "info"}`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -667,19 +669,21 @@ const MasterApplications = () => {
                   : "This will enable the application and allow departments to configure access."}
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setShowStatusModal(false)}
               >
                 Cancel
               </button>
               <button
-                className={`modal-btn ${selectedApp.isActive ? "modal-btn-warning" : "modal-btn-primary"}`}
+                className={`cd-btn ${selectedApp.isActive ? "cd-btn-warning" : "cd-btn-primary"}`}
                 onClick={confirmToggleStatus}
                 disabled={loading}
               >
                 <svg
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

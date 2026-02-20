@@ -69,6 +69,21 @@ const Toast = ({ message, type, onClose }) => {
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
         );
+      case "dark":
+        return (
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        );
       default: // info
         return (
           <svg
@@ -120,8 +135,8 @@ const Toast = ({ message, type, onClose }) => {
       case "success":
         return {
           ...baseStyle,
-          borderColor: "#cbd5e1", // abu-abu
-          backgroundColor: "#f3f4f6", // abu-abu terang
+          borderColor: "#22c55e",
+          backgroundColor: "#f0fdf4",
         };
       case "error":
         return {
@@ -135,6 +150,13 @@ const Toast = ({ message, type, onClose }) => {
           borderColor: "#f59e0b",
           backgroundColor: "#fffbeb",
         };
+      case "dark":
+        return {
+          ...baseStyle,
+          borderColor: "#334155",
+          backgroundColor: "#1e293b",
+          color: "#f1f5f9",
+        };
       default:
         return {
           ...baseStyle,
@@ -147,46 +169,35 @@ const Toast = ({ message, type, onClose }) => {
   const getIconColor = () => {
     switch (type) {
       case "success":
-        return "#64748b"; // abu-abu
+        return "#22c55e";
       case "error":
         return "#ef4444";
       case "warning":
         return "#f59e0b";
+      case "dark":
+        return "#e2e8f0";
       default:
         return "#3b82f6";
     }
   };
 
   const getIconBgStyle = () => {
+    const base = {
+      padding: "8px",
+      borderRadius: "10px",
+      display: "flex",
+    };
     switch (type) {
       case "success":
-        return {
-          backgroundColor: "#e5e7eb", // abu-abu
-          padding: "8px",
-          borderRadius: "10px",
-          display: "flex",
-        };
+        return { ...base, backgroundColor: "#dcfce7" };
       case "error":
-        return {
-          backgroundColor: "#fee2e2",
-          padding: "8px",
-          borderRadius: "10px",
-          display: "flex",
-        };
+        return { ...base, backgroundColor: "#fee2e2" };
       case "warning":
-        return {
-          backgroundColor: "#fef3c7",
-          padding: "8px",
-          borderRadius: "10px",
-          display: "flex",
-        };
+        return { ...base, backgroundColor: "#fef3c7" };
+      case "dark":
+        return { ...base, backgroundColor: "#334155" };
       default:
-        return {
-          backgroundColor: "#dbeafe",
-          padding: "8px",
-          borderRadius: "10px",
-          display: "flex",
-        };
+        return { ...base, backgroundColor: "#dbeafe" };
     }
   };
 
@@ -195,7 +206,13 @@ const Toast = ({ message, type, onClose }) => {
       <div style={{ ...getIconBgStyle(), color: getIconColor() }}>
         {getIcon()}
       </div>
-      <div style={{ flex: 1, color: "#334155", lineHeight: "1.5" }}>
+      <div
+        style={{
+          flex: 1,
+          color: type === "dark" ? "#e2e8f0" : "#334155",
+          lineHeight: "1.5",
+        }}
+      >
         {message}
       </div>
       <button

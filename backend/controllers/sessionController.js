@@ -4,7 +4,7 @@ import db from "../config/database.js";
 export const getAllSessions = async (req, res) => {
   try {
     const [sessions] = await db.query(
-      "SELECT * FROM active_sessions ORDER BY login_at DESC",
+      "SELECT s.*, u.avatar as user_avatar FROM active_sessions s LEFT JOIN users u ON s.user_id = u.id ORDER BY s.login_at DESC",
     );
     res.json({ success: true, data: sessions });
   } catch (error) {
@@ -64,6 +64,20 @@ export const deleteSession = async (req, res) => {
   }
 };
 
+// DELETE sessions by user_id (cleanup on logout)
+export const deleteSessionByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await db.query("DELETE FROM active_sessions WHERE user_id = ?", [userId]);
+    res.json({ success: true, message: "User sessions cleaned up" });
+  } catch (error) {
+    console.error("Error cleaning up sessions:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to cleanup sessions" });
+  }
+};
+
 // GET dashboard stats
 export const getDashboardStats = async (req, res) => {
   try {
@@ -117,7 +131,7 @@ export const getDashboardStats = async (req, res) => {
 
     // Recent 3 sessions for dashboard preview
     const [recentSessions] = await db.query(
-      "SELECT * FROM active_sessions ORDER BY login_at DESC LIMIT 3",
+      "SELECT s.*, u.avatar as user_avatar FROM active_sessions s LEFT JOIN users u ON s.user_id = u.id ORDER BY s.login_at DESC LIMIT 3",
     );
 
     res.json({

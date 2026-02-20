@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import "../../styles/UserControl.css";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "/api";
 
 const UserControl = () => {
   // State for departments, positions, roles
@@ -36,14 +37,13 @@ const UserControl = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPrivilegeModal, setShowPrivilegeModal] = useState(false);
-  const [showRoleConfirmModal, setShowRoleConfirmModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [notification, setNotification] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [originalRole, setOriginalRole] = useState(null);
+  const avatarPreviewUrl = useRef(null);
   const [users, setUsers] = useState([]);
   const [inactiveUsers, setInactiveUsers] = useState([]);
   const [privilegeUsers, setPrivilegeUsers] = useState([]);
@@ -51,6 +51,7 @@ const UserControl = () => {
   const [adminUsers, setAdminUsers] = useState([]);
   const [applications, setApplications] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
+  const [pendingAppToggle, setPendingAppToggle] = useState(null); // { appId, appName, newValue }
 
   const [formData, setFormData] = useState({
     name: "",
@@ -74,17 +75,14 @@ const UserControl = () => {
       });
   }, []);
 
-  // Filter users based on active tab - this runs when tab changes
+  // Cleanup avatar preview URL on unmount
   useEffect(() => {
-    filterUsersByTab();
-  }, [
-    activeTab,
-    users,
-    inactiveUsers,
-    privilegeUsers,
-    activeUsers,
-    adminUsers,
-  ]);
+    return () => {
+      if (avatarPreviewUrl.current) {
+        URL.revokeObjectURL(avatarPreviewUrl.current);
+      }
+    };
+  }, []);
 
   const fetchAllUsers = async () => {
     setLoading(true);
@@ -130,22 +128,14 @@ const UserControl = () => {
     }
   };
 
-  const filterUsersByTab = () => {
-    // This function is just for triggering re-render when tab changes
-    // Actual data is already loaded in fetchAllUsers
-  };
-
-  // Helper functions (getDeptType, getUserInitials, getInitialsColor, etc.)
-  const getDeptType = (department) => {
-    const mapping = {
-      Finance: "finance",
-      "Human Resources": "hr",
-      Warehouse: "warehouse",
-      "IT Department": "it",
-      Marketing: "marketing",
-      Sales: "sales",
-    };
-    return mapping[department] || "default";
+  // Helper: get avatar preview URL safely (revoke old one)
+  const getAvatarPreview = (file) => {
+    if (avatarPreviewUrl.current) {
+      URL.revokeObjectURL(avatarPreviewUrl.current);
+    }
+    const url = URL.createObjectURL(file);
+    avatarPreviewUrl.current = url;
+    return url;
   };
 
   const getDeptColor = (deptName) => {
@@ -188,8 +178,10 @@ const UserControl = () => {
   const filteredUsers = getCurrentUsers()
     .filter(
       (user) =>
-        (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+        ((user.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (user.email || "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) &&
         (deptFilter === "" || user.department === deptFilter),
     )
     .sort((a, b) => {
@@ -410,11 +402,30 @@ const UserControl = () => {
                     >
                       <td>
                         <div className="user-cell">
+                          {user.avatar ? (
+                            <img
+                              src={user.avatar}
+                              alt={user.name}
+                              className="user-avatar"
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                e.target.nextElementSibling.style.display =
+                                  "flex";
+                              }}
+                            />
+                          ) : null}
                           <div
                             className="user-avatar"
                             style={{
                               background: colors.bg,
                               color: colors.color,
+                              display: user.avatar ? "none" : "flex",
                             }}
                           >
                             {initials}
@@ -651,6 +662,146 @@ const UserControl = () => {
                   </svg>
                   <h4>Personal Information</h4>
                 </div>
+                {/* Photo Upload - Centered */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "16px 0 20px",
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      width: 80,
+                      height: 80,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "50%",
+                        background: formData.avatar
+                          ? "transparent"
+                          : getInitialsColor(formData.name).bg,
+                        color: getInitialsColor(formData.name).color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 26,
+                        fontWeight: 700,
+                        border: "3px solid #e1e8ed",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {formData.avatar ? (
+                        <img
+                          src={getAvatarPreview(formData.avatar)}
+                          alt="Avatar Preview"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        getUserInitials(formData.name)
+                      )}
+                    </div>
+                    <label
+                      htmlFor="avatar-upload"
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        right: 0,
+                        background: "#4a90e2",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        width: 28,
+                        height: 28,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(74,144,226,0.3)",
+                        border: "2px solid #fff",
+                        transition: "background 0.2s",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#357abd")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "#4a90e2")
+                      }
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      name="avatar"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const file = e.target.files[0];
+                          if (file.size > 2 * 1024 * 1024) {
+                            setNotification({
+                              type: "error",
+                              message: "File size max 2MB",
+                            });
+                            return;
+                          }
+                          setFormData({
+                            ...formData,
+                            avatar: file,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <span style={{ color: "#7f8c9a", fontSize: 12 }}>
+                      {formData.avatar
+                        ? formData.avatar.name
+                        : "Upload photo (jpg, png, max 2MB)"}
+                    </span>
+                    {formData.avatar && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({ ...formData, avatar: null })
+                        }
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#e74c3c",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          marginLeft: 6,
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Form Fields */}
                 <div className="modal-form-row">
                   <div className="modal-form-group">
                     <label className="required">Full Name</label>
@@ -678,107 +829,19 @@ const UserControl = () => {
                       autoComplete="off"
                     />
                   </div>
-                  <div className="modal-form-group">
-                    <label className="required">Password</label>
-                    <input
-                      type="password"
-                      name="password"
-                      placeholder="Password..."
-                      value={formData.password || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <div className="modal-form-group">
-                    <label>Photo</label>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 16 }}
-                    >
-                      <div
-                        style={{
-                          position: "relative",
-                          width: 64,
-                          height: 64,
-                          borderRadius: "50%",
-                          background: getInitialsColor(formData.name).bg,
-                          color: getInitialsColor(formData.name).color,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 22,
-                          fontWeight: 700,
-                          boxShadow: "0 2px 8px rgba(74,144,226,0.08)",
-                        }}
-                      >
-                        {formData.avatar ? (
-                          <img
-                            src={URL.createObjectURL(formData.avatar)}
-                            alt="Avatar Preview"
-                            style={{
-                              width: 64,
-                              height: 64,
-                              borderRadius: "50%",
-                              objectFit: "cover",
-                              border: "2px solid #e1e8ed",
-                            }}
-                          />
-                        ) : (
-                          getUserInitials(formData.name)
-                        )}
-                        <label
-                          htmlFor="avatar-upload"
-                          style={{
-                            position: "absolute",
-                            bottom: -8,
-                            right: -8,
-                            background: "#4a90e2",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            width: 28,
-                            height: 28,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            boxShadow: "0 1px 4px rgba(74,144,226,0.12)",
-                            fontSize: 16,
-                          }}
-                        >
-                          <svg
-                            width="18"
-                            height="18"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M16.24 7.76a6 6 0 1 1-8.48 0" />
-                          </svg>
-                        </label>
-                        <input
-                          id="avatar-upload"
-                          type="file"
-                          accept="image/*"
-                          name="avatar"
-                          style={{ display: "none" }}
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setFormData({
-                                ...formData,
-                                avatar: e.target.files[0],
-                              });
-                            }
-                          }}
-                        />
-                      </div>
-                      <span style={{ color: "#7f8c9a", fontSize: 13 }}>
-                        Upload photo (jpg, png, max 2MB)
-                      </span>
-                    </div>
-                  </div>
+                </div>
+                <div className="modal-form-group">
+                  <label className="required">Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Min. 6 characters..."
+                    value={formData.password || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    autoComplete="new-password"
+                  />
                 </div>
               </div>
               <div className="modal-section">
@@ -833,22 +896,35 @@ const UserControl = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="modal-form-group">
-                    <label>Role</label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value })
-                      }
-                    >
-                      {(roles || []).map((role) => (
-                        <option key={role.id} value={role.name}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                </div>
+                <div className="modal-form-group">
+                  <label>Role</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData({ ...formData, role: e.target.value })
+                    }
+                    disabled
+                    style={{ background: "#f5f7fa", color: "#7f8c9a" }}
+                  >
+                    <option value="User">User</option>
+                    {(roles || []).map((role) => (
+                      <option key={role.id} value={role.name}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small
+                    style={{
+                      color: "#7f8c9a",
+                      fontSize: 11,
+                      marginTop: 4,
+                      display: "block",
+                    }}
+                  >
+                    Default role is User. Can be changed after creation.
+                  </small>
                 </div>
               </div>
             </div>
@@ -859,7 +935,62 @@ const UserControl = () => {
               >
                 Cancel
               </button>
-              <button className="modal-btn modal-btn-primary">
+              <button
+                className="modal-btn modal-btn-primary"
+                onClick={async () => {
+                  if (!formData.name || !formData.email || !formData.password) {
+                    setNotification({
+                      type: "error",
+                      message: "Name, email, and password are required",
+                    });
+                    return;
+                  }
+                  try {
+                    const body = new FormData();
+                    body.append("name", formData.name);
+                    body.append("email", formData.email);
+                    body.append("password", formData.password);
+                    body.append("department", formData.department);
+                    body.append("position", formData.position);
+                    body.append("role", "User");
+                    body.append("status", "active");
+                    if (formData.avatar) body.append("avatar", formData.avatar);
+                    const res = await fetch(`${API_URL}/users`, {
+                      method: "POST",
+                      body,
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                      setNotification({
+                        type: "success",
+                        message: "User created successfully",
+                      });
+                      setShowAddModal(false);
+                      setFormData({
+                        name: "",
+                        email: "",
+                        position: "Staff",
+                        department: "Finance",
+                        role: "User",
+                        status: "active",
+                        accountActive: true,
+                        privilegeAccess: false,
+                      });
+                      fetchAllUsers();
+                    } else {
+                      setNotification({
+                        type: "error",
+                        message: result.message || "Failed to create user",
+                      });
+                    }
+                  } catch (err) {
+                    setNotification({
+                      type: "error",
+                      message: "Server error. Please try again.",
+                    });
+                  }
+                }}
+              >
                 Create User
               </button>
             </div>
@@ -925,15 +1056,35 @@ const UserControl = () => {
                   <div
                     className="modal-avatar-large"
                     style={{
-                      background: getInitialsColor(formData.name).bg,
-                      color: getInitialsColor(formData.name).color,
                       width: 56,
                       height: 56,
-                      fontSize: 20,
                       flex: "0 0 auto",
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      background: selectedUser?.avatar
+                        ? "transparent"
+                        : getInitialsColor(formData.name).bg,
+                      color: getInitialsColor(formData.name).color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 20,
+                      fontWeight: 700,
                     }}
                   >
-                    {getUserInitials(formData.name)}
+                    {selectedUser?.avatar ? (
+                      <img
+                        src={selectedUser.avatar}
+                        alt={formData.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      getUserInitials(formData.name)
+                    )}
                   </div>
                   <div
                     style={{
@@ -980,21 +1131,36 @@ const UserControl = () => {
                     <div
                       className="modal-avatar-large"
                       style={{
-                        background: getInitialsColor(formData.name).bg,
-                        color: getInitialsColor(formData.name).color,
                         width: 52,
                         height: 52,
-                        fontSize: 18,
                         flex: "0 0 auto",
                         borderRadius: "50%",
+                        overflow: "hidden",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 700,
+                        fontSize: 18,
                         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        background: selectedUser?.avatar
+                          ? "transparent"
+                          : getInitialsColor(formData.name).bg,
+                        color: getInitialsColor(formData.name).color,
                       }}
                     >
-                      {getUserInitials(formData.name)}
+                      {selectedUser?.avatar ? (
+                        <img
+                          src={selectedUser.avatar}
+                          alt={formData.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        getUserInitials(formData.name)
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h4
@@ -1775,8 +1941,6 @@ const UserControl = () => {
               >
                 <div
                   style={{
-                    background: getInitialsColor(selectedUser.name).bg,
-                    color: getInitialsColor(selectedUser.name).color,
                     width: 44,
                     height: 44,
                     borderRadius: "50%",
@@ -1786,9 +1950,26 @@ const UserControl = () => {
                     fontWeight: 700,
                     fontSize: 15,
                     flex: "0 0 auto",
+                    overflow: "hidden",
+                    background: selectedUser.avatar
+                      ? "transparent"
+                      : getInitialsColor(selectedUser.name).bg,
+                    color: getInitialsColor(selectedUser.name).color,
                   }}
                 >
-                  {getUserInitials(selectedUser.name)}
+                  {selectedUser.avatar ? (
+                    <img
+                      src={selectedUser.avatar}
+                      alt={selectedUser.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    getUserInitials(selectedUser.name)
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h4
@@ -1897,11 +2078,12 @@ const UserControl = () => {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {
-                            setSelectedApps((prev) =>
-                              prev.includes(app.id)
-                                ? prev.filter((id) => id !== app.id)
-                                : [...prev, app.id],
-                            );
+                            const newValue = !isSelected;
+                            setPendingAppToggle({
+                              appId: app.id,
+                              appName: app.name,
+                              newValue,
+                            });
                           }}
                           style={{
                             width: 18,
@@ -2087,66 +2269,98 @@ const UserControl = () => {
         </div>
       )}
 
-      {/* ROLE CONFIRMATION MODAL */}
-      {showRoleConfirmModal && selectedUser && (
+      {/* APP TOGGLE CONFIRMATION MODAL */}
+      {pendingAppToggle && (
         <div
-          className="modal-overlay"
-          onClick={() => setShowRoleConfirmModal(false)}
+          className="confirm-dialog-overlay"
+          style={{ zIndex: 1200 }}
+          onClick={() => setPendingAppToggle(null)}
         >
-          <div
-            className="modal-container"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 420 }}
-          >
-            <div className="modal-header">
-              <h3>Confirm Role Change</h3>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div
+                className={`confirm-dialog-icon ${pendingAppToggle.newValue ? "info" : "warning"}`}
+              >
+                {pendingAppToggle.newValue ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                )}
+              </div>
+              <h3>{pendingAppToggle.newValue ? "Enable" : "Disable"} App?</h3>
+              <p>
+                {pendingAppToggle.newValue ? (
+                  <>
+                    Grant <strong>{pendingAppToggle.appName}</strong> access to{" "}
+                    <strong>{selectedUser?.name}</strong>?
+                  </>
+                ) : (
+                  <>
+                    Remove <strong>{pendingAppToggle.appName}</strong> access
+                    from <strong>{selectedUser?.name}</strong>?
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-close"
-                onClick={() => setShowRoleConfirmModal(false)}
+                className="cd-btn cd-btn-cancel"
+                onClick={() => setPendingAppToggle(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={`cd-btn ${pendingAppToggle.newValue ? "cd-btn-primary" : "cd-btn-warning"}`}
+                onClick={() => {
+                  const { appId, newValue } = pendingAppToggle;
+                  setSelectedApps((prev) =>
+                    newValue
+                      ? [...prev, appId]
+                      : prev.filter((id) => id !== appId),
+                  );
+                  setPendingAppToggle(null);
+                }}
               >
                 <svg
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                 >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  {pendingAppToggle.newValue ? (
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  ) : (
+                    <>
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </>
+                  )}
                 </svg>
+                {pendingAppToggle.newValue ? "Enable" : "Disable"}
               </button>
-            </div>
-            <div
-              className="modal-body"
-              style={{ textAlign: "center", padding: "32px 0" }}
-            >
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#e67e22"
-                strokeWidth="2"
-                style={{ marginBottom: 16 }}
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12" y2="16" />
-              </svg>
-              <p style={{ fontWeight: 600, fontSize: 16 }}>
-                Are you sure you want to change this user's role?
-              </p>
-              <p style={{ color: "#7f8c9a", fontSize: 13, marginTop: 8 }}>
-                This action may affect user permissions and access.
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button
-                className="modal-btn modal-btn-secondary"
-                onClick={() => setShowRoleConfirmModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="modal-btn modal-btn-primary">Confirm</button>
             </div>
           </div>
         </div>
@@ -2387,4 +2601,3 @@ const UserControl = () => {
 };
 
 export default UserControl;
-import "../../styles/UserControl.css";

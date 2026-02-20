@@ -292,7 +292,7 @@ const MasterRoles = () => {
                     <div
                       style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}
                     >
-                      {role.permissions.slice(0, 3).map((perm) => (
+                      {(role.permissions || []).slice(0, 3).map((perm) => (
                         <span
                           key={perm}
                           style={{
@@ -307,9 +307,9 @@ const MasterRoles = () => {
                             ?.label || perm}
                         </span>
                       ))}
-                      {role.permissions.length > 3 && (
+                      {(role.permissions || []).length > 3 && (
                         <span style={{ fontSize: "11px", color: "#666" }}>
-                          +{role.permissions.length - 3} more
+                          +{(role.permissions || []).length - 3} more
                         </span>
                       )}
                     </div>
@@ -545,12 +545,12 @@ const MasterRoles = () => {
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && selectedRole && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon warning">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon warning">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -577,17 +577,14 @@ const MasterRoles = () => {
                 )}
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-danger"
-                onClick={confirmDelete}
-              >
+              <button className="cd-btn cd-btn-danger" onClick={confirmDelete}>
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"

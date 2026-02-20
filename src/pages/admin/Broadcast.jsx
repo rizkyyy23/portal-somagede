@@ -1,4 +1,20 @@
-import * as LucideIcons from "lucide-react";
+import {
+  AlertTriangle,
+  Info,
+  Megaphone,
+  Send,
+  Trash2,
+  Clock,
+  Radio,
+  Search,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Bell,
+  Edit3,
+  Inbox,
+} from "lucide-react";
 import "../../styles/admin-dashboard.css";
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
@@ -23,7 +39,7 @@ const Broadcast = () => {
 
   useEffect(() => {
     fetchBroadcasts();
-  }, [activeTab]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBroadcasts = async () => {
     setLoading(true);
@@ -111,14 +127,14 @@ const Broadcast = () => {
         return {
           color: "#e74c3c",
           bg: "#feeff0",
-          icon: LucideIcons.AlertTriangle,
+          icon: AlertTriangle,
           label: "Urgent",
         };
       case "high":
         return {
           color: "#f1c40f",
           bg: "#fef9e7",
-          icon: LucideIcons.Info,
+          icon: Info,
           label: "High Priority",
         };
       case "normal":
@@ -126,7 +142,7 @@ const Broadcast = () => {
         return {
           color: "#2ecc71",
           bg: "#e8f8f5",
-          icon: LucideIcons.Megaphone,
+          icon: Megaphone,
           label: "Normal",
         };
     }
@@ -135,7 +151,7 @@ const Broadcast = () => {
   return (
     <div className="broadcast-container">
       <div className="section-header broadcast-main-header">
-        <LucideIcons.Radio size={28} />
+        <Radio size={28} />
         <div>
           <h2 className="broadcast-main-title">Broadcast Center</h2>
           <p className="broadcast-main-subtitle">
@@ -148,7 +164,7 @@ const Broadcast = () => {
         {/* COMPOSE SECTION */}
         <div className="broadcast-composer">
           <h3 className="broadcast-section-title">
-            <LucideIcons.Edit3 size={20} />
+            <Edit3 size={20} />
             Compose New Message
           </h3>
 
@@ -256,7 +272,7 @@ const Broadcast = () => {
             </div>
 
             <button type="submit" className="btn-send-broadcast">
-              <LucideIcons.Send size={20} />
+              <Send size={20} />
               Send Broadcast
             </button>
           </form>
@@ -265,7 +281,7 @@ const Broadcast = () => {
         {/* HISTORY SECTION */}
         <div className="broadcast-history-panel">
           <h3 className="broadcast-section-title">
-            <LucideIcons.Clock size={20} />
+            <Clock size={20} />
             Broadcast History
           </h3>
 
@@ -301,7 +317,7 @@ const Broadcast = () => {
                 if (filteredBroadcasts.length === 0) {
                   return (
                     <div className="broadcast-empty">
-                      <LucideIcons.Inbox
+                      <Inbox
                         size={48}
                         style={{ opacity: 0.5, marginBottom: "10px" }}
                       />
@@ -364,7 +380,7 @@ const Broadcast = () => {
                                 className="broadcast-expiry"
                                 data-expired={isExpired}
                               >
-                                <LucideIcons.Clock size={12} />
+                                <Clock size={12} />
                                 {isExpired ? "Expired at: " : "Expires: "}
                                 {new Date(item.expires_at).toLocaleString()}
                               </div>
@@ -376,7 +392,7 @@ const Broadcast = () => {
                           className="btn-delete-broadcast"
                           title="Delete"
                         >
-                          <LucideIcons.Trash2 size={16} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                       <p className="broadcast-message-preview">
@@ -406,11 +422,14 @@ const Broadcast = () => {
       </div>
       {/* DELETE CONFIRMATION MODAL */}
       {deleteCandidate && (
-        <div className="modal-overlay" onClick={() => setDeleteCandidate(null)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon danger">
-                <LucideIcons.Trash2 />
+        <div
+          className="confirm-dialog-overlay"
+          onClick={() => setDeleteCandidate(null)}
+        >
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon danger">
+                <Trash2 />
               </div>
               <h3>Delete Broadcast?</h3>
               <p>
@@ -418,17 +437,14 @@ const Broadcast = () => {
                 action cannot be undone.
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setDeleteCandidate(null)}
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-danger"
-                onClick={confirmDelete}
-              >
+              <button className="cd-btn cd-btn-danger" onClick={confirmDelete}>
                 Delete
               </button>
             </div>

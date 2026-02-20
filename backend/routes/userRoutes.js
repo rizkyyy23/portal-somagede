@@ -12,6 +12,7 @@ import {
   getUserPrivileges,
   updateUserPrivileges,
   loginUser,
+  changePassword,
   syncAllUsers,
 } from "../controllers/userController.js";
 import { upload } from "../utils/upload.js";
@@ -26,9 +27,10 @@ router.get("/users/inactive", getInactiveUsers);
 router.get("/users/admins", getAdminUsers);
 router.get("/users/privilege", getPrivilegeUsers);
 router.get("/users/:id", getUserById);
-router.post("/users", upload.single('avatar'), createUser);
+router.post("/users", upload.single("avatar"), createUser);
 router.post("/users/login", loginUser);
-router.put("/users/:id", upload.single('avatar'), updateUser);
+router.put("/users/:id/change-password", changePassword);
+router.put("/users/:id", upload.single("avatar"), updateUser);
 router.delete("/users/:id", deleteUser);
 
 // Privilege routes

@@ -14,6 +14,7 @@ export const getAllUsers = async (req, res) => {
         u.department,
         u.role,
         u.status,
+        u.avatar,
         u.has_privilege,
         up.accessible_app_count,
         up.accessible_app_codes,
@@ -52,6 +53,7 @@ export const getActiveUsers = async (req, res) => {
         u.department,
         u.role,
         u.status,
+        u.avatar,
         u.has_privilege,
         up.accessible_app_count,
         up.accessible_app_codes,
@@ -201,6 +203,7 @@ export const getUserById = async (req, res) => {
         role,
         status,
         avatar,
+        password_changed_at,
         created_at,
         updated_at
       FROM users 
@@ -243,6 +246,18 @@ export const createUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Name, email, and department are required",
+      });
+    }
+
+    // Check for duplicate email
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email],
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "A user with this email already exists",
       });
     }
 
@@ -723,13 +738,11 @@ export const getUserPrivileges = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user privileges:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error fetching user privileges",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user privileges",
+      error: error.message,
+    });
   }
 };
 
@@ -939,13 +952,11 @@ export const updateUserPrivileges = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating user privileges:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error updating user privileges",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error updating user privileges",
+      error: error.message,
+    });
   }
 };
 
@@ -961,7 +972,7 @@ export const loginUser = async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      'SELECT id, name, email, password, position, department, role, status FROM users WHERE email = ? AND status = "active"',
+      'SELECT id, name, email, password, avatar, position, department, role, status FROM users WHERE email = ? AND status = "active"',
       [email],
     );
 
@@ -987,6 +998,14 @@ export const loginUser = async (req, res) => {
           .status(401)
           .json({ success: false, message: "Invalid password" });
       }
+    } else {
+      // User has no password set — block login and prompt to set one
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Password not set. Please contact your administrator.",
+        });
     }
 
     // Log login activity (non-critical, don't fail login if this fails)
@@ -1011,6 +1030,99 @@ export const loginUser = async (req, res) => {
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ success: false, message: "Login failed" });
+  }
+};
+
+// Change user password
+export const changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters",
+      });
+    }
+
+    // Get user's current password hash and last change timestamp
+    const [rows] = await pool.query(
+      "SELECT id, password, password_changed_at FROM users WHERE id = ?",
+      [id],
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const user = rows[0];
+
+    // Check if password was changed within the last 30 days
+    if (user.password_changed_at) {
+      const lastChanged = new Date(user.password_changed_at);
+      const now = new Date();
+      const diffDays = Math.floor((now - lastChanged) / (1000 * 60 * 60 * 24));
+      if (diffDays < 30) {
+        const remainingDays = 30 - diffDays;
+        return res.status(429).json({
+          success: false,
+          message: `Password can only be changed once per month. Please wait ${remainingDays} more day(s).`,
+        });
+      }
+    }
+
+    // Verify current password
+    if (user.password) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Current password is incorrect",
+        });
+      }
+    }
+
+    // Hash new password and update
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await pool.query(
+      "UPDATE users SET password = ?, password_changed_at = NOW() WHERE id = ?",
+      [hashedPassword, id],
+    );
+
+    // Log activity
+    try {
+      await logActivity({
+        user_id: id,
+        activity_type: "PASSWORD_CHANGE",
+        details: "User changed their password",
+      });
+    } catch (logError) {
+      console.error("Failed to log activity (non-critical):", logError.message);
+    }
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to change password",
+    });
   }
 };
 

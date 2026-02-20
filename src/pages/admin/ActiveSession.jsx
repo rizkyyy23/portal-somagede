@@ -38,8 +38,12 @@ const ActiveSession = () => {
 
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
-      session.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.user_email.toLowerCase().includes(searchQuery.toLowerCase());
+      (session.user_name || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (session.user_email || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     const matchesDept = deptFilter === "" || session.department === deptFilter;
     return matchesSearch && matchesDept;
   });
@@ -217,11 +221,30 @@ const ActiveSession = () => {
                     <tr key={session.id}>
                       <td>
                         <div className="user-cell">
+                          {session.user_avatar ? (
+                            <img
+                              src={session.user_avatar}
+                              alt={session.user_name}
+                              className="user-avatar"
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                e.target.nextElementSibling.style.display =
+                                  "flex";
+                              }}
+                            />
+                          ) : null}
                           <div
                             className="user-avatar"
                             style={{
                               background: colors.bg,
                               color: colors.color,
+                              display: session.user_avatar ? "none" : "flex",
                             }}
                           >
                             {initials}
@@ -338,12 +361,12 @@ const ActiveSession = () => {
       {/* FORCE LOGOUT CONFIRMATION MODAL */}
       {showConfirmModal && selectedSession && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setShowConfirmModal(false)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon warning">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon warning">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -364,15 +387,15 @@ const ActiveSession = () => {
                 will need to log in again.
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setShowConfirmModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="modal-btn modal-btn-danger"
+                className="cd-btn cd-btn-danger"
                 onClick={confirmForceLogout}
               >
                 <svg

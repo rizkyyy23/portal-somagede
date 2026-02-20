@@ -2,10 +2,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 .profile-page {
-  min-height: 100vh;
+  height: 100vh;
   background: #f8fafc;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .profile-loading {
@@ -76,7 +77,11 @@
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 24px 40px 20px;
+  padding: 24px 40px 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* ============= PROFILE CARD TOP ============= */
@@ -89,6 +94,7 @@
   gap: 24px;
   align-items: flex-start;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .profile-avatar-section {
@@ -96,15 +102,40 @@
   flex-shrink: 0;
 }
 
-.profile-avatar-img,
-.profile-avatar-placeholder {
+.profile-avatar-wrapper {
   width: 80px;
   height: 80px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.15),
+    rgba(29, 78, 216, 0.18)
+  );
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
   border-radius: 12px;
   object-fit: cover;
 }
 
 .profile-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   display: flex;
   align-items: center;
@@ -185,6 +216,7 @@
   gap: 0;
   border-bottom: 2px solid #e2e8f0;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .tab-btn {
@@ -214,6 +246,44 @@
 /* ============= TAB CONTENT ============= */
 .tab-content {
   animation: fadeIn 0.3s ease-in;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Personal Info tab: side-by-side layout with scrollable left */
+.personal-tab-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+/* Settings tab: fixed content, no scroll */
+.settings-tab-content {
+  overflow: visible;
+  padding-bottom: 24px;
+}
+
+.personal-scroll-area {
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 24px;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.personal-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.personal-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.personal-scroll-area::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
 }
 
 @keyframes fadeIn {
@@ -233,10 +303,17 @@
   gap: 16px;
 }
 
+/* Quick Tip stays fixed at top right */
+.personal-tab-content > .quick-tip-box {
+  align-self: start;
+  position: sticky;
+  top: 0;
+}
+
 .info-section {
   background: white;
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
@@ -244,20 +321,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .section-header svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: #3b82f6;
 }
 
 .section-header h3 {
   font-family: "Poppins", sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
@@ -275,8 +352,12 @@
   gap: 20px;
 }
 
+.field-row.field-row-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .field-row:not(:last-child) {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .field-group {
@@ -287,7 +368,7 @@
 
 .field-label {
   font-family: "Poppins", sans-serif !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
   color: #94a3b8 !important;
   letter-spacing: 0.5px;
@@ -296,10 +377,10 @@
 
 .field-value {
   font-family: "Poppins", sans-serif !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   color: #1e293b !important;
   font-weight: 500 !important;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* ============= JOB DETAILS CARD ============= */
@@ -490,6 +571,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: sticky;
+  top: 0;
+  align-self: start;
 }
 
 .settings-card {
@@ -497,6 +581,28 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 16px;
+}
+
+/* IT Support Box */
+.it-support-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 7px;
+  padding: 12px;
+}
+
+.it-support-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+  text-align: center;
+}
+
+.it-support-text strong {
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .settings-card-header {
@@ -531,10 +637,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: color 0.2s;
+  text-decoration: none;
 }
 
 .view-all-btn:hover {
   color: #2563eb;
+  scale: 1.08;
 }
 
 .settings-item {
@@ -588,20 +696,71 @@
   transform: translateY(0);
 }
 
+.settings-btn-primary.btn-disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.settings-btn-primary.btn-disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: #94a3b8;
+}
+
+/* Password Cooldown Badge */
+.password-cooldown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  color: #c2410c;
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.password-cooldown-badge svg {
+  color: #f59e0b;
+}
+
 /* Login Activity */
 .login-activity-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  /* Show exactly 3 items: 3 * (8px padding*2 + ~34px content) + 2 * 6px gap = ~168px */
+  max-height: 168px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  padding-right: 4px;
+}
+
+.login-activity-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.login-activity-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.login-activity-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
 }
 
 .login-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 7px;
   transition: all 0.2s;
 }
 
@@ -618,8 +777,8 @@
 .login-item svg {
   color: #64748b;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .login-item.current svg {
@@ -632,21 +791,21 @@
 
 .login-device {
   font-family: "Poppins", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #1e293b;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .login-details {
   font-family: "Poppins", sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   color: #64748b;
 }
 
 .current-badge {
   font-family: "Poppins", sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #22c55e;
   background: white;
@@ -654,108 +813,6 @@
   border-radius: 4px;
   border: 1px solid #22c55e;
   white-space: nowrap;
-}
-
-/* Account Recovery */
-.account-recovery {
-  padding: 14px;
-}
-
-.recovery-label {
-  font-family: "Poppins", sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.5px;
-  margin: 0 0 12px 0;
-}
-
-.recovery-item {
-  display: flex;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.recovery-item:last-child {
-  border-bottom: none;
-}
-
-.recovery-icon {
-  width: 32px;
-  height: 32px;
-  background: #eff6ff;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.recovery-icon svg {
-  color: #3b82f6;
-  width: 14px;
-  height: 14px;
-}
-
-.recovery-info {
-  flex: 1;
-}
-
-.recovery-title {
-  font-family: "Poppins", sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.5px;
-  margin-bottom: 3px;
-}
-
-.recovery-value {
-  font-family: "Poppins", sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1e293b;
-  margin-bottom: 5px;
-}
-
-.recovery-change-btn {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-family: "Poppins", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
-}
-
-.recovery-change-btn:hover {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-/* IT Support Box */
-.it-support-box {
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 7px;
-  padding: 12px;
-}
-
-.it-support-text {
-  font-family: "Poppins", sans-serif;
-  font-size: 11px;
-  line-height: 1.5;
-  color: #64748b;
-  margin: 0;
-  text-align: center;
-}
-
-.it-support-text strong {
-  color: #1e293b;
-  font-weight: 600;
 }
 
 /* ============= FOOTER ============= */
@@ -811,10 +868,10 @@
 
 .login-modal {
   background: white;
-  border-radius: 16px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
+  max-width: 480px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -823,7 +880,7 @@
 
 .login-modal-header {
   background: linear-gradient(135deg, #5b93c7 0%, #4a7ba7 100%);
-  padding: 20px 24px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -836,10 +893,10 @@
 }
 
 .modal-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: white;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -852,7 +909,7 @@
 
 .login-modal-header h3 {
   font-family: "Poppins", sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   color: white;
   margin: 0;
@@ -867,12 +924,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.18s cubic-bezier(0.4, 1.3, 0.6, 1);
   flex-shrink: 0;
 }
 
 .modal-close-btn:hover {
   opacity: 0.8;
+  transform: scale(1.13);
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
 }
 
 .modal-close-btn svg {
@@ -881,20 +945,20 @@
 }
 
 .login-modal-body {
-  padding: 24px;
+  padding: 14px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .modal-login-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 10px;
+  padding: 10px 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   transition: all 0.2s;
 }
 
@@ -911,8 +975,8 @@
 .modal-login-item svg {
   color: #64748b;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .modal-login-item.current svg {
@@ -925,26 +989,26 @@
 
 .modal-login-device {
   font-family: "Poppins", sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .modal-login-details {
   font-family: "Poppins", sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   color: #64748b;
 }
 
 .modal-current-badge {
   font-family: "Poppins", sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #22c55e;
   background: white;
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
   border: 1px solid #22c55e;
   white-space: nowrap;
   flex-shrink: 0;
@@ -952,13 +1016,13 @@
 
 .modal-logout-btn {
   font-family: "Poppins", sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #ef4444;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 14px;
+  padding: 4px 10px;
   border-radius: 6px;
   transition: all 0.2s;
   white-space: nowrap;
@@ -970,9 +1034,426 @@
   color: #dc2626;
 }
 
+/* ============= UPDATE PASSWORD MODAL ============= */
+.password-modal {
+  background: white;
+  border-radius: 16px;
+  width: 380px;
+  max-width: 92vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.password-modal-header {
+  background: linear-gradient(135deg, #777979 0%, #5f7ab4 50%, #306fd3 100%);
+  padding: 16px 20px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-modal-brand {
+  display: flex;
+  align-items: center;
+}
+
+.password-modal-brand img {
+  width: 220px;
+  text-align: center;
+  margin-left: 30px;
+}
+
+.password-modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-modal-close:hover {
+  color: white;
+}
+
+.password-modal-body {
+  padding: 20px 22px;
+}
+
+.password-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.password-modal-title svg {
+  color: #1e293b;
+}
+
+.password-modal-title h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.password-modal-subtitle {
+  font-family: "Poppins", sans-serif;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+/* Password Alerts */
+.password-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.password-alert-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.password-alert-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Password Form */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.password-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.password-field-label {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  outline: none;
+}
+
+.password-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
+}
+
+.password-input::placeholder {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Hide browser's built-in password reveal button (Edge / Chrome) */
+.password-input::-ms-reveal,
+.password-input::-ms-clear,
+.password-input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle-btn:hover {
+  color: #3b82f6;
+}
+
+/* Password Strength */
+.password-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.strength-bars {
+  display: flex;
+  gap: 4px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  transition: background-color 0.3s;
+}
+
+.strength-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.strength-label {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.strength-hint {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Password Requirements Checklist */
+.password-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  color: #94a3b8;
+  transition: color 0.25s;
+}
+
+.req-item svg {
+  flex-shrink: 0;
+  color: #cbd5e1;
+  transition: color 0.25s;
+}
+
+.req-item.met {
+  color: #22c55e;
+}
+
+.req-item.met svg {
+  color: #22c55e;
+}
+
+/* Save Button */
+.password-save-btn {
+  width: 200px;
+  margin: 0 auto;
+  display: block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #7e97b8 0%, #626873 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: "Poppins", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 0.3px;
+}
+
+.password-save-btn:hover {
+  background: linear-gradient(135deg, #172e4a 0%, #303648 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.password-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============= CONFIRM PASSWORD MODAL ============= */
+.confirm-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 36px 32px 28px;
+  width: 420px;
+  max-width: 92vw;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.confirm-modal-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef3c7;
+  border-radius: 50%;
+  color: #f59e0b;
+}
+
+.confirm-modal-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.confirm-modal-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.confirm-modal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.confirm-modal-warning svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+  margin-top: 1px;
+}
+
+.confirm-modal-warning span {
+  font-family: "Poppins", sans-serif;
+  font-size: 12.5px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-cancel-btn {
+  flex: 1;
+  padding: 11px 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-cancel-btn:hover {
+  background: #e2e8f0;
+}
+
+.confirm-proceed-btn {
+  flex: 1;
+  padding: 11px 20px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-proceed-btn:hover {
+  background: linear-gradient(135deg, #172e4a 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
 /* ============= RESPONSIVE ============= */
 @media (max-width: 1024px) {
   .info-grid {
+    grid-template-columns: 1fr;
+  }
+  .personal-tab-content {
     grid-template-columns: 1fr;
   }
 }
@@ -983,7 +1464,7 @@
   }
 
   .profile-main {
-    padding: 24px 20px 60px;
+    padding: 24px 20px 0;
   }
 
   .profile-card-top {
@@ -1002,6 +1483,10 @@
   }
 
   .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .field-row.field-row-3 {
     grid-template-columns: 1fr;
   }
 

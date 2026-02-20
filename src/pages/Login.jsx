@@ -67,6 +67,7 @@ export default function Login() {
           role: userData.role?.toUpperCase() || (isAdmin ? "ADMIN" : "USER"),
           department: userData.department,
           position: userData.position,
+          avatar: userData.avatar || null,
         }),
       );
 

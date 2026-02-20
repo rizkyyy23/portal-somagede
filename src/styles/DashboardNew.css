@@ -642,7 +642,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   padding: 9px 0;
-  width: 85%;
+  width: 80%;
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
@@ -652,6 +652,7 @@ body {
   position: relative;
   overflow: hidden;
   z-index: 1;
+  margin-bottom: 15px;
 }
 
 .launch-link:hover {
@@ -712,11 +713,11 @@ body {
 
 /* LOCKED STATE (Added for functionality) */
 .app-card.locked {
-  filter: grayscale(1);
+  filter: grayscale(0.6);
   opacity: 0.85;
-  pointer-events: none;
   user-select: none;
   background: #f8fafc;
+  position: relative;
 }
 
 .app-card.locked:hover {
@@ -741,9 +742,53 @@ body {
   color: #64748b;
 }
 
+/* Inactive Badge */
+.inactive-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 11;
+  border: 1px solid #fecaca;
+}
+
 .launch-link.disabled {
   color: var(--text-muted);
   pointer-events: none;
+}
+
+/* No Applications Allowed Message */
+.no-apps-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  margin-top: 20px;
+  background: #f8fafc;
+  border-radius: 20px;
+  border: 2px dashed #e2e8f0;
+}
+
+.no-apps-icon {
+  width: 80px;
+  height: 80px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
 .sidebar {
@@ -885,8 +930,8 @@ body {
 
 .section-header.department-header + .section-underline {
   display: block;
-  height: 4px; 
-  width: 60px; 
+  height: 4px;
+  width: 60px;
   background: var(--blue);
   border-radius: 2px;
   margin-bottom: 24px;
@@ -900,7 +945,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--blue); 
+  border-left: 4px solid var(--blue);
   padding: 18px;
   margin-bottom: 14px;
   transition:
@@ -1034,7 +1079,6 @@ body {
   width: 16px;
   height: 16px;
 }
-
 
 /* =================================================
    TABLET
@@ -1212,6 +1256,109 @@ body {
   .logo img {
     width: 120px;
   }
+}
+
+/* ========== LOGOUT CONFIRMATION MODAL ========== */
+.logout-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99998;
+  animation: fadeInOverlay 0.25s ease;
+}
+
+.logout-confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUpFade 0.3s ease;
+}
+
+.logout-confirm-icon {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-confirm-icon svg {
+  background: #fff5f5;
+  border-radius: 50%;
+  padding: 14px;
+  width: 72px;
+  height: 72px;
+}
+
+.logout-confirm-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 8px;
+}
+
+.logout-confirm-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  color: #718096;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.logout-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.logout-confirm-cancel {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #4a5568;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-confirm-cancel:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.logout-confirm-yes {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-confirm-yes:hover {
+  background: linear-gradient(135deg, #c53030, #9b2c2c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.35);
 }
 
 /* ========== FULL PAGE LOADING OVERLAY ========== */

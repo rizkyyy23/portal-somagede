@@ -9,6 +9,21 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPassFields, setShowPassFields] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
@@ -38,6 +53,128 @@ export default function Profile() {
     }
   };
 
+  // Password strength calculator
+  const getPasswordStrength = (password) => {
+    if (!password) return { level: 0, label: "", color: "" };
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1)
+      return { level: 1, label: "WEAK PASSWORD", color: "#ef4444" };
+    if (score <= 2)
+      return { level: 2, label: "FAIR PASSWORD", color: "#f59e0b" };
+    if (score <= 3)
+      return { level: 3, label: "GOOD PASSWORD", color: "#3b82f6" };
+    return { level: 4, label: "STRONG PASSWORD", color: "#22c55e" };
+  };
+
+  const handlePasswordChange = (field, value) => {
+    setPasswordForm((prev) => ({ ...prev, [field]: value }));
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
+
+  const togglePassField = (field) => {
+    setShowPassFields((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const openPasswordModal = () => {
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setShowPassFields({ current: false, new: false, confirm: false });
+    setPasswordError("");
+    setPasswordSuccess("");
+    setShowPasswordModal(true);
+  };
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
+
+  const handleSubmitPassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword) {
+      setPasswordError("Please enter your current password");
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError("Please enter a new password");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New password and confirmation do not match");
+      return;
+    }
+    if (currentPassword === newPassword) {
+      setPasswordError("New password must be different from current password");
+      return;
+    }
+
+    // Show confirmation modal instead of directly saving
+    setShowPasswordConfirm(true);
+  };
+
+  const confirmPasswordChange = async () => {
+    setShowPasswordConfirm(false);
+    setPasswordLoading(true);
+    setPasswordError("");
+
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const response = await fetch(
+        `${API_URL}/users/${storedUser?.id}/change-password`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            currentPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPasswordSuccess("Password changed successfully!");
+        setPasswordForm({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        // Re-fetch user data to update password_changed_at
+        await fetchUserData();
+        setTimeout(() => closePasswordModal(), 2500);
+      } else {
+        setPasswordError(data.message || "Failed to change password");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordError("An error occurred. Please try again.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const getInitials = (name) => {
     if (!name) return "U";
     return name
@@ -46,6 +183,38 @@ export default function Profile() {
       .join("")
       .substring(0, 2)
       .toUpperCase();
+  };
+
+  // Password change cooldown helpers
+  const getPasswordChangeInfo = () => {
+    if (!userData?.password_changed_at) {
+      return {
+        canChange: true,
+        daysAgo: null,
+        remainingDays: 0,
+        label: "Never changed. We recommend setting a strong password.",
+      };
+    }
+    const lastChanged = new Date(userData.password_changed_at);
+    const now = new Date();
+    const diffDays = Math.floor((now - lastChanged) / (1000 * 60 * 60 * 24));
+    const remainingDays = Math.max(0, 30 - diffDays);
+    const canChange = diffDays >= 30;
+
+    let label;
+    if (diffDays === 0) label = "Changed today.";
+    else if (diffDays === 1) label = "Changed yesterday.";
+    else if (diffDays < 30) label = `Changed ${diffDays} days ago.`;
+    else if (diffDays < 60) label = "Changed about 1 month ago.";
+    else label = `Changed ${Math.floor(diffDays / 30)} months ago.`;
+
+    if (!canChange) {
+      label += ` You can change again in ${remainingDays} day(s).`;
+    } else {
+      label += " We recommend changing it periodically.";
+    }
+
+    return { canChange, daysAgo: diffDays, remainingDays, label };
   };
 
   const getFirstName = (fullName) => {
@@ -102,17 +271,23 @@ export default function Profile() {
         {/* Profile Card */}
         <div className="profile-card-top">
           <div className="profile-avatar-section">
-            {userData?.avatar ? (
+            <div className="profile-avatar-wrapper">
               <img
-                src={userData.avatar}
-                alt={userData.name}
+                src={userData?.avatar || null}
+                alt={userData?.name}
                 className="profile-avatar-img"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  e.target.nextElementSibling.style.display = "flex";
+                }}
               />
-            ) : (
-              <div className="profile-avatar-placeholder">
+              <div
+                className="profile-avatar-placeholder"
+                style={{ display: "none" }}
+              >
                 {getInitials(userData?.name)}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="profile-info-section">
@@ -130,7 +305,18 @@ export default function Profile() {
                 </span>
               </div>
               {userData?.role === "staff" && (
-                <span className="badge-internship">✦ Internship</span>
+                <span className="badge-internship">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    stroke="none"
+                  >
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"></polygon>
+                  </svg>
+                  Internship
+                </span>
               )}
             </div>
           </div>
@@ -145,12 +331,6 @@ export default function Profile() {
             Personal Info
           </button>
           <button
-            className={`tab-btn ${activeTab === "job" ? "active" : ""}`}
-            onClick={() => setActiveTab("job")}
-          >
-            Job Details
-          </button>
-          <button
             className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => setActiveTab("settings")}
           >
@@ -160,8 +340,9 @@ export default function Profile() {
 
         {/* Tab Content */}
         {activeTab === "personal" && (
-          <div className="tab-content">
-            <div className="info-grid">
+          <div className="tab-content personal-tab-content">
+            {/* Left: Scrollable Personal Info + Job Details */}
+            <div className="personal-scroll-area">
               <div className="info-section">
                 <div className="section-header">
                   <svg
@@ -213,22 +394,8 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="quick-tip-box">
-                <h4 className="tip-title">QUICK TIP</h4>
-                <p className="tip-text">
-                  Keeping your contact information up-to-date ensures you
-                  receive important system notifications updates on time.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "job" && (
-          <div className="tab-content">
-            <div className="info-grid">
-              <div className="job-details-card">
-                <div className="job-details-header">
+              <div className="info-section" style={{ marginTop: "16px" }}>
+                <div className="section-header">
                   <svg
                     width="20"
                     height="20"
@@ -245,39 +412,47 @@ export default function Profile() {
                   <h3>Job Details</h3>
                 </div>
 
-                <div className="job-details-grid">
-                  <div className="job-field">
-                    <label className="job-label">DEPARTMENT</label>
-                    <div className="job-value">
-                      {userData?.department || "Not assigned"}
+                <div className="info-fields">
+                  <div className="field-row">
+                    <div className="field-group">
+                      <label className="field-label">DEPARTMENT</label>
+                      <div className="field-value">
+                        {userData?.department || "Not assigned"}
+                      </div>
+                    </div>
+                    <div className="field-group">
+                      <label className="field-label">EMPLOYEE ID</label>
+                      <div className="field-value">
+                        {userData?.employee_id || "N/A"}
+                      </div>
                     </div>
                   </div>
-                  <div className="job-field">
-                    <label className="job-label">POSITION</label>
-                    <div className="job-value">
-                      {userData?.position || "Not assigned"}
-                    </div>
-                  </div>
-                  <div className="job-field job-field-full">
-                    <label className="job-label">EMPLOYEE ID</label>
-                    <div className="job-value employee-id">
-                      {userData?.employee_id || "N/A"}
+
+                  <div className="field-row">
+                    <div className="field-group">
+                      <label className="field-label">POSITION</label>
+                      <div className="field-value">
+                        {userData?.position || "Not assigned"}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="hr-support-box">
-                <h4 className="hr-title">HR Support</h4>
-                <p className="hr-text">Any questions or data discrepancies?</p>
-                <button className="hr-contact-btn">Contact HR Admin</button>
-              </div>
+            {/* Right: Fixed Quick Tip */}
+            <div className="quick-tip-box">
+              <h4 className="tip-title">QUICK TIP</h4>
+              <p className="tip-text">
+                Keeping your contact information up-to-date ensures you receive
+                important system notifications updates on time.
+              </p>
             </div>
           </div>
         )}
 
         {activeTab === "settings" && (
-          <div className="tab-content">
+          <div className="tab-content settings-tab-content">
             <div className="settings-layout">
               <div className="settings-left">
                 {/* Security Settings */}
@@ -301,11 +476,33 @@ export default function Profile() {
                     <div className="settings-item-info">
                       <h4 className="settings-item-title">Change Password</h4>
                       <p className="settings-item-desc">
-                        Last changed 3 months ago. We recommend changing it
-                        periodically.
+                        {getPasswordChangeInfo().label}
                       </p>
+                      {!getPasswordChangeInfo().canChange && (
+                        <div className="password-cooldown-badge">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          <span>
+                            {getPasswordChangeInfo().remainingDays} day(s)
+                            remaining
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <button className="settings-btn-primary">
+                    <button
+                      className={`settings-btn-primary ${!getPasswordChangeInfo().canChange ? "btn-disabled" : ""}`}
+                      onClick={openPasswordModal}
+                      disabled={!getPasswordChangeInfo().canChange}
+                    >
                       Update Password
                     </button>
                   </div>
@@ -395,71 +592,160 @@ export default function Profile() {
                         </div>
                       </div>
                     </div>
+                    <div className="login-item">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="2"
+                          y="3"
+                          width="20"
+                          height="14"
+                          rx="2"
+                          ry="2"
+                        />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                      </svg>
+                      <div className="login-item-info">
+                        <div className="login-device">Windows PC • Edge</div>
+                        <div className="login-details">
+                          IP: 112.215.172.10 · Yesterday at 14:20
+                        </div>
+                      </div>
+                    </div>
+                    <div className="login-item">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="2"
+                          y="3"
+                          width="20"
+                          height="14"
+                          rx="2"
+                          ry="2"
+                        />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                      </svg>
+                      <div className="login-item-info">
+                        <div className="login-device">
+                          macOS Desktop • Chrome
+                        </div>
+                        <div className="login-details">
+                          IP: 182.253.155.242 · 2 days ago at 09:15
+                        </div>
+                      </div>
+                    </div>
+                    <div className="login-item">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="5"
+                          y="2"
+                          width="14"
+                          height="20"
+                          rx="2"
+                          ry="2"
+                        />
+                        <line x1="12" y1="18" x2="12.01" y2="18" />
+                      </svg>
+                      <div className="login-item-info">
+                        <div className="login-device">
+                          Samsung Galaxy S24 • Chrome Mobile
+                        </div>
+                        <div className="login-details">
+                          IP: 36.72.210.88 · 3 days ago at 18:45
+                        </div>
+                      </div>
+                    </div>
+                    <div className="login-item">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="2"
+                          y="3"
+                          width="20"
+                          height="14"
+                          rx="2"
+                          ry="2"
+                        />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                      </svg>
+                      <div className="login-item-info">
+                        <div className="login-device">
+                          Linux Desktop • Firefox
+                        </div>
+                        <div className="login-details">
+                          IP: 103.28.115.70 · 5 days ago at 11:30
+                        </div>
+                      </div>
+                    </div>
+                    <div className="login-item">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="5"
+                          y="2"
+                          width="14"
+                          height="20"
+                          rx="2"
+                          ry="2"
+                        />
+                        <line x1="12" y1="18" x2="12.01" y2="18" />
+                      </svg>
+                      <div className="login-item-info">
+                        <div className="login-device">iPad Pro • Safari</div>
+                        <div className="login-details">
+                          IP: 182.253.155.242 · 1 week ago
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="settings-right">
-                {/* Account Recovery */}
-                <div className="settings-card account-recovery">
-                  <h5 className="recovery-label">ACCOUNT RECOVERY</h5>
-
-                  <div className="recovery-item">
-                    <div className="recovery-icon">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                        <polyline points="22,6 12,13 2,6" />
-                      </svg>
-                    </div>
-                    <div className="recovery-info">
-                      <div className="recovery-title">RECOVERY EMAIL</div>
-                      <div className="recovery-value">
-                        {userData?.email?.replace(
-                          /(.{2})(.*)(@.*)/,
-                          "$1*****$3",
-                        ) || "r*****s@personal.com"}
-                      </div>
-                      <button className="recovery-change-btn">Change</button>
-                    </div>
-                  </div>
-
-                  <div className="recovery-item">
-                    <div className="recovery-icon">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
-                      </svg>
-                    </div>
-                    <div className="recovery-info">
-                      <div className="recovery-title">PHONE NUMBER</div>
-                      <div className="recovery-value">
-                        {userData?.phone?.replace(
-                          /(\d{4})(\d{4})(\d{4})/,
-                          "$1-****-$3",
-                        ) || "+62 812-****-7890"}
-                      </div>
-                      <button className="recovery-change-btn">Change</button>
-                    </div>
-                  </div>
-                </div>
-
                 {/* IT Support Box */}
                 <div className="it-support-box">
                   <p className="it-support-text">
@@ -678,6 +964,443 @@ export default function Profile() {
                 </div>
                 <button className="modal-logout-btn">Logout</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Password Modal */}
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={closePasswordModal}>
+          <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header with gradient */}
+            <div className="password-modal-header">
+              <div className="password-modal-brand">
+                <img
+                  src="/assets/logo somagede white.png"
+                  alt="Somagede Indonesia"
+                  className="password-modal-logo"
+                />
+              </div>
+              <button
+                className="password-modal-close"
+                onClick={closePasswordModal}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="password-modal-body">
+              <div className="password-modal-title">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2" />
+                </svg>
+                <h3>Update Password</h3>
+              </div>
+              <p className="password-modal-subtitle">
+                To secure your account, please enter your current password
+                followed by your new password.
+              </p>
+
+              {/* Error / Success Messages */}
+              {passwordError && (
+                <div className="password-alert password-alert-error">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className="password-alert password-alert-success">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              {/* Form Fields */}
+              <div className="password-form">
+                <div className="password-field-group">
+                  <label className="password-field-label">
+                    CURRENT PASSWORD
+                  </label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassFields.current ? "text" : "password"}
+                      className="password-input"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) =>
+                        handlePasswordChange("currentPassword", e.target.value)
+                      }
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => togglePassField("current")}
+                    >
+                      {showPassFields.current ? (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="password-field-group">
+                  <label className="password-field-label">NEW PASSWORD</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassFields.new ? "text" : "password"}
+                      className="password-input"
+                      value={passwordForm.newPassword}
+                      onChange={(e) =>
+                        handlePasswordChange("newPassword", e.target.value)
+                      }
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => togglePassField("new")}
+                    >
+                      {showPassFields.new ? (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  {/* Password Strength Bar */}
+                  {passwordForm.newPassword && (
+                    <div className="password-strength">
+                      <div className="strength-bars">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className={`strength-bar ${i <= getPasswordStrength(passwordForm.newPassword).level ? "active" : ""}`}
+                            style={{
+                              backgroundColor:
+                                i <=
+                                getPasswordStrength(passwordForm.newPassword)
+                                  .level
+                                  ? getPasswordStrength(
+                                      passwordForm.newPassword,
+                                    ).color
+                                  : "#e2e8f0",
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div className="strength-info">
+                        <span
+                          className="strength-label"
+                          style={{
+                            color: getPasswordStrength(passwordForm.newPassword)
+                              .color,
+                          }}
+                        >
+                          {getPasswordStrength(passwordForm.newPassword).label}
+                        </span>
+                        <span className="strength-hint">Min. 8 characters</span>
+                      </div>
+
+                      {/* Password Requirements Checklist */}
+                      <div className="password-requirements">
+                        <div
+                          className={`req-item ${passwordForm.newPassword.length >= 8 ? "met" : ""}`}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            {passwordForm.newPassword.length >= 8 ? (
+                              <polyline points="20 6 9 17 4 12" />
+                            ) : (
+                              <circle cx="12" cy="12" r="5" />
+                            )}
+                          </svg>
+                          <span>At least 8 characters</span>
+                        </div>
+                        <div
+                          className={`req-item ${/[A-Z]/.test(passwordForm.newPassword) ? "met" : ""}`}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            {/[A-Z]/.test(passwordForm.newPassword) ? (
+                              <polyline points="20 6 9 17 4 12" />
+                            ) : (
+                              <circle cx="12" cy="12" r="5" />
+                            )}
+                          </svg>
+                          <span>Contains uppercase letter (A-Z)</span>
+                        </div>
+                        <div
+                          className={`req-item ${/[0-9]/.test(passwordForm.newPassword) ? "met" : ""}`}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            {/[0-9]/.test(passwordForm.newPassword) ? (
+                              <polyline points="20 6 9 17 4 12" />
+                            ) : (
+                              <circle cx="12" cy="12" r="5" />
+                            )}
+                          </svg>
+                          <span>Contains a number (0-9)</span>
+                        </div>
+                        <div
+                          className={`req-item ${/[^A-Za-z0-9]/.test(passwordForm.newPassword) ? "met" : ""}`}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            {/[^A-Za-z0-9]/.test(passwordForm.newPassword) ? (
+                              <polyline points="20 6 9 17 4 12" />
+                            ) : (
+                              <circle cx="12" cy="12" r="5" />
+                            )}
+                          </svg>
+                          <span>Contains special character (!@#$...)</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="password-field-group">
+                  <label className="password-field-label">
+                    CONFIRM NEW PASSWORD
+                  </label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassFields.confirm ? "text" : "password"}
+                      className="password-input"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) =>
+                        handlePasswordChange("confirmPassword", e.target.value)
+                      }
+                      placeholder="Re-enter new password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => togglePassField("confirm")}
+                    >
+                      {showPassFields.confirm ? (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="password-save-btn"
+                onClick={handleSubmitPassword}
+                disabled={passwordLoading}
+              >
+                {passwordLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Change Confirmation Modal */}
+      {showPasswordConfirm && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPasswordConfirm(false)}
+        >
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-modal-icon">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+            </div>
+            <h3 className="confirm-modal-title">Confirm Password Change</h3>
+            <p className="confirm-modal-text">
+              Are you sure you want to change your password?
+            </p>
+            <div className="confirm-modal-warning">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>
+                Password change can only be done <strong>once per month</strong>
+                . Make sure your new password is correct.
+              </span>
+            </div>
+            <div className="confirm-modal-actions">
+              <button
+                className="confirm-cancel-btn"
+                onClick={() => setShowPasswordConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-proceed-btn"
+                onClick={confirmPasswordChange}
+              >
+                Yes, Change Password
+              </button>
             </div>
           </div>
         </div>

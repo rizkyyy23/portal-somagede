@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [showAdminNavModal, setShowAdminNavModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Track open state for section dropdowns: { 'it': true, 'finance': false }
   const [openSections, setOpenSections] = useState({});
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [categorizedApps, setCategorizedApps] = useState({});
   const [allowedAppIds, setAllowedAppIds] = useState([]);
+  const [deptAllowedCodes, setDeptAllowedCodes] = useState(null); // app codes allowed for user's department
   const [broadcasts, setBroadcasts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +72,39 @@ export default function Dashboard() {
         setCategorizedApps(appData.data);
       }
 
-      // 4. Fetch Active Broadcasts
+      // 4. Fetch Department allowed apps (for non-admin filtering)
+      const fetchedUser = userData.success ? userData.data : null;
+      if (fetchedUser?.department) {
+        try {
+          const deptRes = await fetch(`${API_URL}/departments`);
+          const deptData = await deptRes.json();
+          if (deptData.success) {
+            const userDept = deptData.data.find(
+              (d) => d.name === fetchedUser.department,
+            );
+            if (userDept?.allowed_apps) {
+              let codes = [];
+              try {
+                codes =
+                  typeof userDept.allowed_apps === "string"
+                    ? JSON.parse(userDept.allowed_apps)
+                    : userDept.allowed_apps;
+              } catch (e) {
+                codes = String(userDept.allowed_apps)
+                  .split(",")
+                  .map((c) => c.trim());
+              }
+              setDeptAllowedCodes(Array.isArray(codes) ? codes : []);
+            } else {
+              setDeptAllowedCodes([]);
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching department permissions:", e);
+        }
+      }
+
+      // 5. Fetch Active Broadcasts
       const broadcastRes = await fetch(`${API_URL}/broadcasts`);
       const broadcastData = await broadcastRes.json();
       if (broadcastData.success) {
@@ -114,6 +148,18 @@ export default function Dashboard() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Cleanup active session
+    try {
+      if (user?.id) {
+        await fetch(`${API_URL}/sessions/user/${user.id}`, {
+          method: "DELETE",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to cleanup session:", e);
+    }
+
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("user");
@@ -127,6 +173,13 @@ export default function Dashboard() {
   const isAppAllowed = (appId) => {
     if (isAdmin) return true;
     return allowedAppIds.includes(appId);
+  };
+
+  // Check if app is in the user's department allowed list
+  const isAppInDepartment = (appCode) => {
+    if (isAdmin) return true; // Admin sees all apps
+    if (!deptAllowedCodes || deptAllowedCodes.length === 0) return false;
+    return deptAllowedCodes.includes(appCode);
   };
 
   const getInitials = (name) => {
@@ -319,7 +372,13 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="dropdown-item logout" onClick={handleLogout}>
+              <div
+                className="dropdown-item logout"
+                onClick={() => {
+                  setShowLogoutConfirm(true);
+                  setProfileOpen(false);
+                }}
+              >
                 <div className="di-icon">
                   <svg
                     width="16"
@@ -360,11 +419,17 @@ export default function Dashboard() {
       <div className="main">
         <div className="content-area" id="contentArea">
           {Object.entries(categorizedApps).map(([category, apps]) => {
+            // Filter apps based on department permissions for non-admin users
+            const visibleApps = isAdmin
+              ? apps // Admin sees all apps
+              : apps.filter((app) => isAppInDepartment(app.code));
+
+            // Don't render empty sections
+            if (visibleApps.length === 0) return null;
+
             const isOther =
               category.toLowerCase() === "other" ||
               category.toLowerCase() === "others";
-            // If category is "Other", use user.department, or user.position, or fallback to "Department"
-            // Note: Data is usually title case, so we check case-insensitively
             const displayCategory = isOther
               ? `${user?.department || user?.position || "Department"} Department`
               : category;
@@ -408,7 +473,7 @@ export default function Dashboard() {
                       </span>
                     </button>
                     <div className="section-dropdown">
-                      {apps.map((app) => (
+                      {visibleApps.map((app) => (
                         <button
                           key={app.id}
                           className="section-dropdown-item"
@@ -423,7 +488,7 @@ export default function Dashboard() {
                 <div className="section-underline"></div>
 
                 <div className="cards-grid">
-                  {apps.map((app) => {
+                  {visibleApps.map((app) => {
                     const allowed = isAppAllowed(app.id);
                     const isInactive = app.status === "inactive";
                     const canAccess = allowed && !isInactive;
@@ -440,6 +505,29 @@ export default function Dashboard() {
                             background: canAccess ? "var(--blue)" : "#94a3b8",
                           }}
                         ></div>
+
+                        {/* Inactive Badge */}
+                        {isInactive && (
+                          <div className="inactive-badge">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line
+                                x1="4.93"
+                                y1="4.93"
+                                x2="19.07"
+                                y2="19.07"
+                              ></line>
+                            </svg>
+                            INACTIVE
+                          </div>
+                        )}
 
                         {!canAccess && (
                           <div className="lock-overlay">
@@ -580,11 +668,62 @@ export default function Dashboard() {
             );
           })}
 
-          {Object.keys(categorizedApps).length === 0 && (
-            <div
-              style={{ textAlign: "center", padding: "40px", color: "#64748b" }}
-            >
-              <p>No active applications found.</p>
+          {/* No apps at all or no apps visible for this user's department */}
+          {(Object.keys(categorizedApps).length === 0 ||
+            (!isAdmin &&
+              Object.values(categorizedApps).every(
+                (apps) =>
+                  apps.filter((app) => isAppInDepartment(app.code)).length ===
+                  0,
+              ))) && (
+            <div className="no-apps-message">
+              <div className="no-apps-icon">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#94a3b8"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                  <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                  <line
+                    x1="2"
+                    y1="2"
+                    x2="22"
+                    y2="22"
+                    stroke="#e74c3c"
+                    strokeWidth="2"
+                  ></line>
+                </svg>
+              </div>
+              <h3
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#334155",
+                  marginBottom: "8px",
+                }}
+              >
+                No Applications Allowed
+              </h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#64748b",
+                  lineHeight: "1.6",
+                  maxWidth: "400px",
+                }}
+              >
+                Your department currently has no applications assigned.
+                <br />
+                Please contact your administrator to request access.
+              </p>
             </div>
           )}
         </div>
@@ -810,6 +949,57 @@ export default function Dashboard() {
                 }}
               >
                 Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div
+          className="logout-confirm-overlay"
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            className="logout-confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="logout-confirm-icon">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#e53e3e"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </div>
+            <h3 className="logout-confirm-title">Konfirmasi Logout</h3>
+            <p className="logout-confirm-text">
+              Apakah Anda yakin ingin keluar dari akun ini?
+            </p>
+            <div className="logout-confirm-actions">
+              <button
+                className="logout-confirm-cancel"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="logout-confirm-yes"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  handleLogout();
+                }}
+              >
+                Ya, Logout
               </button>
             </div>
           </div>

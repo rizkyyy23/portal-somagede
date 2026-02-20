@@ -4,9 +4,21 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
   background-color: #f5f6fa;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ==================== TOAST NOTIFICATION STYLES ==================== */

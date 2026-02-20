@@ -185,7 +185,22 @@ const AdminSidebar = () => {
     setIsLoggingOut(true);
     // Simulate logout process (untuk animasi)
     await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Delete active session
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (storedUser?.id) {
+        await fetch(`/api/sessions/user/${storedUser.id}`, {
+          method: "DELETE",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to cleanup session:", e);
+    }
+
     localStorage.removeItem("user");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("userEmail");
     sessionStorage.removeItem("adminWelcomeShown");
     setShowLogoutModal(false);
     setIsLoggingOut(false);
@@ -303,7 +318,22 @@ const AdminSidebar = () => {
 
         <div className="user-profile">
           <div className="profile-card">
-            <div className="profile-avatar">{getUserInitials(user.name)}</div>
+            <div className="profile-avatar" style={{ overflow: "hidden" }}>
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                getUserInitials(user.name)
+              )}
+            </div>
             <div className="profile-info">
               <div className="profile-name">{user.name}</div>
               <div className="profile-role">{user.role}</div>

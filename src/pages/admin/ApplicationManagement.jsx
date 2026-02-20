@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useToast } from "../../contexts/ToastContext";
 import "../../styles/ApplicationManagement.css";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "/api";
 
 const ApplicationManagement = () => {
   const [expandedDept, setExpandedDept] = useState(null);
@@ -9,6 +10,8 @@ const ApplicationManagement = () => {
   const [departments, setDepartments] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pendingToggle, setPendingToggle] = useState(null); // { deptId, appCode, appName, deptName, newValue }
+  const { showToast } = useToast();
 
   // Icon mapping for departments (Font Awesome icons)
   const departmentIcons = {
@@ -95,8 +98,23 @@ const ApplicationManagement = () => {
 
   const togglePermission = async (deptId, appCode) => {
     const newValue = !permissions[deptId]?.[appCode];
+    const app = applications.find((a) => a.code === appCode);
+    const dept = departments.find((d) => d.id === deptId);
+    setPendingToggle({
+      deptId,
+      appCode,
+      appName: app?.name || appCode,
+      deptName: dept?.name || "Department",
+      newValue,
+    });
+  };
+
+  const confirmToggle = async () => {
+    if (!pendingToggle) return;
+    const { deptId, appCode, appName, deptName, newValue } = pendingToggle;
 
     // Optimistically update UI
+    const oldPermissions = { ...permissions };
     const newPermissions = {
       ...permissions,
       [deptId]: {
@@ -105,22 +123,30 @@ const ApplicationManagement = () => {
       },
     };
     setPermissions(newPermissions);
+    setPendingToggle(null);
 
     // Save to database
     try {
-      // Find application ID by code
-      const app = applications.find((a) => a.code === appCode);
-      if (app) {
-        await fetch(`${API_URL}/departments/${deptId}/permissions/${app.id}`, {
+      const res = await fetch(
+        `${API_URL}/departments/${deptId}/permissions/${appCode}`,
+        {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ enabled: newValue }),
-        });
+        },
+      );
+      if (res.ok) {
+        showToast(
+          `${appName} ${newValue ? "enabled" : "disabled"} for ${deptName}`,
+          "success",
+        );
+      } else {
+        throw new Error("API error");
       }
     } catch (error) {
       console.error("Error saving permission:", error);
-      // Revert on error
-      setPermissions(permissions);
+      setPermissions(oldPermissions);
+      showToast(`Failed to update ${appName} permission`, "error");
     }
   };
 
@@ -137,7 +163,28 @@ const ApplicationManagement = () => {
     return (
       <div className="app-management-section">
         <div className="app-management-loading">
-          <div className="loading-icon">⏳</div>
+          <div className="loading-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ animation: "spin 1s linear infinite" }}
+            >
+              <line x1="12" y1="2" x2="12" y2="6"></line>
+              <line x1="12" y1="18" x2="12" y2="22"></line>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+              <line x1="2" y1="12" x2="6" y2="12"></line>
+              <line x1="18" y1="12" x2="22" y2="12"></line>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+            </svg>
+          </div>
           <p className="loading-text">Loading departments...</p>
         </div>
       </div>
@@ -286,6 +333,97 @@ const ApplicationManagement = () => {
           </div>
         ))}
       </div>
+
+      {/* Toggle Confirmation Modal */}
+      {pendingToggle && (
+        <div
+          className="confirm-dialog-overlay"
+          onClick={() => setPendingToggle(null)}
+        >
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div
+                className={`confirm-dialog-icon ${pendingToggle.newValue ? "info" : "warning"}`}
+              >
+                {pendingToggle.newValue ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                )}
+              </div>
+              <h3>
+                {pendingToggle.newValue ? "Enable" : "Disable"} Application?
+              </h3>
+              <p>
+                {pendingToggle.newValue ? (
+                  <>
+                    Enable <strong>{pendingToggle.appName}</strong> for{" "}
+                    <strong>{pendingToggle.deptName}</strong>?
+                  </>
+                ) : (
+                  <>
+                    Disable <strong>{pendingToggle.appName}</strong> for{" "}
+                    <strong>{pendingToggle.deptName}</strong>? Users in this
+                    department will lose access.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="confirm-dialog-footer">
+              <button
+                className="cd-btn cd-btn-cancel"
+                onClick={() => setPendingToggle(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={`cd-btn ${pendingToggle.newValue ? "cd-btn-primary" : "cd-btn-warning"}`}
+                onClick={confirmToggle}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  {pendingToggle.newValue ? (
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  ) : (
+                    <>
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </>
+                  )}
+                </svg>
+                {pendingToggle.newValue ? "Enable" : "Disable"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

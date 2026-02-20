@@ -6,11 +6,22 @@ export const getAllRoles = async (req, res) => {
     const [roles] = await db.query("SELECT * FROM roles ORDER BY id ASC");
 
     // Parse permissions from JSON string
-    const parsed = roles.map((r) => ({
-      ...r,
-      permissions: r.permissions ? JSON.parse(r.permissions) : [],
-      isActive: r.is_active === 1,
-    }));
+    const parsed = roles.map((r) => {
+      let permissions = [];
+      try {
+        permissions = r.permissions ? JSON.parse(r.permissions) : [];
+      } catch (e) {
+        console.error(
+          `Invalid JSON in permissions for role ${r.id}:`,
+          e.message,
+        );
+      }
+      return {
+        ...r,
+        permissions,
+        isActive: r.is_active === 1,
+      };
+    });
 
     // Count users per role (all users regardless of status)
     const [users] = await db.query(
@@ -49,13 +60,11 @@ export const createRole = async (req, res) => {
       [name, code, description || "", permStr, isActive !== false ? 1 : 0],
     );
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Role created",
-        data: { id: result.insertId },
-      });
+    res.status(201).json({
+      success: true,
+      message: "Role created",
+      data: { id: result.insertId },
+    });
   } catch (error) {
     console.error("Error creating role:", error);
     if (error.code === "ER_DUP_ENTRY") {

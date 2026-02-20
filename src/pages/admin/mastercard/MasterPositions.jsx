@@ -457,12 +457,12 @@ const MasterPositions = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedPosition && (
         <div
-          className="modal-overlay confirmation-modal"
+          className="confirm-dialog-overlay"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-body">
-              <div className="confirmation-icon warning">
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-dialog-body">
+              <div className="confirm-dialog-icon warning">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -493,19 +493,21 @@ const MasterPositions = () => {
                 )}
               </p>
             </div>
-            <div className="modal-footer">
+            <div className="confirm-dialog-footer">
               <button
-                className="modal-btn modal-btn-secondary"
+                className="cd-btn cd-btn-cancel"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="modal-btn modal-btn-danger"
+                className="cd-btn cd-btn-danger"
                 onClick={confirmDelete}
                 disabled={loading}
               >
                 <svg
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

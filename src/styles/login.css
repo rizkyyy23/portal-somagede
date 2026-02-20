@@ -189,6 +189,13 @@
   padding-right: 40px;
 }
 
+/* Hide browser's built-in password reveal button (Edge / Chrome) */
+.login-page .input-wrapper input::-ms-reveal,
+.login-page .input-wrapper input::-ms-clear,
+.login-page .input-wrapper input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
 .login-page .eye-icon {
   position: absolute;
   right: 14px;

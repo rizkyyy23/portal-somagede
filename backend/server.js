@@ -22,9 +22,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // Routes
@@ -36,7 +41,7 @@ app.use("/api", analyticsRoutes);
 app.use("/api", applicationRoutes);
 app.use("/api", roleRoutes);
 app.use("/api", positionRoutes);
-app.use("/api", apiConfigRoutes);
+app.use("/api/api-configs", apiConfigRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
@@ -61,7 +66,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     success: false,
     message: "Internal server error",
-    error: err.message,
+    error: process.env.NODE_ENV === "production" ? undefined : err.message,
   });
 });
 

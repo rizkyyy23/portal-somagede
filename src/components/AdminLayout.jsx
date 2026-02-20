@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import "../styles/admin-dashboard.css";
 
 const AdminLayout = () => {
   const [showUserNavModal, setShowUserNavModal] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Get page title based on current route
   const getPageTitle = () => {
@@ -16,6 +17,10 @@ const AdminLayout = () => {
       "application-management": "APPLICATION MANAGEMENT",
       "user-control": "USER CONTROL",
       broadcast: "BROADCAST MESSAGE",
+      departments: "MASTER DEPARTMENTS",
+      applications: "MASTER APPLICATIONS",
+      roles: "MASTER ROLES",
+      positions: "MASTER POSITIONS",
     };
     return titles[path] || "ADMIN PANEL";
   };
@@ -136,7 +141,7 @@ const AdminLayout = () => {
               <button
                 onClick={() => {
                   setShowUserNavModal(false);
-                  window.location.href = "/dashboard";
+                  navigate("/dashboard");
                 }}
                 style={{
                   flex: 1,
