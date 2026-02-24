@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 const AdminSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [expandedMenus, setExpandedMenus] = useState({ mastercard: false });
+  const [expandedMenus, setExpandedMenus] = useState({ masterdata: false });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -104,8 +104,8 @@ const AdminSidebar = () => {
       ),
     },
     {
-      id: "mastercard",
-      label: "Mastercard",
+      id: "masterdata",
+      label: "Master Data",
       hasSubmenu: true,
       icon: (
         <svg
@@ -122,22 +122,27 @@ const AdminSidebar = () => {
         {
           id: "master-departments",
           label: "Master Departments",
-          path: "/admin/mastercard/departments",
+          path: "/admin/masterdata/departments",
         },
         {
           id: "master-applications",
           label: "Master Applications",
-          path: "/admin/mastercard/applications",
+          path: "/admin/masterdata/applications",
         },
         {
           id: "master-roles",
           label: "Master Roles",
-          path: "/admin/mastercard/roles",
+          path: "/admin/masterdata/roles",
         },
         {
           id: "master-positions",
           label: "Master Positions",
-          path: "/admin/mastercard/positions",
+          path: "/admin/masterdata/positions",
+        },
+        {
+          id: "master-menu",
+          label: "Master Menu",
+          path: "/admin/masterdata/menu",
         },
       ],
     },

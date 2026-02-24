@@ -251,7 +251,16 @@ const ActiveSession = () => {
                           </div>
                           <div className="user-info">
                             <h4>{session.user_name}</h4>
-                            <p>{session.user_email}</p>
+                            <p
+                              className={
+                                session.user_email &&
+                                session.user_email.length > 22
+                                  ? "small-email"
+                                  : ""
+                              }
+                            >
+                              {session.user_email}
+                            </p>
                           </div>
                         </div>
                       </td>

@@ -25,36 +25,61 @@ const API_URL = "/api";
 
 const Broadcast = () => {
   const { showToast } = useToast();
-  const [broadcasts, setBroadcasts] = useState([]);
+  // activeBroadcasts: non-deleted ones (for Active Now tab)
+  const [activeBroadcasts, setActiveBroadcasts] = useState([]);
+  // historyBroadcasts: all broadcasts including soft-deleted (for All History tab)
+  const [historyBroadcasts, setHistoryBroadcasts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     message: "",
-    priority: "normal", // normal, high, urgent
+    priority: "normal",
     target_audience: "all",
     expires_at: "",
   });
-  const [activeTab, setActiveTab] = useState("active"); // 'active' or 'history'
+  const [activeTab, setActiveTab] = useState("active");
 
   useEffect(() => {
-    fetchBroadcasts();
+    fetchAllData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchBroadcasts = async () => {
+  // Fetch active (non-deleted) broadcasts
+  const fetchActiveBroadcasts = async () => {
+    try {
+      const t = Date.now();
+      const response = await fetch(`${API_URL}/broadcasts?t=${t}`);
+      const data = await response.json();
+      if (data.success) setActiveBroadcasts(data.data);
+    } catch (error) {
+      console.error("Error fetching active broadcasts:", error);
+    }
+  };
+
+  // Fetch ALL broadcasts history (including soft-deleted)
+  const fetchHistoryBroadcasts = async () => {
+    try {
+      const t = Date.now();
+      const response = await fetch(`${API_URL}/broadcasts/history?t=${t}`);
+      const data = await response.json();
+      if (data.success) setHistoryBroadcasts(data.data);
+    } catch (error) {
+      console.error("Error fetching broadcast history:", error);
+    }
+  };
+
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/broadcasts`);
-      const data = await response.json();
-      if (data.success) {
-        setBroadcasts(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching broadcasts:", error);
-      showToast("Failed to fetch broadcasts", "error");
+      await Promise.all([fetchActiveBroadcasts(), fetchHistoryBroadcasts()]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    fetchAllData();
   };
 
   const handleSubmit = async (e) => {
@@ -82,7 +107,7 @@ const Broadcast = () => {
           target_audience: "all",
           expires_at: "",
         });
-        fetchBroadcasts();
+        fetchAllData();
       } else {
         showToast(result.message || "Failed to send broadcast", "error");
       }
@@ -103,21 +128,20 @@ const Broadcast = () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const response = await fetch(
         `${API_URL}/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" },
       );
       const result = await response.json();
       if (result.success) {
-        showToast("Broadcast deleted successfully", "success");
-        fetchBroadcasts();
+        showToast("Broadcast removed from active list (kept in history)", "success");
+        // Refresh both lists so active no longer shows it, but history still does
+        await fetchAllData();
         setDeleteCandidate(null);
       } else {
-        showToast("Failed to delete broadcast", "error");
+        showToast(result.message || "Failed to remove broadcast", "error");
       }
     } catch (error) {
-      console.error("Error sending broadcast:", error);
-      showToast("Failed to delete broadcast", "error");
+      console.error("Error deleting broadcast:", error);
+      showToast("Failed to remove broadcast", "error");
     }
   };
 
@@ -287,134 +311,246 @@ const Broadcast = () => {
 
           <div className="broadcast-tabs">
             <button
-              onClick={() => setActiveTab("active")}
+              onClick={() => handleTabChange("active")}
               className={`broadcast-tab-btn ${activeTab === "active" ? "active" : ""}`}
             >
-              Active
+              Active Now
             </button>
             <button
-              onClick={() => setActiveTab("history")}
+              onClick={() => handleTabChange("history")}
               className={`broadcast-tab-btn ${activeTab === "history" ? "active" : ""}`}
             >
-              History
+              All History
             </button>
           </div>
 
           <div className="broadcast-history-list">
             {loading ? (
-              <p className="broadcast-empty">Loading...</p>
+              <p className="broadcast-empty">Loading history...</p>
             ) : (
               (() => {
                 const now = new Date();
-                const filteredBroadcasts = broadcasts.filter((b) => {
-                  if (activeTab === "active") {
-                    return !b.expires_at || new Date(b.expires_at) > now;
-                  } else {
-                    return true;
-                  }
-                });
+                // Use the correct data source for each tab
+                const displayList =
+                  activeTab === "active" ? activeBroadcasts : historyBroadcasts;
 
-                if (filteredBroadcasts.length === 0) {
+                if (displayList.length === 0) {
                   return (
-                    <div className="broadcast-empty">
+                    <div className="broadcast-empty" style={{ padding: "40px 0" }}>
                       <Inbox
                         size={48}
-                        style={{ opacity: 0.5, marginBottom: "10px" }}
+                        style={{ opacity: 0.2, marginBottom: "16px" }}
                       />
-                      <p>No {activeTab} broadcasts</p>
+                      <p>
+                        {activeTab === "active"
+                          ? "No active broadcasts at the moment"
+                          : "No broadcast history found"}
+                      </p>
                     </div>
                   );
                 }
 
-                return filteredBroadcasts.map((item) => {
-                  const config = getPriorityConfig(item.priority);
-                  const Icon = config.icon;
-                  const isExpired =
-                    item.expires_at && new Date(item.expires_at) < now;
-
-                  return (
+                return (
+                  <>
                     <div
-                      key={item.id}
-                      className="broadcast-item"
                       style={{
-                        opacity: isExpired && activeTab === "history" ? 0.7 : 1,
+                        padding: "0 4px 8px",
+                        fontSize: "11px",
+                        color: "#94a3b8",
+                        fontWeight: "500",
+                        borderBottom: "1px solid #f1f5f9",
+                        marginBottom: "4px",
                       }}
                     >
-                      <div className="broadcast-item-header">
+                      Showing {displayList.length} record
+                      {displayList.length !== 1 ? "s" : ""}
+                    </div>
+                    {displayList.map((item) => {
+                      const config = getPriorityConfig(item.priority);
+                      const Icon = config.icon;
+                      const isDeleted = !!item.deleted_at;
+                      const isExpired =
+                        !isDeleted &&
+                        item.expires_at &&
+                        new Date(item.expires_at) < now;
+
+                      // Determine visual state
+                      let statusLabel, statusBg, statusColor, borderColor;
+                      if (isDeleted) {
+                        statusLabel = "Deleted";
+                        statusBg = "#fef2f2";
+                        statusColor = "#ef4444";
+                        borderColor = "#fca5a5";
+                      } else if (isExpired) {
+                        statusLabel = "Expired";
+                        statusBg = "#f1f5f9";
+                        statusColor = "#64748b";
+                        borderColor = "#cbd5e1";
+                      } else {
+                        statusLabel = "Live";
+                        statusBg = "#ecfdf5";
+                        statusColor = "#10b981";
+                        borderColor = config.color;
+                      }
+
+                      return (
                         <div
+                          key={item.id}
+                          className="broadcast-item"
                           style={{
-                            display: "flex",
-                            gap: "10px",
-                            alignItems: "center",
+                            borderLeft: `4px solid ${borderColor}`,
+                            opacity: isDeleted || isExpired ? 0.8 : 1,
                           }}
                         >
-                          <div
-                            className="broadcast-item-icon"
-                            data-priority={item.priority}
-                          >
-                            <Icon size={16} />
-                          </div>
-                          <div>
-                            <div className="broadcast-item-title-row">
-                              <h4 className="broadcast-item-title">
-                                {item.title}
-                              </h4>
-                              {activeTab === "history" && (
-                                <span
-                                  className="broadcast-status-pill"
-                                  data-status={isExpired ? "expired" : "active"}
-                                >
-                                  {isExpired ? "Expired" : "Active"}
-                                </span>
-                              )}
-                            </div>
-                            <span className="broadcast-time">
-                              {new Date(item.created_at).toLocaleDateString()} •{" "}
-                              {new Date(item.created_at).toLocaleTimeString(
-                                [],
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
-                            </span>
-                            {item.expires_at && (
+                          <div className="broadcast-item-header">
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "10px",
+                                alignItems: "start",
+                                flex: 1,
+                              }}
+                            >
                               <div
-                                className="broadcast-expiry"
-                                data-expired={isExpired}
+                                className="broadcast-item-icon"
+                                data-priority={item.priority}
+                                style={{
+                                  backgroundColor:
+                                    isDeleted || isExpired
+                                      ? "#f1f5f9"
+                                      : config.bg,
+                                  color:
+                                    isDeleted || isExpired
+                                      ? "#64748b"
+                                      : config.color,
+                                }}
                               >
-                                <Clock size={12} />
-                                {isExpired ? "Expired at: " : "Expires: "}
-                                {new Date(item.expires_at).toLocaleString()}
+                                <Icon size={14} />
                               </div>
+                              <div style={{ flex: 1 }}>
+                                <div className="broadcast-item-title-row">
+                                  <h4 className="broadcast-item-title">
+                                    {item.title}
+                                  </h4>
+                                  <span
+                                    className="broadcast-status-pill"
+                                    style={{
+                                      backgroundColor: statusBg,
+                                      color: statusColor,
+                                    }}
+                                  >
+                                    {statusLabel}
+                                  </span>
+                                </div>
+                                <span className="broadcast-time">
+                                  Sent:{" "}
+                                  {new Date(item.created_at).toLocaleDateString(
+                                    "id-ID",
+                                    {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    },
+                                  )}{" "}
+                                  •{" "}
+                                  {new Date(item.created_at).toLocaleTimeString(
+                                    [],
+                                    { hour: "2-digit", minute: "2-digit" },
+                                  )}
+                                </span>
+                                {item.deleted_at && (
+                                  <div
+                                    className="broadcast-expiry"
+                                    style={{ color: "#ef4444" }}
+                                  >
+                                    <Trash2 size={11} />
+                                    Removed:{" "}
+                                    {new Date(
+                                      item.deleted_at,
+                                    ).toLocaleString("id-ID", {
+                                      day: "numeric",
+                                      month: "short",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </div>
+                                )}
+                                {!item.deleted_at && item.expires_at && (
+                                  <div
+                                    className="broadcast-expiry"
+                                    style={{
+                                      color: isExpired ? "#94a3b8" : "#f59e0b",
+                                    }}
+                                  >
+                                    <Clock size={11} />
+                                    {isExpired ? "Expired: " : "Live until: "}
+                                    {new Date(item.expires_at).toLocaleString(
+                                      "id-ID",
+                                      {
+                                        day: "numeric",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      },
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {/* Only show delete button on active items that haven't been deleted */}
+                            {!isDeleted && (
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                className="btn-delete-broadcast"
+                                title="Remove from active broadcasts"
+                                style={{ padding: "4px", borderRadius: "4px" }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             )}
                           </div>
+                          <p className="broadcast-message-preview">
+                            {item.message}
+                          </p>
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span className="broadcast-audience-tag">
+                              To:{" "}
+                              {item.target_audience === "all"
+                                ? "Everyone"
+                                : item.target_audience}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                color: "#94a3b8",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "3px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: "#cbd5e1",
+                                }}
+                              />
+                              Priority: {item.priority}
+                            </span>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="btn-delete-broadcast"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <p className="broadcast-message-preview">
-                        {item.message}
-                      </p>
-                      <div
-                        style={{
-                          marginTop: "12px",
-                          display: "flex",
-                          gap: "8px",
-                        }}
-                      >
-                        <span className="broadcast-audience-tag">
-                          To:{" "}
-                          {item.target_audience === "all"
-                            ? "Everyone"
-                            : item.target_audience}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                });
+                      );
+                    })}
+                  </>
+                );
               })()
             )}
           </div>

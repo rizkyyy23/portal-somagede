@@ -19,6 +19,14 @@ import MasterApplications from "./pages/admin/mastercard/MasterApplications";
 import MasterRoles from "./pages/admin/mastercard/MasterRoles";
 import MasterPositions from "./pages/admin/mastercard/MasterPositions";
 
+// Placeholder for MasterMenu until a full implementation is created
+const MasterMenu = () => (
+  <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+    <h2>Master Menu</h2>
+    <p>This page is under construction.</p>
+  </div>
+);
+
 function App() {
   return (
     <Router>
@@ -45,20 +53,21 @@ function App() {
             <Route path="/admin/user-control" element={<UserControl />} />
             <Route path="/admin/broadcast" element={<Broadcast />} />
 
-            {/* Mastercard Routes */}
+            {/* Masterdata Routes */}
             <Route
-              path="/admin/mastercard/departments"
+              path="/admin/masterdata/departments"
               element={<MasterDepartments />}
             />
             <Route
-              path="/admin/mastercard/applications"
+              path="/admin/masterdata/applications"
               element={<MasterApplications />}
             />
-            <Route path="/admin/mastercard/roles" element={<MasterRoles />} />
+            <Route path="/admin/masterdata/roles" element={<MasterRoles />} />
             <Route
-              path="/admin/mastercard/positions"
+              path="/admin/masterdata/positions"
               element={<MasterPositions />}
             />
+            <Route path="/admin/masterdata/menu" element={<MasterMenu />} />
           </Route>
         </Route>
 

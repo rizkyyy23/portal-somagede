@@ -432,7 +432,15 @@ const UserControl = () => {
                           </div>
                           <div className="user-info">
                             <h4>{user.name}</h4>
-                            <p>{user.email}</p>
+                            <p
+                              className={
+                                user.email && user.email.length > 22
+                                  ? "small-email"
+                                  : ""
+                              }
+                            >
+                              {user.email}
+                            </p>
                           </div>
                         </div>
                       </td>

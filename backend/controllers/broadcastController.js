@@ -2,12 +2,11 @@
 import db from '../config/database.js';
 import { logAudit } from '../utils/logger.js';
 
-// GET all broadcasts
-// GET all broadcasts (Admin view - shows all)
+// GET all broadcasts (Admin view - excludes soft-deleted)
 export const getAllBroadcasts = async (req, res) => {
   try {
     const [broadcasts] = await db.query(
-      'SELECT * FROM broadcasts ORDER BY created_at DESC'
+      'SELECT * FROM broadcasts WHERE deleted_at IS NULL ORDER BY created_at DESC'
     );
     res.json({ success: true, data: broadcasts });
   } catch (error) {
@@ -16,12 +15,26 @@ export const getAllBroadcasts = async (req, res) => {
   }
 };
 
-// GET active broadcasts (User view - filters expired)
+// GET all broadcasts history (Admin view - includes soft-deleted, for History tab)
+export const getAllBroadcastsHistory = async (req, res) => {
+  try {
+    const [broadcasts] = await db.query(
+      'SELECT * FROM broadcasts ORDER BY created_at DESC'
+    );
+    res.json({ success: true, data: broadcasts });
+  } catch (error) {
+    console.error('Error fetching broadcasts history:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch broadcasts history' });
+  }
+};
+
+// GET active broadcasts (User view - filters expired and soft-deleted)
 export const getActiveBroadcasts = async (req, res) => {
   try {
     const [broadcasts] = await db.query(
       `SELECT * FROM broadcasts 
-       WHERE expires_at IS NULL OR expires_at > NOW() 
+       WHERE deleted_at IS NULL
+       AND (expires_at IS NULL OR expires_at > NOW()) 
        ORDER BY created_at DESC`
     );
     res.json({ success: true, data: broadcasts });
@@ -68,11 +81,21 @@ export const createBroadcast = async (req, res) => {
   }
 };
 
-// DELETE broadcast
+// SOFT DELETE broadcast (sets deleted_at, keeps record in history)
 export const deleteBroadcast = async (req, res) => {
   try {
     const { id } = req.params;
-    await db.query('DELETE FROM broadcasts WHERE id = ?', [id]);
+
+    // Perform a soft delete by setting deleted_at timestamp
+    const [result] = await db.query(
+      'UPDATE broadcasts SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Broadcast not found or already deleted' });
+    }
+
     // Log admin action
     const admin_id = req.query.admin_id || req.body.admin_id;
     if (admin_id) {
@@ -81,12 +104,12 @@ export const deleteBroadcast = async (req, res) => {
         action_type: 'DELETE',
         target_type: 'BROADCAST',
         target_id: id,
-        details: `Deleted broadcast ID: ${id}`,
+        details: `Soft-deleted broadcast ID: ${id}`,
         ip_address: req.ip
       });
     }
 
-    res.json({ success: true, message: 'Broadcast deleted successfully' });
+    res.json({ success: true, message: 'Broadcast removed from active broadcasts' });
   } catch (error) {
     console.error('Error deleting broadcast:', error);
     res.status(500).json({ success: false, message: 'Failed to delete broadcast' });
