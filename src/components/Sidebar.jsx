@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "../utils/api";
 
 const AdminSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -7,6 +8,8 @@ const AdminSidebar = () => {
   const [expandedMenus, setExpandedMenus] = useState({ masterdata: false });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [dynamicMenus, setDynamicMenus] = useState([]);
+  const [isMenusLoaded, setIsMenusLoaded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,136 +35,99 @@ const AdminSidebar = () => {
     localStorage.setItem("sidebarCollapsed", newState);
   };
 
-  const menuItems = [
-    {
-      id: "dashboard-admin",
-      label: "Dashboard",
-      path: "/admin/dashboard-admin",
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-      ),
-    },
-    {
-      id: "active-session",
-      label: "Active Session",
-      path: "/admin/active-session",
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M12 6v6l4 2" />
-        </svg>
-      ),
-    },
-    {
-      id: "application-management",
-      label: "Application Management",
-      path: "/admin/application-management",
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-      ),
-    },
-    {
-      id: "user-control",
-      label: "User Control",
-      path: "/admin/user-control",
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-      ),
-    },
-    {
-      id: "masterdata",
-      label: "Master Data",
-      hasSubmenu: true,
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-        </svg>
-      ),
-      submenu: [
-        {
-          id: "master-departments",
-          label: "Master Departments",
-          path: "/admin/masterdata/departments",
-        },
-        {
-          id: "master-applications",
-          label: "Master Applications",
-          path: "/admin/masterdata/applications",
-        },
-        {
-          id: "master-roles",
-          label: "Master Roles",
-          path: "/admin/masterdata/roles",
-        },
-        {
-          id: "master-positions",
-          label: "Master Positions",
-          path: "/admin/masterdata/positions",
-        },
-        {
-          id: "master-menu",
-          label: "Master Menu",
-          path: "/admin/masterdata/menu",
-        },
-      ],
-    },
-    {
-      id: "broadcast",
-      label: "Broadcast Message",
-      path: "/admin/broadcast",
-      icon: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-      ),
-    },
-  ];
+  // Fetch dynamic menus from DB
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const data = await api.get("/menus");
+        if (data.success) {
+          // Filter out menus that are already in the Master Data exclusion list if needed
+          // or just take all active menus
+          setDynamicMenus(data.data.filter((m) => m.isActive));
+        }
+      } catch (error) {
+        console.error("Failed to fetch sidebar menus:", error);
+      } finally {
+        setIsMenusLoaded(true);
+      }
+    };
+    fetchMenus();
+  }, []);
+
+  const renderMenuIcon = (item) => {
+    if (!item.icon && !item.customIcon) return null;
+
+    // Handle custom uploaded icon (base64)
+    if (item.customIcon) {
+      return (
+        <img
+          src={item.customIcon}
+          alt=""
+          style={{
+            width: 18,
+            height: 18,
+            objectFit: "contain",
+            marginRight: 0,
+          }}
+        />
+      );
+    }
+
+    // Handle Font Awesome class
+    if (typeof item.icon === "string" && item.icon.startsWith("fas")) {
+      return <i className={item.icon} style={{ fontSize: 18 }}></i>;
+    }
+
+    // Fallback to SVG (legacy/static)
+    return item.icon;
+  };
+
+  const getMenuItems = () => {
+    if (!isMenusLoaded) {
+      return []; // Or some default skeleton
+    }
+
+    // Construct final list by mapping dynamic menus and attaching submenus to Master Data
+    return dynamicMenus.map((menu) => {
+      // If this is the Master Data entry (by path), attach the submenu
+      if (menu.path === "/admin/masterdata") {
+        return {
+          ...menu,
+          hasSubmenu: true,
+          submenu: [
+            {
+              id: "master-departments",
+              label: "Master Departments",
+              path: "/admin/masterdata/departments",
+            },
+            {
+              id: "master-applications",
+              label: "Master Applications",
+              path: "/admin/masterdata/applications",
+            },
+            {
+              id: "master-roles",
+              label: "Master Roles",
+              path: "/admin/masterdata/roles",
+            },
+            {
+              id: "master-positions",
+              label: "Master Positions",
+              path: "/admin/masterdata/positions",
+            },
+            {
+              id: "master-menu",
+              label: "Master Menu",
+              path: "/admin/masterdata/menu",
+            },
+          ],
+        };
+      }
+      return menu;
+    });
+  };
+
+  const menuItems = getMenuItems();
 
   const handleNavigation = (item) => {
     if (item.hasSubmenu) {
@@ -195,14 +161,13 @@ const AdminSidebar = () => {
     try {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       if (storedUser?.id) {
-        await fetch(`/api/sessions/user/${storedUser.id}`, {
-          method: "DELETE",
-        });
+        await api.delete(`/sessions/user/${storedUser.id}`);
       }
     } catch (e) {
       console.error("Failed to cleanup session:", e);
     }
 
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
@@ -285,7 +250,7 @@ const AdminSidebar = () => {
                 onClick={() => handleNavigation(item)}
                 data-tooltip={item.label}
               >
-                {item.icon}
+                {renderMenuIcon(item)}
                 <span>{item.label}</span>
                 {item.hasSubmenu && (
                   <svg

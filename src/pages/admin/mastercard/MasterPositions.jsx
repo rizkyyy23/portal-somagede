@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../../contexts/ToastContext";
+import { api } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
-
-const API_URL = "http://localhost:3001/api";
 
 const MasterPositions = () => {
   const { showToast } = useToast();
@@ -27,8 +26,7 @@ const MasterPositions = () => {
   const fetchPositions = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/positions`);
-      const data = await response.json();
+      const data = await api.get("/positions");
       if (data.success) {
         setPositions(data.data);
       }
@@ -75,18 +73,12 @@ const MasterPositions = () => {
 
     setLoading(true);
     try {
-      const method = selectedPosition ? "PUT" : "POST";
-      const endpoint = selectedPosition
-        ? `${API_URL}/positions/${selectedPosition.id}`
-        : `${API_URL}/positions`;
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
+      let data;
+      if (selectedPosition) {
+        data = await api.put(`/positions/${selectedPosition.id}`, formData);
+      } else {
+        data = await api.post("/positions", formData);
+      }
 
       if (data.success) {
         showToast(data.message || "Position saved successfully", "success");
@@ -106,14 +98,7 @@ const MasterPositions = () => {
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_URL}/positions/${selectedPosition.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      const data = await response.json();
+      const data = await api.delete(`/positions/${selectedPosition.id}`);
 
       if (data.success) {
         showToast(data.message || "Position deleted successfully", "success");
@@ -133,11 +118,7 @@ const MasterPositions = () => {
   const toggleStatus = async (pos) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/positions/${pos.id}/toggle`, {
-        method: "PATCH",
-      });
-
-      const data = await response.json();
+      const data = await api.patch(`/positions/${pos.id}/toggle`);
 
       if (data.success) {
         fetchPositions();

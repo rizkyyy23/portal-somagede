@@ -18,10 +18,9 @@ import {
 import "../../styles/admin-dashboard.css";
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
+import { api } from "../../utils/api";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/Broadcast.css";
-
-const API_URL = "/api";
 
 const Broadcast = () => {
   const { showToast } = useToast();
@@ -48,8 +47,7 @@ const Broadcast = () => {
   const fetchActiveBroadcasts = async () => {
     try {
       const t = Date.now();
-      const response = await fetch(`${API_URL}/broadcasts?t=${t}`);
-      const data = await response.json();
+      const data = await api.get(`/broadcasts?t=${t}`);
       if (data.success) setActiveBroadcasts(data.data);
     } catch (error) {
       console.error("Error fetching active broadcasts:", error);
@@ -60,8 +58,7 @@ const Broadcast = () => {
   const fetchHistoryBroadcasts = async () => {
     try {
       const t = Date.now();
-      const response = await fetch(`${API_URL}/broadcasts/history?t=${t}`);
-      const data = await response.json();
+      const data = await api.get(`/broadcasts/history?t=${t}`);
       if (data.success) setHistoryBroadcasts(data.data);
     } catch (error) {
       console.error("Error fetching broadcast history:", error);
@@ -91,12 +88,10 @@ const Broadcast = () => {
 
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await fetch(`${API_URL}/broadcasts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, admin_id: user.id }),
+      const result = await api.post("/broadcasts", {
+        ...formData,
+        admin_id: user.id,
       });
-      const result = await response.json();
 
       if (result.success) {
         showToast("Broadcast sent successfully!", "success");
@@ -126,11 +121,9 @@ const Broadcast = () => {
 
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await fetch(
-        `${API_URL}/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
-        { method: "DELETE" },
+      const result = await api.delete(
+        `/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
       );
-      const result = await response.json();
       if (result.success) {
         showToast("Broadcast removed from active list (kept in history)", "success");
         // Refresh both lists so active no longer shows it, but history still does

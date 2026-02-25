@@ -24,10 +24,9 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { api } from "../../utils/api";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/MasterData.css";
-
-const API_URL = "/api";
 
 const DashboardAdmin = () => {
   const navigate = useNavigate();
@@ -75,8 +74,7 @@ const DashboardAdmin = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch(`${API_URL}/departments`);
-      const result = await response.json();
+      const result = await api.get("/departments");
       if (result.success) {
         setDepartments(result.data);
       }
@@ -87,8 +85,7 @@ const DashboardAdmin = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch(`${API_URL}/analytics/trends`);
-      const trendData = await response.json();
+      const trendData = await api.get("/analytics/trends");
 
       if (trendData.success) {
         // Use the 'day' field from backend for fixed Mon-Sun order
@@ -114,8 +111,7 @@ const DashboardAdmin = () => {
 
   const fetchActiveBroadcasts = async () => {
     try {
-      const response = await fetch(`${API_URL}/broadcasts/active`); // Use active endpoint
-      const result = await response.json();
+      const result = await api.get("/broadcasts/active");
       if (result.success) {
         setActiveBroadcasts(result.data.slice(0, 3)); // Limit to 3 latest
       }
@@ -126,8 +122,7 @@ const DashboardAdmin = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch(`${API_URL}/dashboard/stats`);
-      const result = await response.json();
+      const result = await api.get("/dashboard/stats");
 
       if (result.success) {
         const data = result.data;
@@ -205,9 +200,7 @@ const DashboardAdmin = () => {
     if (!logoutCandidate) return;
 
     try {
-      await fetch(`${API_URL}/sessions/${logoutCandidate.id}`, {
-        method: "DELETE",
-      });
+      await api.delete(`/sessions/${logoutCandidate.id}`);
       fetchDashboardData();
       showToast(
         `${logoutCandidate.user_name} has been logged out successfully.`,
@@ -771,8 +764,25 @@ const DashboardAdmin = () => {
                             {initials}
                           </div>
                           <div className="user-info">
-                            <h4>{session.user_name}</h4>
-                            <p>{session.user_email}</p>
+                            <h4
+                              className={
+                                session.user_name && session.user_name.length > 20
+                                  ? "small-name"
+                                  : ""
+                              }
+                            >
+                              {session.user_name}
+                            </h4>
+                            <p
+                              className={
+                                session.user_email &&
+                                session.user_email.length > 24
+                                  ? "small-email"
+                                  : ""
+                              }
+                            >
+                              {session.user_email}
+                            </p>
                           </div>
                         </div>
                       </td>

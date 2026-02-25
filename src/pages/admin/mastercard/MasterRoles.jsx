@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../../contexts/ToastContext";
+import { api } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
-
-const API_URL = "http://localhost:3001/api";
 
 const MasterRoles = () => {
   const { showToast } = useToast();
@@ -12,8 +11,7 @@ const MasterRoles = () => {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/roles`);
-      const data = await res.json();
+      const data = await api.get("/roles");
       if (data.success) {
         setRoles(data.data);
       } else {
@@ -90,14 +88,10 @@ const MasterRoles = () => {
     }
 
     try {
+      let data;
       if (selectedRole) {
         // Update existing
-        const res = await fetch(`${API_URL}/roles/${selectedRole.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const data = await res.json();
+        data = await api.put(`/roles/${selectedRole.id}`, formData);
         if (data.success) {
           showToast("Role updated successfully", "success");
         } else {
@@ -106,12 +100,7 @@ const MasterRoles = () => {
         }
       } else {
         // Add new
-        const res = await fetch(`${API_URL}/roles`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const data = await res.json();
+        data = await api.post("/roles", formData);
         if (data.success) {
           showToast("Role added successfully", "success");
         } else {
@@ -138,10 +127,7 @@ const MasterRoles = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/roles/${selectedRole.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
+      const data = await api.delete(`/roles/${selectedRole.id}`);
       if (data.success) {
         showToast("Role deleted successfully", "success");
         setShowDeleteModal(false);
@@ -165,10 +151,7 @@ const MasterRoles = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/roles/${role.id}/toggle`, {
-        method: "PATCH",
-      });
-      const data = await res.json();
+      const data = await api.patch(`/roles/${role.id}/toggle`);
       if (data.success) {
         fetchRoles();
       } else {

@@ -802,9 +802,13 @@ tbody tr:hover {
   max-width: 180px;
   white-space: normal;
 }
+.user-info h4.small-name {
+  font-size: 13px !important;
+}
 .user-info p.small-email {
-  font-size: 10px;
+  font-size: 10px !important;
   color: var(--text-gray);
+  line-height: 1.2;
 }
 .force-logout-btn {
   white-space: nowrap;

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../utils/api";
 import "../styles/login.css";
-
-const API_URL = "/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,31 +25,29 @@ export default function Login() {
 
     try {
       // Lookup user from database with password verification
-      const response = await fetch(`${API_URL}/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: emailInput,
-          password: formData.password,
-        }),
+      const result = await api.post("/users/login", {
+        email: emailInput,
+        password: formData.password,
       });
-      const result = await response.json();
 
-      if (!response.ok) {
-        // Handle authentication errors
+      if (!result.success) {
         setError(result.message || "Invalid email or password");
         setIsLoading(false);
         return;
       }
 
       let userData;
-      if (result.success && result.found) {
-        // User found in database
+      if (result.found) {
         userData = result.data;
       } else {
         setError("Account not found. Please contact your administrator.");
         setIsLoading(false);
         return;
+      }
+
+      // Store auth token if backend provides one
+      if (result.data.token) {
+        localStorage.setItem("token", result.data.token);
       }
 
       // Determine user type based on role
@@ -73,18 +70,14 @@ export default function Login() {
 
       // Create active session
       try {
-        await fetch(`${API_URL}/sessions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userData.id || null,
-            user_name: userData.name,
-            user_email: userData.email,
-            department: userData.department,
-            role: userData.role || (isAdmin ? "Admin" : "User"),
-            ip_address: "0.0.0.0",
-            app_name: "Portal",
-          }),
+        await api.post("/sessions", {
+          user_id: userData.id || null,
+          user_name: userData.name,
+          user_email: userData.email,
+          department: userData.department,
+          role: userData.role || (isAdmin ? "Admin" : "User"),
+          ip_address: "0.0.0.0",
+          app_name: "Portal",
         });
       } catch (sessionError) {
         console.error("Session creation failed:", sessionError);
@@ -110,7 +103,6 @@ export default function Login() {
   };
 
   const handleMicrosoftLogin = () => {
-    console.log("Microsoft Teams 365 login clicked");
     // TODO: Implement Microsoft Teams 365 OAuth
     // After successful auth, redirect to /dashboard
   };
@@ -260,6 +252,9 @@ export default function Login() {
                 type="button"
                 className="google-button"
                 onClick={handleMicrosoftLogin}
+                disabled
+                title="Coming Soon"
+                style={{ opacity: 0.6, cursor: "not-allowed" }}
               >
                 <svg
                   className="google-icon"
@@ -279,6 +274,19 @@ export default function Login() {
                   />
                 </svg>
                 Sign in with Microsoft
+                <span
+                  style={{
+                    fontSize: "10px",
+                    background: "#f1f5f9",
+                    color: "#64748b",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    fontWeight: 600,
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  SOON
+                </span>
               </button>
             </form>
 

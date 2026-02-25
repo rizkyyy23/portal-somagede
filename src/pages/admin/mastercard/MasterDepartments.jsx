@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../../contexts/ToastContext";
+import { api, apiClient } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
-
-const API_URL = "http://localhost:3001/api";
 
 // 22 unique colors for departments
 const DEPARTMENT_COLORS = [
@@ -127,8 +126,7 @@ const MasterDepartments = () => {
   const fetchDepartments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/departments`);
-      const data = await response.json();
+      const data = await api.get("/departments");
       if (data.success) {
         // Sort by ID (1-22)
         const sortedData = data.data.sort((a, b) => a.id - b.id);
@@ -202,12 +200,11 @@ const MasterDepartments = () => {
 
     setLoading(true);
     try {
-      const method = selectedDepartment ? "PUT" : "POST";
       const endpoint = selectedDepartment
-        ? `${API_URL}/departments/${selectedDepartment.id}`
-        : `${API_URL}/departments`;
+        ? `/departments/${selectedDepartment.id}`
+        : `/departments`;
 
-      let requestData;
+      let data;
 
       // If uploading icon file
       if (iconMode === "upload" && iconFile) {
@@ -218,36 +215,25 @@ const MasterDepartments = () => {
         formDataObj.append("icon", iconFile);
         formDataObj.append("color", formData.color);
 
-        const response = await fetch(endpoint, {
-          method,
+        data = await apiClient(endpoint, {
+          method: selectedDepartment ? "PUT" : "POST",
           body: formDataObj,
         });
-        const data = await response.json();
-
-        if (data.success) {
-          showToast(data.message || "Department saved successfully", "success");
-          setShowModal(false);
-          fetchDepartments();
-        } else {
-          showToast(data.message || "Failed to save department", "error");
-        }
       } else {
         // Using icon picker
-        const response = await fetch(endpoint, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          showToast(data.message || "Department saved successfully", "success");
-          setShowModal(false);
-          fetchDepartments();
+        if (selectedDepartment) {
+          data = await api.put(endpoint, formData);
         } else {
-          showToast(data.message || "Failed to save department", "error");
+          data = await api.post(endpoint, formData);
         }
+      }
+
+      if (data.success) {
+        showToast(data.message || "Department saved successfully", "success");
+        setShowModal(false);
+        fetchDepartments();
+      } else {
+        showToast(data.message || "Failed to save department", "error");
       }
     } catch (error) {
       console.error("Error saving department:", error);
@@ -260,14 +246,7 @@ const MasterDepartments = () => {
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_URL}/departments/${selectedDepartment.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      const data = await response.json();
+      const data = await api.delete(`/departments/${selectedDepartment.id}`);
 
       if (data.success) {
         showToast(data.message || "Department deleted successfully", "success");

@@ -19,13 +19,7 @@ import MasterApplications from "./pages/admin/mastercard/MasterApplications";
 import MasterRoles from "./pages/admin/mastercard/MasterRoles";
 import MasterPositions from "./pages/admin/mastercard/MasterPositions";
 
-// Placeholder for MasterMenu until a full implementation is created
-const MasterMenu = () => (
-  <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-    <h2>Master Menu</h2>
-    <p>This page is under construction.</p>
-  </div>
-);
+import MasterMenu from "./pages/admin/mastercard/MasterMenu";
 
 function App() {
   return (

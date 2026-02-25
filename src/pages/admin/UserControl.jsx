@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { api, apiClient } from "../../utils/api";
 import "../../styles/UserControl.css";
-
-const API_URL = "/api";
 
 const UserControl = () => {
   // State for departments, positions, roles
@@ -12,23 +11,17 @@ const UserControl = () => {
   // Fetch departments, positions, roles from database
   useEffect(() => {
     // Fetch departments
-    fetch(`${API_URL}/departments`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setDepartments(data.data);
-      });
+    api.get("/departments").then((data) => {
+      if (data.success) setDepartments(data.data);
+    });
     // Fetch positions
-    fetch(`${API_URL}/positions`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setPositions(data.data.map((p) => p.name));
-      });
+    api.get("/positions").then((data) => {
+      if (data.success) setPositions(data.data.map((p) => p.name));
+    });
     // Fetch roles
-    fetch(`${API_URL}/roles`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setRoles(data.data);
-      });
+    api.get("/roles").then((data) => {
+      if (data.success) setRoles(data.data);
+    });
   }, []);
   // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
@@ -68,11 +61,9 @@ const UserControl = () => {
   useEffect(() => {
     fetchAllUsers();
     // Fetch all applications
-    fetch(`${API_URL}/applications`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setApplications(data.data);
-      });
+    api.get("/applications").then((data) => {
+      if (data.success) setApplications(data.data);
+    });
   }, []);
 
   // Cleanup avatar preview URL on unmount
@@ -90,18 +81,13 @@ const UserControl = () => {
 
     try {
       // Fetch all users data in parallel from different endpoints for accuracy
-      const [allResponse, inactiveResponse, adminResponse, privilegeResponse] =
+      const [allData, inactiveData, adminData, privilegeData] =
         await Promise.all([
-          fetch(`${API_URL}/users`),
-          fetch(`${API_URL}/users/inactive`),
-          fetch(`${API_URL}/users/admins`),
-          fetch(`${API_URL}/users/privilege`),
+          api.get("/users"),
+          api.get("/users/inactive"),
+          api.get("/users/admins"),
+          api.get("/users/privilege"),
         ]);
-
-      const allData = await allResponse.json();
-      const inactiveData = await inactiveResponse.json();
-      const adminData = await adminResponse.json();
-      const privilegeData = await privilegeResponse.json();
 
       if (
         allData.success &&
@@ -431,10 +417,18 @@ const UserControl = () => {
                             {initials}
                           </div>
                           <div className="user-info">
-                            <h4>{user.name}</h4>
+                            <h4
+                              className={
+                                user.name && user.name.length > 20
+                                  ? "small-name"
+                                  : ""
+                              }
+                            >
+                              {user.name}
+                            </h4>
                             <p
                               className={
-                                user.email && user.email.length > 22
+                                user.email && user.email.length > 24
                                   ? "small-email"
                                   : ""
                               }
@@ -577,10 +571,9 @@ const UserControl = () => {
                                 has_privilege: user.has_privilege,
                               });
                               try {
-                                const res = await fetch(
-                                  `${API_URL}/users/${user.id}/privileges`,
+                                const data = await api.get(
+                                  `/users/${user.id}/privileges`,
                                 );
-                                const data = await res.json();
                                 if (data.success) {
                                   setSelectedApps(
                                     data.data.map((a) => a.application_id),
@@ -963,11 +956,10 @@ const UserControl = () => {
                     body.append("role", "User");
                     body.append("status", "active");
                     if (formData.avatar) body.append("avatar", formData.avatar);
-                    const res = await fetch(`${API_URL}/users`, {
+                    const result = await apiClient("/users", {
                       method: "POST",
                       body,
                     });
-                    const result = await res.json();
                     if (result.success) {
                       setNotification({
                         type: "success",
@@ -1769,15 +1761,11 @@ const UserControl = () => {
                       message: `Are you sure you want to activate ${selectedUser.name}'s account?`,
                       onConfirm: async () => {
                         try {
-                          const response = await fetch(
-                            `${API_URL}/users/${selectedUser.id}`,
-                            {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ status: "active" }),
-                            },
+                          const data = await api.put(
+                            `/users/${selectedUser.id}`,
+                            { status: "active" },
                           );
-                          if (response.ok) {
+                          if (data.success !== false) {
                             await fetchAllUsers();
                             setShowEditModal(false);
                             setShowConfirmModal(false);
@@ -1838,21 +1826,15 @@ const UserControl = () => {
                           message: `Are you sure you want to save changes for ${selectedUser.name}?`,
                           onConfirm: async () => {
                             try {
-                              const response = await fetch(
-                                `${API_URL}/users/${selectedUser.id}`,
+                              const data = await api.put(
+                                `/users/${selectedUser.id}`,
                                 {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    status: formData.status,
-                                    has_privilege: formData.has_privilege,
-                                    role: formData.role,
-                                  }),
+                                  status: formData.status,
+                                  has_privilege: formData.has_privilege,
+                                  role: formData.role,
                                 },
                               );
-                              if (response.ok) {
+                              if (data.success !== false) {
                                 await fetchAllUsers();
                                 setShowEditModal(false);
                                 setShowConfirmModal(false);
@@ -2223,18 +2205,13 @@ const UserControl = () => {
                 }}
                 onClick={async () => {
                   try {
-                    const res = await fetch(
-                      `${API_URL}/users/${selectedUser.id}/privileges`,
+                    const data = await api.put(
+                      `/users/${selectedUser.id}/privileges`,
                       {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          application_ids: selectedApps,
-                          has_privilege: true,
-                        }),
+                        application_ids: selectedApps,
+                        has_privilege: true,
                       },
                     );
-                    const data = await res.json();
                     if (data.success) {
                       setShowPrivilegeModal(false);
                       fetchAllUsers();

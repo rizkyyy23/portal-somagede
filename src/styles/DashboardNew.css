@@ -677,41 +677,7 @@ body {
   color: #fff;
 }
 
-/* Locked State overrides */
-.app-card.locked {
-  background: #f8fafc;
-  opacity: 0.9;
-}
-
-.app-card.locked .card-icon-wrap {
-  filter: none; /* Reset filter */
-}
-
-.app-card.locked .launch-link {
-  background: transparent;
-  color: var(--text-muted);
-  box-shadow: none;
-  border: 1px solid var(--border);
-  cursor: not-allowed;
-}
-.app-card.locked .launch-link:hover {
-  transform: none;
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.app-card.locked .launch-link {
-  background: transparent;
-  color: var(--text-muted);
-  box-shadow: none;
-  border: 1px solid var(--border);
-  cursor: not-allowed;
-}
-.app-card.locked .launch-link:hover {
-  transform: none;
-  background: rgba(0, 0, 0, 0.02);
-}
-
-/* LOCKED STATE (Added for functionality) */
+/* Locked State */
 .app-card.locked {
   filter: grayscale(0.6);
   opacity: 0.85;
@@ -723,6 +689,23 @@ body {
 .app-card.locked:hover {
   transform: none;
   box-shadow: var(--shadow);
+}
+
+.app-card.locked .card-icon-wrap {
+  filter: none;
+}
+
+.app-card.locked .launch-link {
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  border: 1px solid var(--border);
+  cursor: not-allowed;
+}
+
+.app-card.locked .launch-link:hover {
+  transform: none;
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .lock-overlay {

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
+import { api } from "../../utils/api";
 import "../../styles/admin-dashboard.css";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/MasterData.css";
-
-const API_URL = "/api";
 
 const ActiveSession = () => {
   const { showToast } = useToast();
@@ -26,8 +25,7 @@ const ActiveSession = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch(`${API_URL}/departments`);
-      const result = await response.json();
+      const result = await api.get("/departments");
       if (result.success) {
         setDepartments(result.data);
       }
@@ -51,8 +49,7 @@ const ActiveSession = () => {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/sessions`);
-      const result = await response.json();
+      const result = await api.get("/sessions");
       if (result.success) {
         setSessions(result.data);
       }
@@ -93,9 +90,7 @@ const ActiveSession = () => {
 
   const confirmForceLogout = async () => {
     try {
-      await fetch(`${API_URL}/sessions/${selectedSession.id}`, {
-        method: "DELETE",
-      });
+      await api.delete(`/sessions/${selectedSession.id}`);
       fetchSessions();
       showToast(
         `${selectedSession.user_name} has been successfully logged out.`,

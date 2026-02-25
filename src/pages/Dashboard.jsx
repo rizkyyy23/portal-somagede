@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../utils/api";
 import "../styles/DashboardNew.css";
-
-const API_URL = "/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -54,20 +53,17 @@ export default function Dashboard() {
       }
 
       // 1. Fetch User Details
-      const userRes = await fetch(`${API_URL}/users/${userId}`);
-      const userData = await userRes.json();
+      const userData = await api.get(`/users/${userId}`);
       if (userData.success) setUser(userData.data);
 
       // 2. Fetch Privileges
-      const privRes = await fetch(`${API_URL}/users/${userId}/privileges`);
-      const privData = await privRes.json();
+      const privData = await api.get(`/users/${userId}/privileges`);
       if (privData.success) {
         setAllowedAppIds(privData.data.map((item) => item.application_id));
       }
 
       // 3. Fetch Applications
-      const appRes = await fetch(`${API_URL}/applications/categories`);
-      const appData = await appRes.json();
+      const appData = await api.get("/applications/categories");
       if (appData.success) {
         setCategorizedApps(appData.data);
       }
@@ -76,8 +72,7 @@ export default function Dashboard() {
       const fetchedUser = userData.success ? userData.data : null;
       if (fetchedUser?.department) {
         try {
-          const deptRes = await fetch(`${API_URL}/departments`);
-          const deptData = await deptRes.json();
+          const deptData = await api.get("/departments");
           if (deptData.success) {
             const userDept = deptData.data.find(
               (d) => d.name === fetchedUser.department,
@@ -105,8 +100,7 @@ export default function Dashboard() {
       }
 
       // 5. Fetch Active Broadcasts
-      const broadcastRes = await fetch(`${API_URL}/broadcasts`);
-      const broadcastData = await broadcastRes.json();
+      const broadcastData = await api.get("/broadcasts");
       if (broadcastData.success) {
         const now = new Date();
         const activeBroadcasts = broadcastData.data
@@ -152,14 +146,13 @@ export default function Dashboard() {
     // Cleanup active session
     try {
       if (user?.id) {
-        await fetch(`${API_URL}/sessions/user/${user.id}`, {
-          method: "DELETE",
-        });
+        await api.delete(`/sessions/user/${user.id}`);
       }
     } catch (e) {
       console.error("Failed to cleanup session:", e);
     }
 
+    localStorage.removeItem("token");
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("user");

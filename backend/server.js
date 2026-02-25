@@ -10,6 +10,7 @@ import applicationRoutes from "./routes/applicationRoutes.js";
 import roleRoutes from "./routes/roleRoutes.js";
 import positionRoutes from "./routes/positionRoutes.js";
 import apiConfigRoutes from "./routes/apiConfigRoutes.js";
+import menuRoutes from "./routes/menuRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -42,6 +43,7 @@ app.use("/api", applicationRoutes);
 app.use("/api", roleRoutes);
 app.use("/api", positionRoutes);
 app.use("/api/api-configs", apiConfigRoutes);
+app.use("/api", menuRoutes);
 
 // Health check
 app.get("/health", (req, res) => {

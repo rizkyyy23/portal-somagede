@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../../contexts/ToastContext";
+import { api, apiClient } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
-
-const API_URL = "http://localhost:3001/api";
 
 const MasterApplications = () => {
   const { showToast } = useToast();
@@ -32,11 +31,8 @@ const MasterApplications = () => {
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/applications`);
-      const data = await response.json();
+      const data = await api.get("/applications");
       if (data.success) {
-        // Map DB fields to UI fields if necessary, or ensure backend sends matching fields
-        // DB: status='active'/'inactive', UI: isActive=true/false
         const mappedApps = data.data.map((app) => ({
           ...app,
           isActive: app.status === "active",
@@ -104,27 +100,24 @@ const MasterApplications = () => {
 
     setLoading(true);
     try {
-      const method = selectedApp ? "PUT" : "POST";
       const endpoint = selectedApp
-        ? `${API_URL}/applications/${selectedApp.id}`
-        : `${API_URL}/applications`;
+        ? `/applications/${selectedApp.id}`
+        : `/applications`;
 
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("code", formData.code);
-      data.append("description", formData.description);
-      data.append("url", formData.url);
-      data.append("status", formData.isActive ? "active" : "inactive");
+      const formDataObj = new FormData();
+      formDataObj.append("name", formData.name);
+      formDataObj.append("code", formData.code);
+      formDataObj.append("description", formData.description);
+      formDataObj.append("url", formData.url);
+      formDataObj.append("status", formData.isActive ? "active" : "inactive");
       if (logoFile) {
-        data.append("icon", logoFile);
+        formDataObj.append("icon", logoFile);
       }
 
-      const response = await fetch(endpoint, {
-        method,
-        body: data, // No Content-Type header needed for FormData, browser sets it
+      const result = await apiClient(endpoint, {
+        method: selectedApp ? "PUT" : "POST",
+        body: formDataObj,
       });
-
-      const result = await response.json();
 
       if (result.success) {
         showToast(
@@ -147,13 +140,7 @@ const MasterApplications = () => {
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_URL}/applications/${selectedApp.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await response.json();
+      const data = await api.delete(`/applications/${selectedApp.id}`);
 
       if (data.success) {
         showToast(
@@ -184,22 +171,14 @@ const MasterApplications = () => {
     setLoading(true);
     try {
       const newStatus = !selectedApp.isActive;
-      const response = await fetch(
-        `${API_URL}/applications/${selectedApp.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: selectedApp.name,
-            code: selectedApp.code,
-            description: selectedApp.description,
-            url: selectedApp.url,
-            status: newStatus ? "active" : "inactive",
-          }),
-        },
-      );
+      const data = await api.put(`/applications/${selectedApp.id}`, {
+        name: selectedApp.name,
+        code: selectedApp.code,
+        description: selectedApp.description,
+        url: selectedApp.url,
+        status: newStatus ? "active" : "inactive",
+      });
 
-      const data = await response.json();
       if (data.success) {
         showToast(
           `Application ${newStatus ? "activated" : "deactivated"} successfully`,

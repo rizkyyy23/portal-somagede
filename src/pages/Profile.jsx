@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../utils/api";
 import "../styles/profile.css";
-
-const API_URL = "/api";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -40,8 +39,7 @@ export default function Profile() {
         return;
       }
 
-      const response = await fetch(`${API_URL}/users/${userId}`);
-      const data = await response.json();
+      const data = await api.get(`/users/${userId}`);
 
       if (data.success) {
         setUserData(data.data);
@@ -140,19 +138,13 @@ export default function Profile() {
 
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
-      const response = await fetch(
-        `${API_URL}/users/${storedUser?.id}/change-password`,
+      const data = await api.put(
+        `/users/${storedUser?.id}/change-password`,
         {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            currentPassword: passwordForm.currentPassword,
-            newPassword: passwordForm.newPassword,
-          }),
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
         },
       );
-
-      const data = await response.json();
 
       if (data.success) {
         setPasswordSuccess("Password changed successfully!");

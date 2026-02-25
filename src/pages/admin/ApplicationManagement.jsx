@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
+import { api } from "../../utils/api";
 import "../../styles/ApplicationManagement.css";
-
-const API_URL = "/api";
 
 const ApplicationManagement = () => {
   const [expandedDept, setExpandedDept] = useState(null);
@@ -47,8 +46,7 @@ const ApplicationManagement = () => {
 
   const fetchApplications = async () => {
     try {
-      const response = await fetch(`${API_URL}/applications`);
-      const data = await response.json();
+      const data = await api.get("/applications");
       if (data.success) {
         setApplications(data.data);
       }
@@ -61,8 +59,7 @@ const ApplicationManagement = () => {
     setLoading(true);
     try {
       // Fetch departments
-      const deptResponse = await fetch(`${API_URL}/departments`);
-      const deptData = await deptResponse.json();
+      const deptData = await api.get("/departments");
 
       if (deptData.success) {
         // Sort departments by ID for consistent ordering
@@ -71,8 +68,7 @@ const ApplicationManagement = () => {
       }
 
       // Fetch permissions from department_permissions table
-      const permResponse = await fetch(`${API_URL}/departments/permissions`);
-      const permData = await permResponse.json();
+      const permData = await api.get("/departments/permissions");
 
       if (permData.success) {
         // Convert to state format {deptId: {appId: boolean}}
@@ -127,15 +123,11 @@ const ApplicationManagement = () => {
 
     // Save to database
     try {
-      const res = await fetch(
-        `${API_URL}/departments/${deptId}/permissions/${appCode}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled: newValue }),
-        },
+      const data = await api.patch(
+        `/departments/${deptId}/permissions/${appCode}`,
+        { enabled: newValue },
       );
-      if (res.ok) {
+      if (data.success !== false) {
         showToast(
           `${appName} ${newValue ? "enabled" : "disabled"} for ${deptName}`,
           "success",
