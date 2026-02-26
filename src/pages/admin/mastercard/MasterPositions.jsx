@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
@@ -49,14 +49,18 @@ const MasterPositions = () => {
     setShowModal(true);
   };
 
+  const originalData = useRef(null);
+
   const handleEdit = (pos) => {
     setSelectedPosition(pos);
-    setFormData({
+    const editData = {
       name: pos.name,
       code: pos.code,
       description: pos.description || "",
       isActive: pos.status === "active" || pos.isActive,
-    });
+    };
+    setFormData(editData);
+    originalData.current = { ...editData };
     setShowModal(true);
   };
 
@@ -66,8 +70,20 @@ const MasterPositions = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.code) {
-      showToast("Name and code are required", "warning");
+    if (!formData.name?.trim()) {
+      showToast("Position name is required", "warning");
+      return;
+    }
+    if (formData.name.length > 100) {
+      showToast("Position name must be less than 100 characters", "warning");
+      return;
+    }
+    if (!formData.code?.trim()) {
+      showToast("Position code is required", "warning");
+      return;
+    }
+    if (formData.code.length > 20) {
+      showToast("Position code must be less than 20 characters", "warning");
       return;
     }
 
@@ -135,8 +151,8 @@ const MasterPositions = () => {
 
   const filteredPositions = positions.filter(
     (pos) =>
-      pos.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pos.code.toLowerCase().includes(searchQuery.toLowerCase()),
+      pos.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      pos.code.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
@@ -413,23 +429,38 @@ const MasterPositions = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Saving..." : "Save Position"}
-              </button>
+              {(() => {
+                const isEdit = !!selectedPosition;
+                const hasChanges = !isEdit || !originalData.current ||
+                  formData.name !== originalData.current.name ||
+                  formData.code !== originalData.current.code ||
+                  formData.description !== originalData.current.description;
+                const canSave = hasChanges && !loading;
+                return (
+                  <button
+                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    onClick={handleSave}
+                    disabled={!canSave}
+                    style={{
+                      opacity: canSave ? 1 : 0.5,
+                      cursor: canSave ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Position"}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api, apiClient } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
@@ -155,15 +155,19 @@ const MasterDepartments = () => {
     setShowModal(true);
   };
 
+  const originalData = useRef(null);
+
   const handleEdit = (dept) => {
     setSelectedDepartment(dept);
-    setFormData({
+    const editData = {
       name: dept.name,
       code: dept.code,
       description: dept.description || "",
       icon: dept.icon || "briefcase",
       color: dept.color || "",
-    });
+    };
+    setFormData(editData);
+    originalData.current = { ...editData };
     setIconMode("picker");
     setIconFile(null);
     setIconPreview(null);
@@ -188,8 +192,20 @@ const MasterDepartments = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.code) {
-      showToast("Name and code are required", "error");
+    if (!formData.name?.trim()) {
+      showToast("Department name is required", "error");
+      return;
+    }
+    if (formData.name.length > 100) {
+      showToast("Department name must be less than 100 characters", "warning");
+      return;
+    }
+    if (!formData.code?.trim()) {
+      showToast("Department code is required", "error");
+      return;
+    }
+    if (formData.code.length > 20) {
+      showToast("Department code must be less than 20 characters", "warning");
       return;
     }
 
@@ -266,8 +282,8 @@ const MasterDepartments = () => {
   const filteredDepartments = departments
     .filter(
       (dept) =>
-        dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dept.code.toLowerCase().includes(searchQuery.toLowerCase()),
+        dept.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        dept.code.toLowerCase().includes(searchQuery.trim().toLowerCase()),
     )
     .sort((a, b) => a.id - b.id); // Always sort by ID
 
@@ -835,23 +851,41 @@ const MasterDepartments = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Saving..." : "Save Department"}
-              </button>
+              {(() => {
+                const isEdit = !!selectedDepartment;
+                const hasChanges = !isEdit || !originalData.current ||
+                  formData.name !== originalData.current.name ||
+                  formData.code !== originalData.current.code ||
+                  formData.description !== originalData.current.description ||
+                  formData.icon !== originalData.current.icon ||
+                  formData.color !== originalData.current.color ||
+                  !!iconFile;
+                const canSave = hasChanges && !loading;
+                return (
+                  <button
+                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    onClick={handleSave}
+                    disabled={!canSave}
+                    style={{
+                      opacity: canSave ? 1 : 0.5,
+                      cursor: canSave ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Department"}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

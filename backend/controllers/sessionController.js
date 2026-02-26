@@ -28,6 +28,12 @@ export const createSession = async (req, res) => {
       app_name,
     } = req.body;
 
+    // Clean up any existing sessions for this user before creating a new one
+    // This prevents stale/duplicate sessions from accumulating
+    if (user_id) {
+      await db.query("DELETE FROM active_sessions WHERE user_id = ?", [user_id]);
+    }
+
     const [result] = await db.query(
       "INSERT INTO active_sessions (user_id, user_name, user_email, department, role, ip_address, app_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [

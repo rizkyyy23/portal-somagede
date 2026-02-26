@@ -52,9 +52,10 @@ const DashboardAdmin = () => {
     fetchDepartments();
   }, []);
 
-  // Always show welcome notification every time admin panel is entered
+  // Show welcome notification only once per login session
   useEffect(() => {
-    // Get admin info from localStorage
+    if (sessionStorage.getItem("adminWelcomeShown")) return;
+
     const storedUser = localStorage.getItem("user");
     let adminName = "Admin";
     if (storedUser) {
@@ -65,9 +66,9 @@ const DashboardAdmin = () => {
         console.error("Error parsing user data:", error);
       }
     }
-    // Show welcome notification after a short delay for better UX
     const timer = setTimeout(() => {
       showToast(`Selamat datang di admin panel, ${adminName}!`, "dark");
+      sessionStorage.setItem("adminWelcomeShown", "true");
     }, 500);
     return () => clearTimeout(timer);
   }, [showToast]);

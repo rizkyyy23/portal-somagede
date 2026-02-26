@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../utils/api";
 import "../styles/login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
+  const [formData, setFormData] = useState(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail") || "";
+    return {
+      email: savedEmail,
+      password: "",
+      rememberMe: !!savedEmail,
+    };
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -21,8 +24,6 @@ export default function Login() {
     setIsLoading(true);
 
     const emailInput = formData.email.trim().toLowerCase();
-    const isAdmin = emailInput.endsWith("@admin.somagede.com");
-
     try {
       // Lookup user from database with password verification
       const result = await api.post("/users/login", {
@@ -36,22 +37,28 @@ export default function Login() {
         return;
       }
 
-      let userData;
-      if (result.found) {
-        userData = result.data;
-      } else {
+      const userData = result.data;
+      if (!userData) {
         setError("Account not found. Please contact your administrator.");
         setIsLoading(false);
         return;
       }
 
       // Store auth token if backend provides one
-      if (result.data.token) {
-        localStorage.setItem("token", result.data.token);
+      if (userData.token) {
+        localStorage.setItem("token", userData.token);
       }
 
-      // Determine user type based on role
-      const userType = userData.role === "Admin" || isAdmin ? "admin" : "user";
+      // Determine user type based on role from backend
+      const userRole = userData.role?.toLowerCase();
+      const userType = userRole === "admin" ? "admin" : "user";
+
+      // Handle Remember Me persistence
+      if (formData.rememberMe) {
+        localStorage.setItem("rememberedEmail", userData.email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
 
       // Store user data
       localStorage.setItem("userType", userType);
@@ -61,7 +68,7 @@ export default function Login() {
         JSON.stringify({
           id: userData.id,
           name: userData.name,
-          role: userData.role?.toUpperCase() || (isAdmin ? "ADMIN" : "USER"),
+          role: userData.role?.toUpperCase() || (userType === "admin" ? "ADMIN" : "USER"),
           department: userData.department,
           position: userData.position,
           avatar: userData.avatar || null,

@@ -44,6 +44,7 @@ const UserControl = () => {
   const [adminUsers, setAdminUsers] = useState([]);
   const [applications, setApplications] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
+  const originalApps = useRef([]);
   const [pendingAppToggle, setPendingAppToggle] = useState(null); // { appId, appName, newValue }
 
   const [formData, setFormData] = useState({
@@ -164,10 +165,10 @@ const UserControl = () => {
   const filteredUsers = getCurrentUsers()
     .filter(
       (user) =>
-        ((user.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ((user.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
           (user.email || "")
             .toLowerCase()
-            .includes(searchQuery.toLowerCase())) &&
+            .includes(searchQuery.trim().toLowerCase())) &&
         (deptFilter === "" || user.department === deptFilter),
     )
     .sort((a, b) => {
@@ -575,14 +576,16 @@ const UserControl = () => {
                                   `/users/${user.id}/privileges`,
                                 );
                                 if (data.success) {
-                                  setSelectedApps(
-                                    data.data.map((a) => a.application_id),
-                                  );
+                                  const appIds = data.data.map((a) => a.application_id);
+                                  setSelectedApps(appIds);
+                                  originalApps.current = [...appIds];
                                 } else {
                                   setSelectedApps([]);
+                                  originalApps.current = [];
                                 }
                               } catch {
                                 setSelectedApps([]);
+                                originalApps.current = [];
                               }
                               setShowPrivilegeModal(true);
                             } else {
@@ -939,10 +942,31 @@ const UserControl = () => {
               <button
                 className="modal-btn modal-btn-primary"
                 onClick={async () => {
-                  if (!formData.name || !formData.email || !formData.password) {
+                  if (!formData.name?.trim()) {
                     setNotification({
                       type: "error",
-                      message: "Name, email, and password are required",
+                      message: "Full name is required",
+                    });
+                    return;
+                  }
+                  if (!formData.email?.trim()) {
+                    setNotification({
+                      type: "error",
+                      message: "Email is required",
+                    });
+                    return;
+                  }
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                    setNotification({
+                      type: "error",
+                      message: "Please enter a valid email address",
+                    });
+                    return;
+                  }
+                  if (!formData.password || formData.password.length < 6) {
+                    setNotification({
+                      type: "error",
+                      message: "Password must be at least 6 characters",
                     });
                     return;
                   }
@@ -2195,60 +2219,69 @@ const UserControl = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                style={{
-                  background: "#3a3f47",
-                  border: "none",
-                  color: "#fff",
-                  flex: "0 0 auto",
-                }}
-                onClick={async () => {
-                  try {
-                    const data = await api.put(
-                      `/users/${selectedUser.id}/privileges`,
-                      {
-                        application_ids: selectedApps,
-                        has_privilege: true,
-                      },
-                    );
-                    if (data.success) {
-                      setShowPrivilegeModal(false);
-                      fetchAllUsers();
-                      setNotification({
-                        type: "success",
-                        message: "Application permissions updated successfully",
-                      });
-                      setTimeout(() => setNotification(null), 3500);
-                    } else {
-                      setNotification({
-                        type: "error",
-                        message: data.message || "Failed to update permissions",
-                      });
-                      setTimeout(() => setNotification(null), 3500);
-                    }
-                  } catch (err) {
-                    console.error("Error updating privileges:", err);
-                    setNotification({
-                      type: "error",
-                      message: "Network error. Please check your connection.",
-                    });
-                    setTimeout(() => setNotification(null), 3500);
-                  }
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Save Permissions
-              </button>
+              {(() => {
+                const hasChanges = JSON.stringify([...selectedApps].sort()) !== JSON.stringify([...originalApps.current].sort());
+                return (
+                  <button
+                    className={`modal-btn ${hasChanges ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    disabled={!hasChanges}
+                    style={{
+                      background: hasChanges ? "#3a3f47" : "#c8ccd0",
+                      border: "none",
+                      color: hasChanges ? "#fff" : "#f0f0f0",
+                      cursor: hasChanges ? "pointer" : "not-allowed",
+                      opacity: hasChanges ? 1 : 0.5,
+                      transition: "all 0.3s ease",
+                      flex: "0 0 auto",
+                    }}
+                    onClick={async () => {
+                      try {
+                        const data = await api.put(
+                          `/users/${selectedUser.id}/privileges`,
+                          {
+                            application_ids: selectedApps,
+                            has_privilege: true,
+                          },
+                        );
+                        if (data.success) {
+                          setShowPrivilegeModal(false);
+                          fetchAllUsers();
+                          setNotification({
+                            type: "success",
+                            message: "Application permissions updated successfully",
+                          });
+                          setTimeout(() => setNotification(null), 3500);
+                        } else {
+                          setNotification({
+                            type: "error",
+                            message: data.message || "Failed to update permissions",
+                          });
+                          setTimeout(() => setNotification(null), 3500);
+                        }
+                      } catch (err) {
+                        console.error("Error updating privileges:", err);
+                        setNotification({
+                          type: "error",
+                          message: "Network error. Please check your connection.",
+                        });
+                        setTimeout(() => setNotification(null), 3500);
+                      }
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Save Permissions
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

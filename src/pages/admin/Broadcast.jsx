@@ -29,6 +29,7 @@ const Broadcast = () => {
   // historyBroadcasts: all broadcasts including soft-deleted (for All History tab)
   const [historyBroadcasts, setHistoryBroadcasts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -43,11 +44,11 @@ const Broadcast = () => {
     fetchAllData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch active (non-deleted) broadcasts
+  // Fetch broadcasts currently visible to users (non-deleted AND non-expired)
   const fetchActiveBroadcasts = async () => {
     try {
       const t = Date.now();
-      const data = await api.get(`/broadcasts?t=${t}`);
+      const data = await api.get(`/broadcasts/active?t=${t}`);
       if (data.success) setActiveBroadcasts(data.data);
     } catch (error) {
       console.error("Error fetching active broadcasts:", error);
@@ -81,11 +82,24 @@ const Broadcast = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.message) {
-      showToast("Please fill in all required fields", "warning");
+    if (!formData.title?.trim()) {
+      showToast("Broadcast title is required", "warning");
+      return;
+    }
+    if (formData.title.length > 200) {
+      showToast("Title must be less than 200 characters", "warning");
+      return;
+    }
+    if (!formData.message?.trim()) {
+      showToast("Broadcast message is required", "warning");
+      return;
+    }
+    if (formData.message.length > 1000) {
+      showToast("Message must be less than 1000 characters", "warning");
       return;
     }
 
+    setSending(true);
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const result = await api.post("/broadcasts", {
@@ -109,6 +123,8 @@ const Broadcast = () => {
     } catch (error) {
       console.error("Error sending broadcast:", error);
       showToast("Failed to send broadcast", "error");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -288,9 +304,15 @@ const Broadcast = () => {
               </p>
             </div>
 
-            <button type="submit" className="btn-send-broadcast">
+            <button type="submit" className="btn-send-broadcast" disabled={sending}
+              style={{
+                opacity: sending ? 0.7 : 1,
+                cursor: sending ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+            >
               <Send size={20} />
-              Send Broadcast
+              {sending ? "Sending..." : "Send Broadcast"}
             </button>
           </form>
         </div>
@@ -490,8 +512,8 @@ const Broadcast = () => {
                                 )}
                               </div>
                             </div>
-                            {/* Only show delete button on active items that haven't been deleted */}
-                            {!isDeleted && (
+                            {/* Only show delete button on Active tab for live items */}
+                            {activeTab === "active" && !isDeleted && (
                               <button
                                 onClick={() => handleDelete(item.id)}
                                 className="btn-delete-broadcast"
@@ -560,10 +582,10 @@ const Broadcast = () => {
               <div className="confirm-dialog-icon danger">
                 <Trash2 />
               </div>
-              <h3>Delete Broadcast?</h3>
+              <h3>Remove Broadcast?</h3>
               <p>
-                Are you sure you want to delete this broadcast message? This
-                action cannot be undone.
+                This will remove the broadcast from the active view. Users will
+                no longer see it. The record will remain in All History.
               </p>
             </div>
             <div className="confirm-dialog-footer">
@@ -574,7 +596,7 @@ const Broadcast = () => {
                 Cancel
               </button>
               <button className="cd-btn cd-btn-danger" onClick={confirmDelete}>
-                Delete
+                Remove
               </button>
             </div>
           </div>

@@ -2043,6 +2043,21 @@ textarea.form-input {
   box-shadow: none !important;
 }
 
+.modal-btn-disabled {
+  background: #c8ccd0 !important;
+  color: #f0f0f0 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.modal-btn-disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: #c8ccd0 !important;
+}
+
 .modal-section {
   margin-bottom: 22px;
 }

@@ -91,6 +91,19 @@ const ActiveSession = () => {
   const confirmForceLogout = async () => {
     try {
       await api.delete(`/sessions/${selectedSession.id}`);
+
+      // Check if the force-logged-out session belongs to the current user
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (selectedSession.user_id === currentUser.id) {
+        // Dispatch event so SessionExpiredOverlay shows the modal
+        window.dispatchEvent(
+          new CustomEvent("session-expired", {
+            detail: { reason: "force_logout" },
+          })
+        );
+        return;
+      }
+
       fetchSessions();
       showToast(
         `${selectedSession.user_name} has been successfully logged out.`,

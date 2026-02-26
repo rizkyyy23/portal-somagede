@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import Login from "./pages/Login";
@@ -20,9 +21,12 @@ import MasterRoles from "./pages/admin/mastercard/MasterRoles";
 import MasterPositions from "./pages/admin/mastercard/MasterPositions";
 
 import MasterMenu from "./pages/admin/mastercard/MasterMenu";
+import SessionExpiredOverlay from "./components/SessionExpiredOverlay";
 
 function App() {
   return (
+    <ErrorBoundary>
+    <SessionExpiredOverlay />
     <Router>
       <Routes>
         {/* Public Routes */}
@@ -69,6 +73,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
+    </ErrorBoundary>
   );
 }
 

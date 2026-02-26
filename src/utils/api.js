@@ -37,11 +37,12 @@ export const apiClient = async (endpoint, options = {}) => {
     // Jangan redirect jika sedang di halaman login
     const isLoginEndpoint = endpoint.includes("/login");
     if (!isLoginEndpoint) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("userType");
-      localStorage.removeItem("userEmail");
-      window.location.href = "/login";
+      // Dispatch event so SessionExpiredOverlay can show the modal
+      window.dispatchEvent(
+        new CustomEvent("session-expired", {
+          detail: { reason: "session_timeout" },
+        })
+      );
       throw new Error("Session expired. Please login again.");
     }
   }

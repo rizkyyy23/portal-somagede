@@ -1055,6 +1055,27 @@
   flex-shrink: 0;
 }
 
+.btn-modern-disabled {
+  padding: 9px 20px;
+  background: #c8ccd0 !important;
+  background-image: none !important;
+  border: none;
+  color: #f0f0f0 !important;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-modern-disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* Alert Modal */
 .modal-container-modern-alert {
   width: 100%;

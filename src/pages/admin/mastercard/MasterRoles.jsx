@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
@@ -64,15 +64,19 @@ const MasterRoles = () => {
     setShowModal(true);
   };
 
+  const originalData = useRef(null);
+
   const handleEdit = (role) => {
     setSelectedRole(role);
-    setFormData({
+    const editData = {
       name: role.name,
       code: role.code,
       description: role.description || "",
       permissions: role.permissions || [],
       isActive: role.isActive,
-    });
+    };
+    setFormData(editData);
+    originalData.current = { ...editData, permissions: [...(role.permissions || [])] };
     setShowModal(true);
   };
 
@@ -82,15 +86,27 @@ const MasterRoles = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.code) {
-      showToast("Name and code are required", "warning");
+    if (!formData.name?.trim()) {
+      showToast("Role name is required", "warning");
+      return;
+    }
+    if (formData.name.length > 100) {
+      showToast("Role name must be less than 100 characters", "warning");
+      return;
+    }
+    if (!formData.code?.trim()) {
+      showToast("Role code is required", "warning");
+      return;
+    }
+    if (formData.code.length > 20) {
+      showToast("Role code must be less than 20 characters", "warning");
       return;
     }
 
+    setLoading(true);
     try {
       let data;
       if (selectedRole) {
-        // Update existing
         data = await api.put(`/roles/${selectedRole.id}`, formData);
         if (data.success) {
           showToast("Role updated successfully", "success");
@@ -99,7 +115,6 @@ const MasterRoles = () => {
           return;
         }
       } else {
-        // Add new
         data = await api.post("/roles", formData);
         if (data.success) {
           showToast("Role added successfully", "success");
@@ -114,6 +129,8 @@ const MasterRoles = () => {
     } catch (error) {
       console.error("Error saving role:", error);
       showToast("Failed to connect to server", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,8 +191,8 @@ const MasterRoles = () => {
 
   const filteredRoles = roles.filter(
     (role) =>
-      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.code.toLowerCase().includes(searchQuery.toLowerCase()),
+      role.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      role.code.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
@@ -504,22 +521,39 @@ const MasterRoles = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSave}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Save Role
-              </button>
+              {(() => {
+                const isEdit = !!selectedRole;
+                const hasChanges = !isEdit || !originalData.current ||
+                  formData.name !== originalData.current.name ||
+                  formData.code !== originalData.current.code ||
+                  formData.description !== originalData.current.description ||
+                  JSON.stringify(formData.permissions) !== JSON.stringify(originalData.current.permissions);
+                const canSave = hasChanges && !loading;
+                return (
+                  <button
+                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    onClick={handleSave}
+                    disabled={!canSave}
+                    style={{
+                      opacity: canSave ? 1 : 0.5,
+                      cursor: canSave ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Role'}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

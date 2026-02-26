@@ -12,6 +12,7 @@ export default function Dashboard() {
 
   // Track open state for section dropdowns: { 'it': true, 'finance': false }
   const [openSections, setOpenSections] = useState({});
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
   // Data States
   const [user, setUser] = useState(null);
@@ -31,7 +32,10 @@ export default function Dashboard() {
       if (!event.target.closest(".profile-btn")) {
         setProfileOpen(false);
       }
-      if (!event.target.closest(".section-dropdown-wrap")) {
+      if (
+        !event.target.closest(".section-dropdown-wrap") &&
+        !event.target.closest(".hero-filter-wrap")
+      ) {
         setOpenSections({});
       }
     };
@@ -145,8 +149,9 @@ export default function Dashboard() {
 
     // Cleanup active session
     try {
-      if (user?.id) {
-        await api.delete(`/sessions/user/${user.id}`);
+      const userId = user?.id || JSON.parse(localStorage.getItem("user") || "{}").id;
+      if (userId) {
+        await api.delete(`/sessions/user/${userId}`);
       }
     } catch (e) {
       console.error("Failed to cleanup session:", e);
@@ -394,7 +399,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Hero Bottom: Welcome */}
+        {/* Hero Bottom: Welcome + Filter */}
         <div className="hero-bottom">
           <div className="hero-text">
             <h1>
@@ -404,6 +409,85 @@ export default function Dashboard() {
               Everything you need to manage industrial tools and logistics in
               one unified platform.
             </p>
+          </div>
+
+          {/* Filter dropdown at bottom-right of hero */}
+          <div className={`hero-filter-wrap ${openSections['_heroFilter'] ? 'open' : ''}`}>
+            <button
+              className="hero-filter-trigger"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenSections(prev => ({ ...prev, _heroFilter: !prev._heroFilter }));
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              <span>{selectedFilter === "all" ? "All Applications" : (() => {
+                const cat = selectedFilter;
+                const isOther = cat.toLowerCase() === "other" || cat.toLowerCase() === "others";
+                return isOther ? (user?.department || "Department") : cat;
+              })()}</span>
+              <svg className="hero-filter-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div className="hero-filter-dropdown">
+              <button
+                className={`hero-filter-item ${selectedFilter === "all" ? "active" : ""}`}
+                onClick={() => { setSelectedFilter("all"); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                All Applications
+              </button>
+              <div className="hero-filter-divider" />
+              <div className="dropdown-content-compact">
+                {Object.entries(categorizedApps).map(([category, apps]) => {
+                  const isRedundantAll = category.toUpperCase() === "ALL";
+                  const isOther = category.toLowerCase() === "other" || category.toLowerCase() === "others";
+                  const visibleApps = isAdmin
+                    ? apps
+                    : apps.filter((app) => isAppInDepartment(app.code));
+                  
+                  if (visibleApps.length === 0) return null;
+                  
+                  const displayName = isOther
+                    ? `${user?.department || "Department"}`
+                    : category;
+                  
+                  return (
+                    <div key={category} className="filter-group">
+                      {!isRedundantAll && (
+                        <button
+                          className={`hero-filter-item category ${selectedFilter === category ? "active" : ""}`}
+                          onClick={() => { setSelectedFilter(category); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+                        >
+                          <span className="cat-bullet" />
+                          {displayName}
+                          <span className="hero-filter-badge">{visibleApps.length}</span>
+                        </button>
+                      )}
+                      <div className={isRedundantAll ? "filter-apps-direct" : "filter-apps-sub"}>
+                        {visibleApps.map((app) => (
+                          <button
+                            key={app.id}
+                            className="hero-filter-item app"
+                            onClick={() => { scrollToCard(app.id); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+                          >
+                            {app.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -434,49 +518,18 @@ export default function Dashboard() {
                 className="section"
                 data-category={category.toLowerCase()}
                 key={category}
+                style={{
+                  display:
+                    selectedFilter === "all" || selectedFilter === category
+                      ? "block"
+                      : "none",
+                }}
               >
                 <div
                   className={`section-header ${isDeptHeader ? "department-header" : ""}`}
                 >
-                  <div
-                    className={`section-dropdown-wrap ${openSections[category] ? "open" : ""}`}
-                    id={`drop-${category}`}
-                  >
-                    <button
-                      className="section-dropdown-trigger"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSectionDrop(category);
-                      }}
-                    >
-                      <span className="section-title">{displayCategory}</span>
-                      <span className="trigger-caret">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="var(--text-muted)"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </span>
-                    </button>
-                    <div className="section-dropdown">
-                      {visibleApps.map((app) => (
-                        <button
-                          key={app.id}
-                          className="section-dropdown-item"
-                          onClick={() => scrollToCard(app.id)}
-                        >
-                          {app.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <span className="section-label">{displayCategory}</span>
+                  <span className="section-count">{visibleApps.length} apps</span>
                 </div>
                 <div className="section-underline"></div>
 

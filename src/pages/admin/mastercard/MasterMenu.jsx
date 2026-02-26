@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
@@ -79,16 +79,20 @@ const MasterMenu = () => {
     setShowModal(true);
   };
 
+  const originalData = useRef(null);
+
   const handleEdit = (menu) => {
     setSelectedMenu(menu);
-    setFormData({
+    const editData = {
       label: menu.label,
       path: menu.path,
       icon: menu.icon,
       customIcon: menu.customIcon || null,
       order: menu.order,
       isActive: menu.isActive,
-    });
+    };
+    setFormData(editData);
+    originalData.current = { ...editData };
     setShowModal(true);
   };
 
@@ -98,15 +102,20 @@ const MasterMenu = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.label.trim()) {
+    if (!formData.label?.trim()) {
       showToast("Menu label is required", "error");
       return;
     }
-    if (!formData.path.trim()) {
+    if (formData.label.length > 50) {
+      showToast("Menu label must be less than 50 characters", "warning");
+      return;
+    }
+    if (!formData.path?.trim()) {
       showToast("Menu path is required", "error");
       return;
     }
 
+    setLoading(true);
     try {
       if (selectedMenu) {
         const data = await api.put(`/menus/${selectedMenu.id}`, formData);
@@ -129,6 +138,8 @@ const MasterMenu = () => {
     } catch (error) {
       console.error("Error saving menu:", error);
       showToast("Failed to save menu", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -614,16 +625,35 @@ const MasterMenu = () => {
               >
                 Cancel
               </button>
-              <button 
-                className="btn-modern-primary" 
-                style={{ height: 36, padding: "0 16px", fontSize: 13 }}
-                onClick={handleSave}
-              >
-                <i
-                  className={selectedMenu ? "fas fa-check" : "fas fa-plus"}
-                ></i>
-                {selectedMenu ? "Save Changes" : "Add Menu"}
-              </button>
+              {(() => {
+                const isEdit = !!selectedMenu;
+                const hasChanges = !isEdit || !originalData.current ||
+                  formData.label !== originalData.current.label ||
+                  formData.path !== originalData.current.path ||
+                  formData.icon !== originalData.current.icon ||
+                  formData.customIcon !== originalData.current.customIcon ||
+                  formData.order !== originalData.current.order ||
+                  formData.isActive !== originalData.current.isActive;
+                const canSave = hasChanges && !loading;
+                return (
+                  <button 
+                    className={`${canSave ? 'btn-modern-primary' : 'btn-modern-disabled'}`}
+                    style={{ 
+                      height: 36, padding: "0 16px", fontSize: 13,
+                      opacity: canSave ? 1 : 0.5,
+                      cursor: canSave ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onClick={handleSave}
+                    disabled={!canSave}
+                  >
+                    <i
+                      className={selectedMenu ? "fas fa-check" : "fas fa-plus"}
+                    ></i>
+                    {loading ? 'Saving...' : selectedMenu ? "Save Changes" : "Add Menu"}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

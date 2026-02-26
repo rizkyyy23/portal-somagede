@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api, apiClient } from "../../../utils/api";
 import "../../../styles/admin-dashboard.css";
@@ -61,17 +61,21 @@ const MasterApplications = () => {
     setShowModal(true);
   };
 
+  const originalData = useRef(null);
+
   const handleEdit = (app) => {
     setSelectedApp(app);
-    setFormData({
+    const editData = {
       name: app.name,
       code: app.code,
       description: app.description || "",
       url: app.url || "",
       isActive: app.isActive,
-    });
+    };
+    setFormData(editData);
+    originalData.current = { ...editData };
     setLogoFile(null);
-    setLogoPreview(app.icon || null); // Display existing icon as preview
+    setLogoPreview(app.icon || null);
     setShowModal(true);
   };
 
@@ -93,8 +97,24 @@ const MasterApplications = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.code) {
-      showToast("Name and code are required", "error");
+    if (!formData.name?.trim()) {
+      showToast("Application name is required", "error");
+      return;
+    }
+    if (formData.name.length > 100) {
+      showToast("Application name must be less than 100 characters", "warning");
+      return;
+    }
+    if (!formData.code?.trim()) {
+      showToast("Application code is required", "error");
+      return;
+    }
+    if (formData.code.length > 20) {
+      showToast("Application code must be less than 20 characters", "warning");
+      return;
+    }
+    if (formData.url && formData.url.trim() && !/^https?:\/\/.+/i.test(formData.url.trim())) {
+      showToast("URL must start with http:// or https://", "warning");
       return;
     }
 
@@ -199,8 +219,8 @@ const MasterApplications = () => {
 
   const filteredApps = applications.filter(
     (app) =>
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.code.toLowerCase().includes(searchQuery.toLowerCase()),
+      app.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      app.code.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
@@ -525,23 +545,40 @@ const MasterApplications = () => {
               >
                 Cancel
               </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {loading ? "Saving..." : "Save Application"}
-              </button>
+              {(() => {
+                const isEdit = !!selectedApp;
+                const hasChanges = !isEdit || !originalData.current ||
+                  formData.name !== originalData.current.name ||
+                  formData.code !== originalData.current.code ||
+                  formData.description !== originalData.current.description ||
+                  formData.url !== originalData.current.url ||
+                  !!logoFile;
+                const canSave = hasChanges && !loading;
+                return (
+                  <button
+                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    onClick={handleSave}
+                    disabled={!canSave}
+                    style={{
+                      opacity: canSave ? 1 : 0.5,
+                      cursor: canSave ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Application"}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
