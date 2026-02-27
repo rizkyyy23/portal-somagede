@@ -1448,6 +1448,21 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
+/* Logout session confirm variant (red) */
+.confirm-modal-icon.logout-icon {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.confirm-proceed-btn.logout-btn {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+}
+
+.confirm-proceed-btn.logout-btn:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
 /* ============= RESPONSIVE ============= */
 @media (max-width: 1024px) {
   .info-grid {

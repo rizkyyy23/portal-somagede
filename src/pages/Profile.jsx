@@ -25,8 +25,15 @@ export default function Profile() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+  // Login activity states
+  const [loginSessions, setLoginSessions] = useState([]);
+  const [loginSessionsLoading, setLoginSessionsLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [logoutTarget, setLogoutTarget] = useState(null);
+
   useEffect(() => {
     fetchUserData();
+    fetchUserSessions();
   }, []);
 
   const fetchUserData = async () => {
@@ -48,6 +55,45 @@ export default function Profile() {
       console.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch user's own sessions + login history
+  const fetchUserSessions = async () => {
+    try {
+      setLoginSessionsLoading(true);
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const userId = storedUser?.id;
+      if (!userId) return;
+
+      // Fetch both active sessions and login history in parallel
+      const [sessionsData, historyData] = await Promise.all([
+        api.get(`/sessions/user/${userId}`),
+        api.get(`/login-history/user/${userId}`),
+      ]);
+
+      const activeSessions = sessionsData.success ? sessionsData.data : [];
+      const loginHistory = historyData.success ? historyData.data : [];
+
+      // Combine: active sessions first (marked as current), then past logins
+      // Skip history entries that match the current active session time
+      const activeIds = new Set(activeSessions.map((s) => s.id));
+      const activeLoginTimes = new Set(
+        activeSessions.map((s) => new Date(s.login_at).getTime()),
+      );
+
+      const pastLogins = loginHistory
+        .filter((h) => !activeLoginTimes.has(new Date(h.login_at).getTime()))
+        .map((h) => ({ ...h, _isPast: true }));
+
+      setLoginSessions([
+        ...activeSessions.map((s) => ({ ...s, _isCurrent: true })),
+        ...pastLogins,
+      ]);
+    } catch (error) {
+      console.error("Error fetching user sessions:", error);
+    } finally {
+      setLoginSessionsLoading(false);
     }
   };
 
@@ -207,6 +253,68 @@ export default function Profile() {
     }
 
     return { canChange, daysAgo: diffDays, remainingDays, label };
+  };
+
+  // Session activity helpers
+  const formatSessionTime = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffDays === 1) {
+      return `Yesterday at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    }
+    if (diffDays < 7) {
+      return `${diffDays} days ago at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    }
+    return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  };
+
+  const getDeviceIcon = (session) => {
+    // Simple icon — desktop monitor
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+    );
+  };
+
+  const handleSessionLogout = (session) => {
+    setLogoutTarget(session);
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmSessionLogout = async () => {
+    if (!logoutTarget) return;
+    try {
+      await api.delete(`/sessions/${logoutTarget.id}`);
+      // Check if user is logging out their own current session
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (logoutTarget.user_id === storedUser.id && loginSessions.length <= 1) {
+        // This was the only session — trigger session expired
+        window.dispatchEvent(
+          new CustomEvent("session-expired", {
+            detail: { reason: "force_logout" },
+          }),
+        );
+        return;
+      }
+      // Re-fetch sessions to update the list
+      await fetchUserSessions();
+    } catch (error) {
+      console.error("Error logging out session:", error);
+    }
+    setShowLogoutConfirm(false);
+    setLogoutTarget(null);
   };
 
   const getFirstName = (fullName) => {
@@ -524,215 +632,34 @@ export default function Profile() {
                     </button>
                   </div>
                   <div className="login-activity-list">
-                    <div className="login-item current">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="2"
-                          y="3"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">Windows PC • Chrome</div>
-                        <div className="login-details">
-                          IP: 112.215.172.10 · Just now
-                        </div>
+                    {loginSessionsLoading ? (
+                      <div className="login-item" style={{ justifyContent: "center", color: "#94a3b8", fontSize: "12px" }}>
+                        Loading sessions...
                       </div>
-                      <span className="current-badge">Current Session</span>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="5"
-                          y="2"
-                          width="14"
-                          height="20"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="12" y1="18" x2="12.01" y2="18" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">
-                          iPhone 15 Pro • Safari
-                        </div>
-                        <div className="login-details">
-                          IP: 182.253.155.242 · 2 hours ago
-                        </div>
+                    ) : loginSessions.length === 0 ? (
+                      <div className="login-item" style={{ justifyContent: "center", color: "#94a3b8", fontSize: "12px" }}>
+                        No login activity
                       </div>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="2"
-                          y="3"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">Windows PC • Edge</div>
-                        <div className="login-details">
-                          IP: 112.215.172.10 · Yesterday at 14:20
+                    ) : (
+                      loginSessions.slice(0, 7).map((session) => (
+                        <div key={`${session.id}-${session._isPast ? 'h' : 's'}`} className={`login-item ${session._isCurrent ? "current" : ""}`}>
+                          {getDeviceIcon(session)}
+                          <div className="login-item-info">
+                            <div className="login-device">
+                              {session.app_name || "Portal"}
+                            </div>
+                            <div className="login-details">
+                              IP: {session.ip_address} · {formatSessionTime(session.login_at)}
+                            </div>
+                          </div>
+                          {session._isCurrent ? (
+                            <span className="current-badge">Current Session</span>
+                          ) : session._isPast ? (
+                            <span className="current-badge" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Past</span>
+                          ) : null}
                         </div>
-                      </div>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="2"
-                          y="3"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">
-                          macOS Desktop • Chrome
-                        </div>
-                        <div className="login-details">
-                          IP: 182.253.155.242 · 2 days ago at 09:15
-                        </div>
-                      </div>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="5"
-                          y="2"
-                          width="14"
-                          height="20"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="12" y1="18" x2="12.01" y2="18" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">
-                          Samsung Galaxy S24 • Chrome Mobile
-                        </div>
-                        <div className="login-details">
-                          IP: 36.72.210.88 · 3 days ago at 18:45
-                        </div>
-                      </div>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="2"
-                          y="3"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">
-                          Linux Desktop • Firefox
-                        </div>
-                        <div className="login-details">
-                          IP: 103.28.115.70 · 5 days ago at 11:30
-                        </div>
-                      </div>
-                    </div>
-                    <div className="login-item">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="5"
-                          y="2"
-                          width="14"
-                          height="20"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="12" y1="18" x2="12.01" y2="18" />
-                      </svg>
-                      <div className="login-item-info">
-                        <div className="login-device">iPad Pro • Safari</div>
-                        <div className="login-details">
-                          IP: 182.253.155.242 · 1 week ago
-                        </div>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -807,155 +734,37 @@ export default function Profile() {
             </div>
 
             <div className="login-modal-body">
-              <div className="modal-login-item current">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">
-                    macOS Desktop • Chrome
-                  </div>
-                  <div className="modal-login-details">
-                    IP: 182.253.155.242 · Just now
-                  </div>
+              {loginSessions.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "24px", color: "#94a3b8", fontSize: "13px" }}>
+                  No login activity found
                 </div>
-                <span className="modal-current-badge">Current Session</span>
-              </div>
-
-              <div className="modal-login-item">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                  <line x1="12" y1="18" x2="12.01" y2="18" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">
-                    iPhone 15 Pro • Safari
+              ) : (
+                loginSessions.map((session) => (
+                  <div key={`modal-${session.id}-${session._isPast ? 'h' : 's'}`} className={`modal-login-item ${session._isCurrent ? "current" : ""}`}>
+                    {getDeviceIcon(session)}
+                    <div className="modal-login-info">
+                      <div className="modal-login-device">
+                        {session.app_name || "Portal"}
+                      </div>
+                      <div className="modal-login-details">
+                        IP: {session.ip_address} · {formatSessionTime(session.login_at)}
+                      </div>
+                    </div>
+                    {session._isCurrent ? (
+                      <span className="modal-current-badge">Current Session</span>
+                    ) : session._isPast ? (
+                      <span className="modal-current-badge" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Past</span>
+                    ) : (
+                      <button
+                        className="modal-logout-btn"
+                        onClick={() => handleSessionLogout(session)}
+                      >
+                        Logout
+                      </button>
+                    )}
                   </div>
-                  <div className="modal-login-details">
-                    IP: 182.253.155.242 · 2 hours ago
-                  </div>
-                </div>
-                <button className="modal-logout-btn">Logout</button>
-              </div>
-
-              <div className="modal-login-item">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">Windows PC • Edge</div>
-                  <div className="modal-login-details">
-                    IP: 112.215.172.10 · Yesterday at 14:20
-                  </div>
-                </div>
-                <button className="modal-logout-btn">Logout</button>
-              </div>
-
-              <div className="modal-login-item">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">
-                    macOS Desktop • Chrome
-                  </div>
-                  <div className="modal-login-details">
-                    IP: 182.253.155.242 · Just now
-                  </div>
-                </div>
-                <button className="modal-logout-btn">Logout</button>
-              </div>
-
-              <div className="modal-login-item">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                  <line x1="12" y1="18" x2="12.01" y2="18" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">
-                    iPhone 15 Pro • Safari
-                  </div>
-                  <div className="modal-login-details">
-                    IP: 182.253.155.242 · 2 hours ago
-                  </div>
-                </div>
-                <button className="modal-logout-btn">Logout</button>
-              </div>
-
-              <div className="modal-login-item">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-                <div className="modal-login-info">
-                  <div className="modal-login-device">Windows PC • Edge</div>
-                  <div className="modal-login-details">
-                    IP: 112.215.172.10 · Yesterday at 14:20
-                  </div>
-                </div>
-                <button className="modal-logout-btn">Logout</button>
-              </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -1392,6 +1201,69 @@ export default function Profile() {
                 onClick={confirmPasswordChange}
               >
                 Yes, Change Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Logout Session Confirmation Modal */}
+      {showLogoutConfirm && logoutTarget && (
+        <div
+          className="modal-overlay"
+          onClick={() => { setShowLogoutConfirm(false); setLogoutTarget(null); }}
+        >
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-modal-icon logout-icon">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </div>
+            <h3 className="confirm-modal-title">Logout This Session?</h3>
+            <p className="confirm-modal-text">
+              Are you sure you want to terminate this session?
+            </p>
+            <div className="confirm-modal-warning">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>
+                <strong>{logoutTarget.app_name || "Portal"}</strong> session
+                from IP <strong>{logoutTarget.ip_address}</strong> will be
+                disconnected immediately.
+              </span>
+            </div>
+            <div className="confirm-modal-actions">
+              <button
+                className="confirm-cancel-btn"
+                onClick={() => { setShowLogoutConfirm(false); setLogoutTarget(null); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-proceed-btn logout-btn"
+                onClick={confirmSessionLogout}
+              >
+                Yes, Logout Session
               </button>
             </div>
           </div>

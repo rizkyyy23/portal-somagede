@@ -188,10 +188,15 @@ const AdminSidebar = () => {
     return (names[0][0] + names[names.length - 1][0]).toUpperCase();
   };
 
-  const user = JSON.parse(
-    localStorage.getItem("user") ||
-      '{"name":"RIZKY SETYO","role":"ADMIN USER"}',
-  );
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate, user]);
+
+  if (!user) return null;
 
   return (
     <>

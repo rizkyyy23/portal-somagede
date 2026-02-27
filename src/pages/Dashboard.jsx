@@ -411,7 +411,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Filter dropdown at bottom-right of hero */}
           <div className={`hero-filter-wrap ${openSections['_heroFilter'] ? 'open' : ''}`}>
             <button
               className="hero-filter-trigger"
@@ -420,35 +419,33 @@ export default function Dashboard() {
                 setOpenSections(prev => ({ ...prev, _heroFilter: !prev._heroFilter }));
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-              </svg>
+              <div className="filter-icon-bg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14" />
+                  <line x1="4" y1="10" x2="4" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12" y2="3" />
+                  <line x1="20" y1="21" x2="20" y2="16" />
+                  <line x1="20" y1="12" x2="20" y2="3" />
+                  <line x1="1" y1="14" x2="7" y2="14" />
+                  <line x1="9" y1="8" x2="15" y2="8" />
+                  <line x1="17" y1="16" x2="23" y2="16" />
+                </svg>
+              </div>
               <span>{selectedFilter === "all" ? "All Applications" : (() => {
                 const cat = selectedFilter;
                 const isOther = cat.toLowerCase() === "other" || cat.toLowerCase() === "others";
                 return isOther ? (user?.department || "Department") : cat;
               })()}</span>
-              <svg className="hero-filter-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="hero-filter-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
             <div className="hero-filter-dropdown">
-              <button
-                className={`hero-filter-item ${selectedFilter === "all" ? "active" : ""}`}
-                onClick={() => { setSelectedFilter("all"); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                </svg>
-                All Applications
-              </button>
-              <div className="hero-filter-divider" />
-              <div className="dropdown-content-compact">
+              <div className="filter-dropdown-title">FILTER BY SECTION</div>
+              
+              <div className="dropdown-scroll-area">
                 {Object.entries(categorizedApps).map(([category, apps]) => {
-                  const isRedundantAll = category.toUpperCase() === "ALL";
                   const isOther = category.toLowerCase() === "other" || category.toLowerCase() === "others";
                   const visibleApps = isAdmin
                     ? apps
@@ -461,26 +458,32 @@ export default function Dashboard() {
                     : category;
                   
                   return (
-                    <div key={category} className="filter-group">
-                      {!isRedundantAll && (
-                        <button
-                          className={`hero-filter-item category ${selectedFilter === category ? "active" : ""}`}
-                          onClick={() => { setSelectedFilter(category); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
-                        >
-                          <span className="cat-bullet" />
-                          {displayName}
-                          <span className="hero-filter-badge">{visibleApps.length}</span>
-                        </button>
-                      )}
-                      <div className={isRedundantAll ? "filter-apps-direct" : "filter-apps-sub"}>
+                    <div key={category} className="filter-dropdown-group">
+                      <button
+                        className={`hero-filter-item category ${selectedFilter === category ? "active" : ""}`}
+                        onClick={() => { setSelectedFilter(category); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+                      >
+                        <div className="item-icon">
+                          <span className="cat-dot" />
+                        </div>
+                        <span>{displayName}</span>
+                        <span className="count-badge">{visibleApps.length}</span>
+                      </button>
+                      
+                      <div className="dropdown-apps-list">
                         {visibleApps.map((app) => (
-                          <button
+                          <div
                             key={app.id}
-                            className="hero-filter-item app"
-                            onClick={() => { scrollToCard(app.id); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+                            className="dropdown-app-link"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              scrollToCard(app.id);
+                              setOpenSections(prev => ({ ...prev, _heroFilter: false }));
+                            }}
                           >
+                            <span className="app-link-dot" />
                             {app.name}
-                          </button>
+                          </div>
                         ))}
                       </div>
                     </div>
