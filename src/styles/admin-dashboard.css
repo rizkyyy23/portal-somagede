@@ -2318,13 +2318,13 @@ textarea.form-input {
   }
 }
 
-/* Mastercard Sections */
-.mastercard-wrapper {
+/* Master Data Sections */
+.masterdata-wrapper {
   padding: 24px;
   max-width: 100%;
 }
 
-.mastercard-header {
+.masterdata-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2774,9 +2774,9 @@ textarea.form-input {
   font-size: 14px;
 }
 
-/* Responsive Mastercard */
+/* Responsive Master Data */
 @media (max-width: 768px) {
-  .mastercard-header {
+  .masterdata-header {
     flex-direction: column;
     align-items: stretch;
   }

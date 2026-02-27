@@ -1,24 +1,21 @@
-import express from "express";
-import {
-  getAllDepartments,
-  getAllDepartmentPermissions,
-  getDepartmentPermissions,
-  updateDepartmentPermissions,
-  toggleDepartmentPermission,
-} from "../controllers/departmentController.js";
+import { protect, admin } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Department routes
-router.get("/departments", getAllDepartments);
-router.get("/departments/permissions", getAllDepartmentPermissions);
-router.get("/departments/:departmentId/permissions", getDepartmentPermissions);
+router.get("/departments", protect, getAllDepartments);
+router.get("/departments/permissions", protect, admin, getAllDepartmentPermissions);
+router.get("/departments/:departmentId/permissions", protect, admin, getDepartmentPermissions);
 router.put(
   "/departments/:departmentId/permissions",
+  protect,
+  admin,
   updateDepartmentPermissions,
 );
 router.patch(
   "/departments/:departmentId/permissions/:applicationId",
+  protect,
+  admin,
   toggleDepartmentPermission,
 );
 

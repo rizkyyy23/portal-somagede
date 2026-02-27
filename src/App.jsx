@@ -15,13 +15,27 @@ import ActiveSession from "./pages/admin/ActiveSession";
 import ApplicationManagement from "./pages/admin/ApplicationManagement";
 import UserControl from "./pages/admin/UserControl";
 import Broadcast from "./pages/admin/Broadcast";
-import MasterDepartments from "./pages/admin/mastercard/MasterDepartments";
-import MasterApplications from "./pages/admin/mastercard/MasterApplications";
-import MasterRoles from "./pages/admin/mastercard/MasterRoles";
-import MasterPositions from "./pages/admin/mastercard/MasterPositions";
+import MasterDepartments from "./pages/admin/masterdata/MasterDepartments";
+import MasterApplications from "./pages/admin/masterdata/MasterApplications";
+import MasterRoles from "./pages/admin/masterdata/MasterRoles";
+import MasterPositions from "./pages/admin/masterdata/MasterPositions";
 
-import MasterMenu from "./pages/admin/mastercard/MasterMenu";
+import MasterMenu from "./pages/admin/masterdata/MasterMenu";
 import SessionExpiredOverlay from "./components/SessionExpiredOverlay";
+import BlankPage from "./pages/admin/BlankPage";
+
+// Helper component to handle 404/Catch-all redirection
+const NotFound = () => {
+  const token = localStorage.getItem("token");
+  const userType = localStorage.getItem("userType");
+  const userEmail = localStorage.getItem("userEmail");
+  const isAuthenticated = token || (userType && userEmail);
+
+  if (isAuthenticated) {
+    return <Navigate to={userType === "admin" ? "/admin/dashboard-admin" : "/dashboard"} replace />;
+  }
+  return <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
@@ -66,11 +80,14 @@ function App() {
               element={<MasterPositions />}
             />
             <Route path="/admin/masterdata/menu" element={<MasterMenu />} />
+            
+            {/* Catch-all for undefined admin routes */}
+            <Route path="/admin/*" element={<BlankPage />} />
           </Route>
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
     </ErrorBoundary>

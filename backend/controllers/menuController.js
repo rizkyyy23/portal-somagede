@@ -65,6 +65,12 @@ export const updateMenu = async (req, res) => {
     const { id } = req.params;
     const { label, path, icon, customIcon, order, isActive } = req.body;
 
+    // Protect Master Data
+    const [currentMenu] = await db.query("SELECT path FROM menus WHERE id = ?", [id]);
+    if (currentMenu && currentMenu[0]?.path === "/admin/masterdata") {
+      return res.status(403).json({ success: false, message: "Cannot modify core system menu" });
+    }
+
     await db.query(
       "UPDATE menus SET label = ?, path = ?, icon = ?, custom_icon = ?, display_order = ?, is_active = ? WHERE id = ?",
       [
@@ -89,6 +95,13 @@ export const updateMenu = async (req, res) => {
 export const deleteMenu = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Protect Master Data
+    const [currentMenu] = await db.query("SELECT path FROM menus WHERE id = ?", [id]);
+    if (currentMenu && currentMenu[0]?.path === "/admin/masterdata") {
+      return res.status(403).json({ success: false, message: "Cannot delete core system menu" });
+    }
+
     await db.query("DELETE FROM menus WHERE id = ?", [id]);
     res.json({ success: true, message: "Menu deleted" });
   } catch (error) {
@@ -101,6 +114,13 @@ export const deleteMenu = async (req, res) => {
 export const toggleMenuStatus = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Protect Master Data
+    const [currentMenu] = await db.query("SELECT path FROM menus WHERE id = ?", [id]);
+    if (currentMenu && currentMenu[0]?.path === "/admin/masterdata") {
+      return res.status(403).json({ success: false, message: "Cannot modify core system menu" });
+    }
+
     await db.query(
       "UPDATE menus SET is_active = NOT is_active WHERE id = ?",
       [id],

@@ -1,11 +1,10 @@
-import express from 'express';
-import { getAuditLogs, getDeptDistribution, getLoginTrends, getAppUsage } from '../controllers/analyticsController.js';
+import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/analytics/logs', getAuditLogs);
-router.get('/analytics/distribution', getDeptDistribution);
-router.get('/analytics/trends', getLoginTrends);
-router.get('/analytics/usage', getAppUsage);
+router.get('/analytics/logs', protect, admin, getAuditLogs);
+router.get('/analytics/distribution', protect, admin, getDeptDistribution);
+router.get('/analytics/trends', protect, admin, getLoginTrends);
+router.get('/analytics/usage', protect, admin, getAppUsage);
 
 export default router;

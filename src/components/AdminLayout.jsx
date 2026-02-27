@@ -1,33 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import { api } from "../utils/api";
 import "../styles/admin-dashboard.css";
 
 const AdminLayout = () => {
   const [showUserNavModal, setShowUserNavModal] = useState(false);
+  const [menus, setMenus] = useState([]);
+  const [isMenusLoaded, setIsMenusLoaded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Fetch dynamic menus from DB
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const data = await api.get("/menus");
+        if (data.success) {
+          setMenus(data.data.filter((m) => m.isActive));
+        }
+      } catch (error) {
+        console.error("Failed to fetch sidebar menus:", error);
+      } finally {
+        setIsMenusLoaded(true);
+      }
+    };
+    fetchMenus();
+  }, []);
+
   // Get page title based on current route
   const getPageTitle = () => {
-    const path = location.pathname.split("/").pop();
-    const titles = {
-      "dashboard-admin": "DASHBOARD",
-      "active-session": "ACTIVE SESSION",
-      "application-management": "APPLICATION MANAGEMENT",
-      "user-control": "USER CONTROL",
-      broadcast: "BROADCAST MESSAGE",
-      departments: "MASTER DEPARTMENTS",
-      applications: "MASTER APPLICATIONS",
-      roles: "MASTER ROLES",
-      positions: "MASTER POSITIONS",
-    };
-    return titles[path] || "ADMIN PANEL";
+    // Normalize path: lowercase and remove trailing slash
+    const normalizePath = (p) => p.toLowerCase().replace(/\/$/, "");
+    const currentPath = normalizePath(location.pathname);
+    
+    // 1. Check dynamic menus (including those from DB)
+    // We also check the hardcoded submenus for Master Data
+    const masterDataSubmenus = [
+      { path: "/admin/masterdata/departments", label: "MASTER DEPARTMENTS" },
+      { path: "/admin/masterdata/applications", label: "MASTER APPLICATIONS" },
+      { path: "/admin/masterdata/roles", label: "MASTER ROLES" },
+      { path: "/admin/masterdata/positions", label: "MASTER POSITIONS" },
+      { path: "/admin/masterdata/menu", label: "MASTER MENU" },
+    ];
+
+    // Combine all possible sources of menu info
+    const allMenus = [
+      ...menus,
+      ...masterDataSubmenus,
+      // Add common static routes as fallback if they aren't in DB
+      { path: "/admin/dashboard-admin", label: "DASHBOARD" },
+      { path: "/admin/active-session", label: "ACTIVE SESSION" },
+      { path: "/admin/application-management", label: "APPLICATION MANAGEMENT" },
+      { path: "/admin/user-control", label: "USER CONTROL" },
+      { path: "/admin/broadcast", label: "BROADCAST MESSAGE" },
+    ];
+    
+    const activeMenu = allMenus.find(m => normalizePath(m.path) === currentPath);
+    if (activeMenu) return activeMenu.label.toUpperCase();
+
+    // 2. Fallback: derive from path name
+    const pathParts = currentPath.split("/");
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart && lastPart !== "admin") {
+      return lastPart.replace(/-/g, " ").toUpperCase();
+    }
+
+    return "ADMIN PANEL";
   };
 
   return (
     <div className="admin-container">
-      <Sidebar />
+      <Sidebar dynamicMenus={menus} isMenusLoaded={isMenusLoaded} />
       <main className="admin-main">
         <div className="admin-header">
           <div className="header-content-wrapper">

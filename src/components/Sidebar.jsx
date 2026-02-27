@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../utils/api";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activePath, setActivePath] = useState("");
   const [expandedMenus, setExpandedMenus] = useState({ masterdata: false });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [dynamicMenus, setDynamicMenus] = useState([]);
-  const [isMenusLoaded, setIsMenusLoaded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,10 +21,7 @@ const AdminSidebar = () => {
 
   // Update active section based on current route
   useEffect(() => {
-    const path = location.pathname.split("/").pop();
-    if (path) {
-      setActiveSection(path);
-    }
+    setActivePath(location.pathname);
   }, [location]);
 
   const toggleSidebar = () => {
@@ -35,24 +30,7 @@ const AdminSidebar = () => {
     localStorage.setItem("sidebarCollapsed", newState);
   };
 
-  // Fetch dynamic menus from DB
-  useEffect(() => {
-    const fetchMenus = async () => {
-      try {
-        const data = await api.get("/menus");
-        if (data.success) {
-          // Filter out menus that are already in the Master Data exclusion list if needed
-          // or just take all active menus
-          setDynamicMenus(data.data.filter((m) => m.isActive));
-        }
-      } catch (error) {
-        console.error("Failed to fetch sidebar menus:", error);
-      } finally {
-        setIsMenusLoaded(true);
-      }
-    };
-    fetchMenus();
-  }, []);
+  // Remove internal fetch (now handled by AdminLayout)
 
   const renderMenuIcon = (item) => {
     if (!item.icon && !item.customIcon) return null;
@@ -138,13 +116,13 @@ const AdminSidebar = () => {
       }));
     } else {
       // Navigate to page
-      setActiveSection(item.id);
+      setActivePath(item.path);
       navigate(item.path);
     }
   };
 
   const handleSubmenuNavigation = (item, submenuItem) => {
-    setActiveSection(submenuItem.id);
+    setActivePath(submenuItem.path);
     navigate(submenuItem.path);
   };
 
@@ -251,7 +229,7 @@ const AdminSidebar = () => {
           {menuItems.map((item) => (
             <li key={item.id}>
               <div
-                className={`nav-item ${activeSection === item.id ? "active" : ""} ${item.hasSubmenu ? "has-submenu" : ""}`}
+                className={`nav-item ${activePath === item.path ? "active" : ""} ${item.hasSubmenu ? "has-submenu" : ""}`}
                 onClick={() => handleNavigation(item)}
                 data-tooltip={item.label}
               >
@@ -276,7 +254,7 @@ const AdminSidebar = () => {
                   {item.submenu.map((subItem) => (
                     <li
                       key={subItem.id}
-                      className={`submenu-item ${activeSection === subItem.id ? "active" : ""}`}
+                      className={`submenu-item ${activePath === subItem.path ? "active" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSubmenuNavigation(item, subItem);

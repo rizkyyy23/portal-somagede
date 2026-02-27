@@ -1,19 +1,19 @@
 /* Master Data Screens Styles */
 
-.mastercard-wrapper .section-header {
+.masterdata-wrapper .section-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 32px;
 }
 
-.mastercard-wrapper .section-header svg {
+.masterdata-wrapper .section-header svg {
   width: 28px;
   height: 28px;
   color: var(--primary-color);
 }
 
-.mastercard-wrapper .section-header h2 {
+.masterdata-wrapper .section-header h2 {
   font-size: 24px;
   font-weight: 700;
   color: #2c3e50;

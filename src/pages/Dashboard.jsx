@@ -138,6 +138,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      // If unauthorized, the API client will handle the redirect/modal
     } finally {
       setLoading(false);
     }
