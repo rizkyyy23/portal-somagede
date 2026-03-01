@@ -1859,7 +1859,7 @@ const UserControl = () => {
                                 },
                               );
                               if (data.success !== false) {
-                                await fetchAllUsers();
+                                await AllUserfetchs();
                                 setShowEditModal(false);
                                 setShowConfirmModal(false);
                                 setNotification({

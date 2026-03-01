@@ -1,4 +1,12 @@
+
+import express from "express";
 import { protect, admin } from '../middleware/auth.js';
+import {
+	getAuditLogs,
+	getDeptDistribution,
+	getLoginTrends,
+	getAppUsage
+} from "../controllers/analyticsController.js";
 
 const router = express.Router();
 

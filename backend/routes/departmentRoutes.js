@@ -1,4 +1,14 @@
+
+
+import express from "express";
 import { protect, admin } from "../middleware/auth.js";
+import {
+  getAllDepartments,
+  getAllDepartmentPermissions,
+  getDepartmentPermissions,
+  updateDepartmentPermissions,
+  toggleDepartmentPermission
+} from "../controllers/departmentController.js";
 
 const router = express.Router();
 

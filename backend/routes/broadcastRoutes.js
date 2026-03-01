@@ -1,4 +1,14 @@
+
+
+import express from "express";
 import { protect, admin } from '../middleware/auth.js';
+import {
+	getAllBroadcasts,
+	getAllBroadcastsHistory,
+	getActiveBroadcasts,
+	createBroadcast,
+	deleteBroadcast
+} from "../controllers/broadcastController.js";
 
 const router = express.Router();
 

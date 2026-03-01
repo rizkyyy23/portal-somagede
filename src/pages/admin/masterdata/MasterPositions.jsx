@@ -16,7 +16,6 @@ const MasterPositions = () => {
     name: "",
     code: "",
     description: "",
-    isActive: true,
   });
 
   useEffect(() => {
@@ -44,7 +43,6 @@ const MasterPositions = () => {
       name: "",
       code: "",
       description: "",
-      isActive: true,
     });
     setShowModal(true);
   };
@@ -57,7 +55,6 @@ const MasterPositions = () => {
       name: pos.name,
       code: pos.code,
       description: pos.description || "",
-      isActive: pos.status === "active" || pos.isActive,
     };
     setFormData(editData);
     originalData.current = { ...editData };
@@ -126,24 +123,6 @@ const MasterPositions = () => {
     } catch (error) {
       console.error("Error deleting position:", error);
       showToast("Failed to delete position", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleStatus = async (pos) => {
-    setLoading(true);
-    try {
-      const data = await api.patch(`/positions/${pos.id}/toggle`);
-
-      if (data.success) {
-        fetchPositions();
-      } else {
-        showToast(data.message || "Failed to toggle status", "error");
-      }
-    } catch (error) {
-      console.error("Error toggling status:", error);
-      showToast("Failed to toggle status", "error");
     } finally {
       setLoading(false);
     }
@@ -218,7 +197,7 @@ const MasterPositions = () => {
                 <th style={{ width: "120px" }}>Code</th>
                 <th>Description</th>
                 <th style={{ width: "80px", textAlign: "center" }}>Users</th>
-                <th style={{ width: "100px", textAlign: "center" }}>Status</th>
+                {/* Status column removed */}
                 <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
@@ -268,31 +247,7 @@ const MasterPositions = () => {
                         {pos.userCount || 0}
                       </span>
                     </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button
-                        onClick={() => toggleStatus(pos)}
-                        disabled={loading}
-                        style={{
-                          backgroundColor:
-                            pos.status === "active" || pos.isActive
-                              ? "#27ae60"
-                              : "#95a5a6",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          cursor: loading ? "not-allowed" : "pointer",
-                          opacity: loading ? 0.6 : 1,
-                          transition: "all 0.2s",
-                        }}
-                      >
-                        {pos.status === "active" || pos.isActive
-                          ? "Active"
-                          : "Inactive"}
-                      </button>
-                    </td>
+                    {/* Status cell removed */}
                     <td>
                       <div
                         style={{
@@ -431,20 +386,22 @@ const MasterPositions = () => {
               </button>
               {(() => {
                 const isEdit = !!selectedPosition;
-                const hasChanges = !isEdit || !originalData.current ||
+                const hasChanges =
+                  !isEdit ||
+                  !originalData.current ||
                   formData.name !== originalData.current.name ||
                   formData.code !== originalData.current.code ||
                   formData.description !== originalData.current.description;
                 const canSave = hasChanges && !loading;
                 return (
                   <button
-                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    className={`modal-btn ${canSave ? "modal-btn-primary" : "modal-btn-disabled"}`}
                     onClick={handleSave}
                     disabled={!canSave}
                     style={{
                       opacity: canSave ? 1 : 0.5,
-                      cursor: canSave ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease',
+                      cursor: canSave ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <svg
@@ -457,7 +414,11 @@ const MasterPositions = () => {
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Position"}
+                    {loading
+                      ? "Saving..."
+                      : isEdit
+                        ? "Save Changes"
+                        : "Save Position"}
                   </button>
                 );
               })()}
