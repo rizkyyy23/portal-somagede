@@ -2,12 +2,15 @@
 
 .login-page {
   background: #f5f7fa;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .login-page .container {
   display: flex;
   width: 100%;
   max-width: 1500px;
+  height: 100vh;
 }
 
 /* Left Side - Building Background */
@@ -69,7 +72,6 @@
   font-size: 40px;
   font-weight: 700;
   line-height: 1.2;
-
   text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.6);
   letter-spacing: -0.5px;
 }
@@ -401,92 +403,231 @@
   height: 16px;
 }
 
-/* Responsive Design */
+/* ============================================
+   RESPONSIVE — TABLET (≤1024px)
+   ============================================ */
 @media (max-width: 1024px) {
   .login-page .left-title {
-    font-size: 36px;
+    font-size: 32px;
   }
 
-  .login-page .left-description {
-    font-size: 14px;
-  }
-
-  .login-page .left-side {
-    padding: 40px 30px;
-  }
-
-  .login-page .right-side {
-    padding: 30px 40px;
-  }
-}
-
-@media (max-width: 768px) {
-  .login-page .container {
-    flex-direction: column;
-  }
-
-  .login-page .left-side {
-    min-height: 40vh;
-    padding: 30px 20px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .login-page .left-content {
-    text-align: center;
-  }
-
-  .login-page .left-title {
-    font-size: 28px;
-    margin-bottom: 20px;
+  .login-page .left-logo img {
+    width: 220px;
   }
 
   .login-page .left-description {
     font-size: 13px;
   }
 
+  .login-page .left-side {
+    padding: 30px 24px;
+  }
+
   .login-page .right-side {
-    min-height: 60vh;
-    padding: 30px 20px;
+    padding: 30px 36px;
   }
 
-  .login-page .login-container {
-    max-width: 100%;
+  .login-page .top-logo img {
+    width: 240px;
   }
 
-  .login-page .language-selector {
-    top: 15px;
-    right: 15px;
-    font-size: 12px;
+  .login-page .top-logo {
+    margin-bottom: 30px;
   }
-}
 
-@media (max-width: 480px) {
-  .login-page .left-title {
-    font-size: 22px;
+  .login-page .login-header {
+    margin-bottom: 24px;
   }
 
   .login-page .login-header h1 {
     font-size: 22px;
+    margin-bottom: 8px;
   }
 
-  .login-page .left-description,
   .login-page .login-header p {
-    font-size: 12px;
+    font-size: 13px;
   }
 
-  .login-page form {
-    margin-bottom: 20px;
+  .login-page .support-link {
+    left: 36px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE — SMALL TABLET / LARGE PHONE (≤768px)
+   Hide left panel entirely, full-width form
+   ============================================ */
+@media (max-width: 768px) {
+  .login-page {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .login-page .container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Hide the hero panel — removes redundant logos & excessive scroll */
+  .login-page .left-side {
+    display: none;
+  }
+
+  .login-page .right-side {
+    flex: 1;
+    min-height: 100vh;
+    padding: 40px 28px;
+    align-items: flex-start;
+    padding-top: 48px;
+  }
+
+  .login-page .login-container {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .login-page .top-logo {
+    margin-bottom: 28px;
+  }
+
+  .login-page .top-logo img {
+    width: 220px;
+  }
+
+  .login-page .login-header {
+    margin-bottom: 24px;
+  }
+
+  .login-page .login-header h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .login-page .login-header p {
+    font-size: 13px;
   }
 
   .login-page .form-group {
     margin-bottom: 16px;
   }
 
+  .login-page .form-group label {
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .login-page .form-group input {
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+
+  .login-page .login-button {
+    padding: 12px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .login-page .divider {
+    margin: 16px 0 14px;
+  }
+
+  .login-page .microsoft-button,
+  .login-page .google-button {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  /* Support link becomes static at bottom of form */
+  .login-page .support-link {
+    position: static;
+    justify-content: center;
+    margin-top: 24px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE — MOBILE (≤480px)
+   Ultra-compact layout
+   ============================================ */
+@media (max-width: 480px) {
+  .login-page .right-side {
+    padding: 32px 20px;
+    padding-top: 36px;
+  }
+
+  .login-page .top-logo img {
+    width: 180px;
+  }
+
+  .login-page .top-logo {
+    margin-bottom: 20px;
+  }
+
+  .login-page .login-header {
+    margin-bottom: 18px;
+  }
+
+  .login-page .login-header h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .login-page .login-header p {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .login-page .form-group {
+    margin-bottom: 14px;
+  }
+
+  .login-page .form-group label {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .login-page .form-group input {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
   .login-page .form-options {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .login-page .remember-me {
+    font-size: 12px;
+  }
+
+  .login-page .forgot-password {
+    font-size: 12px;
+  }
+
+  .login-page .login-button {
+    padding: 11px;
+    font-size: 13px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+
+  .login-page .divider {
+    margin: 12px 0;
+    font-size: 10px;
+  }
+
+  .login-page .microsoft-button,
+  .login-page .google-button {
+    padding: 9px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  .login-page .support-link {
+    margin-top: 16px;
+    font-size: 12px;
   }
 }
 

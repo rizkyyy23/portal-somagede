@@ -1464,6 +1464,8 @@
 }
 
 /* ============= RESPONSIVE ============= */
+
+/* ─── Tablet (≤1024px) ─── */
 @media (max-width: 1024px) {
   .info-grid {
     grid-template-columns: 1fr;
@@ -1471,20 +1473,51 @@
   .personal-tab-content {
     grid-template-columns: 1fr;
   }
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .settings-right {
+    position: static;
+  }
+  .hr-support-box {
+    max-width: 100%;
+    margin-right: 0;
+  }
 }
 
+/* ─── Small Tablet / Large Phone (≤768px) ─── */
 @media (max-width: 768px) {
   .profile-header {
-    padding: 16px 20px;
+    padding: 12px 20px;
+  }
+
+  .company-logo {
+    width: 160px;
+  }
+
+  .page-title {
+    font-size: 16px;
   }
 
   .profile-main {
-    padding: 24px 20px 0;
+    padding: 20px 20px 0;
   }
 
   .profile-card-top {
     flex-direction: column;
-    padding: 24px;
+    align-items: center;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .profile-avatar-wrapper,
+  .profile-avatar-placeholder {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-avatar-placeholder {
+    font-size: 22px;
   }
 
   .profile-info-section {
@@ -1493,30 +1526,305 @@
     text-align: center;
   }
 
+  .profile-main .profile-name {
+    font-size: 18px;
+  }
+
+  .profile-position {
+    font-size: 13px;
+  }
+
   .profile-badges {
     justify-content: center;
   }
 
+  .profile-tabs {
+    margin-bottom: 16px;
+  }
+
+  .tab-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
   .field-row {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .field-row.field-row-3 {
     grid-template-columns: 1fr;
   }
 
+  .info-section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .job-details-card {
+    padding: 18px;
+    max-width: 100%;
+  }
+
   .job-details-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .quick-tip-box {
+    padding: 16px;
+  }
+
+  .settings-card {
+    padding: 14px;
   }
 
   .footer-content {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     text-align: center;
   }
 
   .footer-links {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .profile-footer {
+    padding: 10px 20px;
+  }
+
+  /* Modals compact */
+  .password-modal {
+    width: 90vw;
+  }
+
+  .confirm-modal {
+    width: 90vw;
+    padding: 28px 24px 22px;
+  }
+
+  .login-modal {
+    max-width: 90vw;
   }
 }
+
+/* ─── Mobile (≤480px) ─── */
+@media (max-width: 480px) {
+  .profile-header {
+    padding: 10px 16px;
+  }
+
+  .company-logo {
+    width: 130px;
+  }
+
+  .page-title {
+    font-size: 14px;
+  }
+
+  .back-btn {
+    padding: 6px;
+  }
+
+  .profile-main {
+    padding: 16px 16px 0;
+  }
+
+  .profile-card-top {
+    padding: 16px;
+    gap: 12px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+
+  .profile-avatar-wrapper,
+  .profile-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+  }
+
+  .profile-avatar-placeholder {
+    font-size: 20px;
+  }
+
+  .profile-main .profile-name {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .profile-position {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .status-badge {
+    padding: 3px 8px;
+  }
+
+  .status-text {
+    font-size: 11px;
+  }
+
+  .badge-internship {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .profile-tabs {
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .info-section {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .section-header h3 {
+    font-size: 13px;
+  }
+
+  .field-label {
+    font-size: 9px !important;
+  }
+
+  .field-value {
+    font-size: 12px !important;
+  }
+
+  .job-details-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .job-details-header h3 {
+    font-size: 14px;
+  }
+
+  .job-label {
+    font-size: 10px;
+  }
+
+  .job-value {
+    font-size: 13px;
+  }
+
+  .quick-tip-box {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .tip-title {
+    font-size: 10px;
+  }
+
+  .tip-text {
+    font-size: 12px;
+  }
+
+  .settings-card {
+    padding: 12px;
+    border-radius: 7px;
+  }
+
+  .settings-item-title {
+    font-size: 12px;
+  }
+
+  .settings-item-desc {
+    font-size: 11px;
+  }
+
+  .settings-btn-primary {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .hr-support-box {
+    padding: 16px;
+    border-radius: 10px;
+    margin-top: 14px;
+  }
+
+  .hr-title {
+    font-size: 14px;
+  }
+
+  .hr-text {
+    font-size: 12px;
+  }
+
+  .hr-contact-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .profile-footer {
+    padding: 8px 16px;
+  }
+
+  .footer-content {
+    font-size: 10px;
+  }
+
+  .footer-links a {
+    font-size: 9px;
+  }
+
+  /* Password modal compact */
+  .password-modal {
+    width: 95vw;
+    border-radius: 12px;
+  }
+
+  .password-modal-body {
+    padding: 16px;
+  }
+
+  .password-form {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .password-input {
+    padding: 8px 36px 8px 12px;
+    font-size: 12px;
+  }
+
+  .password-save-btn {
+    width: 160px;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 10px;
+  }
+
+  /* Confirm modal compact */
+  .confirm-modal {
+    padding: 24px 20px;
+    border-radius: 14px;
+  }
+
+  .confirm-modal-title {
+    font-size: 16px;
+  }
+
+  .confirm-modal-text {
+    font-size: 13px;
+  }
+
+  .confirm-cancel-btn,
+  .confirm-proceed-btn {
+    padding: 9px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}
+
