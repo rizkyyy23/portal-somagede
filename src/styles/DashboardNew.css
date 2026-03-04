@@ -1048,6 +1048,43 @@ body {
   scrollbar-color: var(--text-muted) transparent;
 }
 
+/* Sidebar header — hidden on desktop, visible when stacked */
+.sidebar-header {
+  display: none;
+}
+
+.sidebar-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sidebar-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sidebar-header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-header-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--blue);
+}
+
 .sidebar::-webkit-scrollbar {
   width: 4px;
 }
@@ -1354,7 +1391,7 @@ body {
   .hero {
     height: auto !important;
     min-height: 200px !important;
-    overflow: visible !important; /* Force visible for dropdown */
+    overflow: visible !important;
   }
 
   .hero-content {
@@ -1379,12 +1416,32 @@ body {
     padding-bottom: 20px !important;
   }
 
+  /* ── Sidebar stacked — full width with header ── */
   .sidebar {
     width: 100% !important;
     height: auto !important;
     overflow: visible !important;
     padding-top: 0 !important;
     padding-bottom: 20px !important;
+    border-top: 1px solid var(--border);
+  }
+
+  .sidebar-header {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 16px;
+  }
+
+  /* Broadcast cards in 2-column grid on tablet (full width) */
+  .sidebar-cards-wrap {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .notif-card {
+    margin-bottom: 0 !important; /* Grid handles spacing */
   }
 
   .cards-grid {
@@ -1407,6 +1464,10 @@ body {
 
   .dashboard-container .logo img {
     width: 180px !important;
+  }
+
+  .section {
+    margin-bottom: 28px !important;
   }
 }
 
@@ -1467,10 +1528,16 @@ body {
     font-size: 16px !important;
   }
 
+  .section-header.department-header + .section-underline {
+    width: 40px !important;
+    height: 3px !important;
+    margin-bottom: 16px !important;
+  }
+
   /* ── Cards grid — compact 2-col ── */
   .cards-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
 
   .app-card {
@@ -1502,6 +1569,52 @@ body {
     margin-bottom: 4px !important;
   }
 
+  /* ── Sidebar broadcasts — single column on mobile ── */
+  .sidebar {
+    padding-bottom: 16px !important;
+  }
+
+  .sidebar-header {
+    padding: 16px 0 12px !important;
+  }
+
+  .sidebar-title {
+    font-size: 15px !important;
+  }
+
+  .sidebar-cards-wrap {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .notif-card {
+    padding: 14px !important;
+  }
+
+  .notif-avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .notif-avatar svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .notif-title {
+    font-size: 12.5px !important;
+  }
+
+  .notif-body {
+    font-size: 11.5px !important;
+    padding-left: 44px !important;
+  }
+
+  .notif-dismiss {
+    margin-left: 44px !important;
+    font-size: 11px !important;
+  }
+
   /* ── Logo ── */
   .dashboard-container .logo img {
     width: 140px !important;
@@ -1517,7 +1630,7 @@ body {
     font-size: 10.5px !important;
     white-space: nowrap !important;
     border-radius: 12px !important;
-    overflow: visible !important; /* CRITICAL: Must be visible for dropdown */
+    overflow: visible !important;
     z-index: 50 !important;
   }
 
@@ -1544,11 +1657,10 @@ body {
     position: absolute !important;
     top: calc(100% + 5px) !important;
     right: 0 !important;
-    display: block !important; /* Ensure it uses block layout */
-    z-index: 1000 !important; /* Very high */
+    display: block !important;
+    z-index: 1000 !important;
   }
 
-  /* When open class is present on btn, make dropdown visible */
   .profile-btn.open .dropdown {
     opacity: 1 !important;
     visibility: visible !important;
@@ -1577,7 +1689,7 @@ body {
 ================================================= */
 @media (max-width: 420px) {
   .hero-content {
-    flex-direction: row !important; /* Keep logo and badge side-by-side if possible */
+    flex-direction: row !important;
     align-items: center !important;
     padding: 8px 10px 0 !important;
   }
@@ -1602,6 +1714,83 @@ body {
 
   .hero-text h1 {
     font-size: 14.5px !important;
+  }
+
+  /* ── Cards grid — compact 2-col ── */
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .app-card {
+    min-height: 120px !important;
+    padding: 8px 5px 5px !important;
+  }
+
+  .card-icon-wrap {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .card-icon-wrap img {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .card-title {
+    font-size: 10px !important;
+  }
+
+  .launch-link {
+    font-size: 8.5px !important;
+    padding: 3px 0 !important;
+  }
+
+  /* ── Broadcasts extra compact ── */
+  .sidebar-header {
+    padding: 12px 0 10px !important;
+  }
+
+  .sidebar-title {
+    font-size: 14px !important;
+  }
+
+  .sidebar-header-icon {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .sidebar-header-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .notif-card {
+    padding: 10px 12px !important;
+  }
+
+  .notif-title {
+    font-size: 11.5px !important;
+  }
+
+  .notif-body {
+    font-size: 11px !important;
+    padding-left: 0 !important;
+    margin-top: 6px !important;
+  }
+
+  .notif-dismiss {
+    margin-left: 0 !important;
+    font-size: 10.5px !important;
+  }
+
+  .notif-card.collapsed {
+    padding: 8px 12px !important;
+  }
+
+  .notif-card.collapsed .notif-avatar {
+    width: 28px !important;
+    height: 28px !important;
   }
 }
 

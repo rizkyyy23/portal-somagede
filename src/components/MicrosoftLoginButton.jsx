@@ -50,7 +50,7 @@ export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
     } catch (err) {
       // User menutup popup / popup timeout — bersihkan state, tidak perlu alert
       if (isIgnorableError(err)) {
-        console.log("Login dibatalkan atau timeout, membersihkan state...");
+        // Login cancelled or timed out — silently clean up
         clearMsalInteractionState();
         return;
       }
@@ -65,9 +65,7 @@ export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
           await attemptLogin();
         } catch (retryErr) {
           if (isIgnorableError(retryErr)) {
-            console.log(
-              "Login dibatalkan atau timeout (retry), membersihkan state...",
-            );
+            // Login cancelled or timed out on retry — silently clean up
             clearMsalInteractionState();
             return;
           }

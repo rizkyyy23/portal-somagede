@@ -3,7 +3,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../utils/api";
 import "../../styles/admin-dashboard.css";
 import "../../styles/DashboardAdmin.css";
-import "../../styles/MasterData.css";9
+import "../../styles/MasterData.css";
 
 const ActiveSession = () => {
   const { showToast } = useToast();
@@ -99,7 +99,7 @@ const ActiveSession = () => {
         window.dispatchEvent(
           new CustomEvent("session-expired", {
             detail: { reason: "force_logout" },
-          })
+          }),
         );
         return;
       }
@@ -290,7 +290,7 @@ const ActiveSession = () => {
                           {session.department}
                         </span>
                       </td>
-                      <td>{session.app_name || "Portal"}</td>
+                      <td>{session.app_name || "-"}</td>
                       <td>{session.ip_address}</td>
                       <td>{formatTime(session.login_at)}</td>
                       <td>{formatDuration(session.login_at)}</td>
@@ -400,8 +400,8 @@ const ActiveSession = () => {
                 Are you sure you want to terminate the session for{" "}
                 <strong>{selectedSession.user_name}</strong>? This will
                 immediately disconnect them from{" "}
-                <strong>{selectedSession.app_name || "Portal"}</strong> and they
-                will need to log in again.
+                <strong>{selectedSession.app_name || "-"}</strong> and they will
+                need to log in again.
               </p>
             </div>
             <div className="confirm-dialog-footer">

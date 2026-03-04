@@ -6,8 +6,8 @@ export default function ProtectedRoute({ adminOnly = false }) {
   const userEmail = localStorage.getItem("userEmail");
 
   // Check if user is logged in
-  // Accepts: JWT token (preferred) OR legacy userType+userEmail
-  // TODO: Once backend enforces JWT, simplify to: if (!token)
+  // Both email/password and Microsoft login now go through backend and return a token
+  // Fallback: also accept userType+userEmail for backward compatibility
   const isAuthenticated = token || (userType && userEmail);
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

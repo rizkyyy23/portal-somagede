@@ -767,7 +767,8 @@ const DashboardAdmin = () => {
                           <div className="user-info">
                             <h4
                               className={
-                                session.user_name && session.user_name.length > 20
+                                session.user_name &&
+                                session.user_name.length > 20
                                   ? "small-name"
                                   : ""
                               }
@@ -805,7 +806,7 @@ const DashboardAdmin = () => {
                           {session.department}
                         </span>
                       </td>
-                      <td>{session.app_name || "Portal"}</td>
+                      <td>{session.app_name || "-"}</td>
                       <td>
                         {formatTime(session.login_at)} (
                         {formatDuration(session.login_at)})

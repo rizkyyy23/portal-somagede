@@ -13,15 +13,15 @@ const UserControl = () => {
     // Fetch departments
     api.get("/departments").then((data) => {
       if (data.success) setDepartments(data.data);
-    });
+    }).catch((e) => console.error("Failed to fetch departments:", e));
     // Fetch positions
     api.get("/positions").then((data) => {
       if (data.success) setPositions(data.data.map((p) => p.name));
-    });
+    }).catch((e) => console.error("Failed to fetch positions:", e));
     // Fetch roles
     api.get("/roles").then((data) => {
       if (data.success) setRoles(data.data);
-    });
+    }).catch((e) => console.error("Failed to fetch roles:", e));
   }, []);
   // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
@@ -1859,7 +1859,7 @@ const UserControl = () => {
                                 },
                               );
                               if (data.success !== false) {
-                                await AllUserfetchs();
+                                await fetchAllUsers();
                                 setShowEditModal(false);
                                 setShowConfirmModal(false);
                                 setNotification({

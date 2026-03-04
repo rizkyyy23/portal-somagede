@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MicrosoftLoginButton from "../components/MicrosoftLoginButton";
 import { api } from "../utils/api";
@@ -45,15 +45,6 @@ export default function Login() {
         return;
       }
 
-      // Store auth token if backend provides one
-      if (userData.token) {
-        localStorage.setItem("token", userData.token);
-      }
-
-      // Determine user type based on role from backend
-      const userRole = userData.role?.toLowerCase();
-      const userType = userRole === "admin" ? "admin" : "user";
-
       // Handle Remember Me persistence
       if (formData.rememberMe) {
         localStorage.setItem("rememberedEmail", userData.email);
@@ -61,37 +52,8 @@ export default function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Store user data
-      localStorage.setItem("userType", userType);
-      localStorage.setItem("userEmail", userData.email);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: userData.id,
-          name: userData.name,
-          role:
-            userData.role?.toUpperCase() ||
-            (userType === "admin" ? "ADMIN" : "USER"),
-          department: userData.department,
-          position: userData.position,
-          avatar: userData.avatar || null,
-        }),
-      );
-
-      // Create active session — backend auto-detects IP, browser, OS, device, location
-      try {
-        // Backend auto-detects: ip_address, browser, os, os_version, device_type, user_agent, city, country
-        await api.post("/sessions", {
-          user_id: userData.id || null,
-          user_name: userData.name,
-          user_email: userData.email,
-          department: userData.department,
-          role: userData.role || (userType === "admin" ? "Admin" : "User"),
-          app_name: "Portal",
-        });
-      } catch (sessionError) {
-        console.error("Session creation failed:", sessionError);
-      }
+      // Store user data + create session
+      await storeUserAndCreateSession(userData);
 
       // Navigate ALL users to the main dashboard
       // Admins can access the Admin Panel from the dashboard profile dropdown
@@ -112,9 +74,97 @@ export default function Login() {
     }));
   };
 
-  const handleMicrosoftLogin = () => {
-    // TODO: Implement Microsoft Teams 365 OAuth
-    // After successful auth, redirect to /dashboard
+  // Shared function to store user data and create session after successful auth
+  const storeUserAndCreateSession = async (userData) => {
+    // Store auth token
+    if (userData.token) {
+      localStorage.setItem("token", userData.token);
+    }
+
+    // Determine user type based on role
+    const userRole = userData.role?.toLowerCase();
+    const userType = userRole === "admin" ? "admin" : "user";
+
+    // Store user data
+    localStorage.setItem("userType", userType);
+    localStorage.setItem("userEmail", userData.email);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: userData.id,
+        name: userData.name,
+        role:
+          userData.role?.toUpperCase() ||
+          (userType === "admin" ? "ADMIN" : "USER"),
+        department: userData.department,
+        position: userData.position,
+        avatar: userData.avatar || null,
+      }),
+    );
+
+    // Create active session — backend auto-detects IP, browser, OS, device, location
+    try {
+      await api.post("/sessions", {
+        user_id: userData.id || null,
+        user_name: userData.name,
+        user_email: userData.email,
+        department: userData.department,
+        role: userData.role || (userType === "admin" ? "Admin" : "User"),
+        app_name: "-",
+      });
+    } catch (sessionError) {
+      console.error("Session creation failed:", sessionError);
+    }
+  };
+
+  // Handle Microsoft login callback — validate with backend before navigating
+  const handleMicrosoftLoginSuccess = async (loginResponse) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const account = loginResponse.account;
+
+      // POST to backend for validation — backend checks if user is registered
+      const result = await api.post("/auth/microsoft", {
+        microsoft_id: account.localAccountId,
+        email: account.username,
+        name: account.name,
+        id_token: loginResponse.idToken,
+      });
+
+      if (!result.success) {
+        setError(
+          result.message ||
+            "Microsoft login failed. Account not registered in the system.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const userData = result.data;
+      if (!userData) {
+        setError(
+          "Account not found. Please contact your administrator to register your Microsoft account.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // Store MSAL account for reference
+      localStorage.setItem("msalAccount", JSON.stringify(account));
+
+      // Store user data + create session (same as email/password login)
+      await storeUserAndCreateSession(userData);
+
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Microsoft login error:", error);
+      setError("Unable to connect to server. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -259,13 +309,7 @@ export default function Login() {
               </div>
 
               <MicrosoftLoginButton
-                onLoginSuccess={(loginResponse) => {
-                  localStorage.setItem(
-                    "msalAccount",
-                    JSON.stringify(loginResponse.account),
-                  );
-                  navigate("/dashboard");
-                }}
+                onLoginSuccess={handleMicrosoftLoginSuccess}
                 disabled={isLoading}
               />
             </form>

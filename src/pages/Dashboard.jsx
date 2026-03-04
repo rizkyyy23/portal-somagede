@@ -44,6 +44,19 @@ export default function Dashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Reset active app to "-" when user returns to portal tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        api.updateActiveApp("-");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -150,7 +163,8 @@ export default function Dashboard() {
 
     // Cleanup active session
     try {
-      const userId = user?.id || JSON.parse(localStorage.getItem("user") || "{}").id;
+      const userId =
+        user?.id || JSON.parse(localStorage.getItem("user") || "{}").id;
       if (userId) {
         await api.delete(`/sessions/user/${userId}`);
       }
@@ -412,16 +426,30 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className={`hero-filter-wrap ${openSections['_heroFilter'] ? 'open' : ''}`}>
+          <div
+            className={`hero-filter-wrap ${openSections["_heroFilter"] ? "open" : ""}`}
+          >
             <button
               className="hero-filter-trigger"
               onClick={(e) => {
                 e.stopPropagation();
-                setOpenSections(prev => ({ ...prev, _heroFilter: !prev._heroFilter }));
+                setOpenSections((prev) => ({
+                  ...prev,
+                  _heroFilter: !prev._heroFilter,
+                }));
               }}
             >
               <div className="filter-icon-bg">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="4" y1="21" x2="4" y2="14" />
                   <line x1="4" y1="10" x2="4" y2="3" />
                   <line x1="12" y1="21" x2="12" y2="12" />
@@ -433,44 +461,70 @@ export default function Dashboard() {
                   <line x1="17" y1="16" x2="23" y2="16" />
                 </svg>
               </div>
-              <span>{selectedFilter === "all" ? "All Applications" : (() => {
-                const cat = selectedFilter;
-                const isOther = cat.toLowerCase() === "other" || cat.toLowerCase() === "others";
-                return isOther ? (user?.department || "Department") : cat;
-              })()}</span>
-              <svg className="hero-filter-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <span>
+                {selectedFilter === "all"
+                  ? "All Applications"
+                  : (() => {
+                      const cat = selectedFilter;
+                      const isOther =
+                        cat.toLowerCase() === "other" ||
+                        cat.toLowerCase() === "others";
+                      return isOther ? user?.department || "Department" : cat;
+                    })()}
+              </span>
+              <svg
+                className="hero-filter-caret"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
             <div className="hero-filter-dropdown">
               <div className="filter-dropdown-title">FILTER BY SECTION</div>
-              
+
               <div className="dropdown-scroll-area">
                 {Object.entries(categorizedApps).map(([category, apps]) => {
-                  const isOther = category.toLowerCase() === "other" || category.toLowerCase() === "others";
+                  const isOther =
+                    category.toLowerCase() === "other" ||
+                    category.toLowerCase() === "others";
                   const visibleApps = isAdmin
                     ? apps
                     : apps.filter((app) => isAppInDepartment(app.code));
-                  
+
                   if (visibleApps.length === 0) return null;
-                  
+
                   const displayName = isOther
                     ? `${user?.department || "Department"}`
                     : category;
-                  
+
                   return (
                     <div key={category} className="filter-dropdown-group">
                       <button
                         className={`hero-filter-item category ${selectedFilter === category ? "active" : ""}`}
-                        onClick={() => { setSelectedFilter(category); setOpenSections(prev => ({ ...prev, _heroFilter: false })); }}
+                        onClick={() => {
+                          setSelectedFilter(category);
+                          setOpenSections((prev) => ({
+                            ...prev,
+                            _heroFilter: false,
+                          }));
+                        }}
                       >
                         <div className="item-icon">
                           <span className="cat-dot" />
                         </div>
                         <span>{displayName}</span>
-                        <span className="count-badge">{visibleApps.length}</span>
+                        <span className="count-badge">
+                          {visibleApps.length}
+                        </span>
                       </button>
-                      
+
                       <div className="dropdown-apps-list">
                         {visibleApps.map((app) => (
                           <div
@@ -479,7 +533,10 @@ export default function Dashboard() {
                             onClick={(e) => {
                               e.stopPropagation();
                               scrollToCard(app.id);
-                              setOpenSections(prev => ({ ...prev, _heroFilter: false }));
+                              setOpenSections((prev) => ({
+                                ...prev,
+                                _heroFilter: false,
+                              }));
                             }}
                           >
                             <span className="app-link-dot" />
@@ -533,7 +590,9 @@ export default function Dashboard() {
                   className={`section-header ${isDeptHeader ? "department-header" : ""}`}
                 >
                   <span className="section-label">{displayCategory}</span>
-                  <span className="section-count">{visibleApps.length} apps</span>
+                  <span className="section-count">
+                    {visibleApps.length} apps
+                  </span>
                 </div>
                 <div className="section-underline"></div>
 
@@ -660,7 +719,14 @@ export default function Dashboard() {
                           target={canAccess ? "_blank" : "_self"}
                           rel="noopener noreferrer"
                           className={`launch-link ${!canAccess ? "disabled" : ""}`}
-                          onClick={(e) => !canAccess && e.preventDefault()}
+                          onClick={(e) => {
+                            if (!canAccess || !app.url) {
+                              e.preventDefault();
+                              return;
+                            }
+                            // Update active app only when app has a valid URL
+                            api.updateActiveApp(app.name);
+                          }}
                         >
                           {canAccess ? (
                             <>
@@ -780,6 +846,19 @@ export default function Dashboard() {
 
         {/* SIDEBAR: Notifications (Broadcasts) */}
         <aside className="sidebar" id="notifSidebar">
+          <div className="sidebar-header">
+            <div className="sidebar-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m3 11 18-5v12L3 14v-3z" />
+                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="sidebar-title">Announcements</h3>
+              <span className="sidebar-subtitle">{broadcasts.length} active broadcast{broadcasts.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div className="sidebar-cards-wrap">
           {broadcasts.length > 0 ? (
             broadcasts.map((broadcast) => {
               const isCollapsed = collapsedIds.includes(broadcast.id);
@@ -902,6 +981,7 @@ export default function Dashboard() {
               No new announcements
             </div>
           )}
+          </div>
         </aside>
       </div>
       {/* Navigation Modal */}

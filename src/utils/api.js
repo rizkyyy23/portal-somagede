@@ -1,6 +1,6 @@
 /**
  * Centralized API Client for Portal Somagede
- * 
+ *
  * - Otomatis menambahkan Authorization header jika token tersedia
  * - Otomatis handle response.ok check
  * - Handle 401 (auto redirect ke login)
@@ -11,7 +11,7 @@ export const API_URL = "/api";
 
 /**
  * Wrapper untuk fetch API yang sudah include auth header & error handling.
- * 
+ *
  * @param {string} endpoint - Path endpoint (contoh: "/users" atau "/users/1")
  * @param {object} options - Fetch options (method, body, headers, dll)
  * @returns {Promise<object>} Parsed JSON response
@@ -41,7 +41,7 @@ export const apiClient = async (endpoint, options = {}) => {
       window.dispatchEvent(
         new CustomEvent("session-expired", {
           detail: { reason: "session_timeout" },
-        })
+        }),
       );
       throw new Error("Session expired. Please login again.");
     }
@@ -67,6 +67,26 @@ export const apiClient = async (endpoint, options = {}) => {
  * Shorthand helpers untuk HTTP methods
  */
 export const api = {
+  /**
+   * Update active app name for current user's session.
+   * Call when user opens an app (appName = "SGI+") or returns to portal (appName = "-").
+   */
+  updateActiveApp: async (appName) => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser?.id) return;
+      await apiClient("/sessions/update-app", {
+        method: "PUT",
+        body: JSON.stringify({
+          user_id: storedUser.id,
+          app_name: appName || "-",
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update active app:", err);
+    }
+  },
+
   get: (endpoint) => apiClient(endpoint),
 
   post: (endpoint, body) =>

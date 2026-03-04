@@ -6,12 +6,6 @@ import {
   Trash2,
   Clock,
   Radio,
-  Search,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Bell,
   Edit3,
   Inbox,
 } from "lucide-react";
