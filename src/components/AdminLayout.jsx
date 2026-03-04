@@ -28,6 +28,7 @@ const AdminLayout = () => {
     fetchMenus();
   }, []);
 
+
   // Get page title based on current route
   const getPageTitle = () => {
     // Normalize path: lowercase and remove trailing slash

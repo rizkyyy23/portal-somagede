@@ -3,6 +3,16 @@ import { createRoot } from "react-dom/client";
 import { ToastProvider } from "./contexts/ToastContext";
 import "./styles/global.css";
 import App from "./App.jsx";
+import { PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider } from "@azure/msal-react";
+import { msalConfig } from "./msalConfig";
+
+const msalInstance = new PublicClientApplication(msalConfig);
+
+// Bersihkan MSAL interaction state yang mungkin tersisa dari session sebelumnya
+msalInstance.handleRedirectPromise().catch((err) => {
+  console.error("MSAL redirect cleanup error:", err);
+});
 
 // Scrollable selectors — elements that ARE allowed to scroll
 const SCROLLABLE_SELECTORS = [
@@ -74,8 +84,10 @@ document.addEventListener(
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
+    <MsalProvider instance={msalInstance}>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </MsalProvider>
   </StrictMode>,
 );

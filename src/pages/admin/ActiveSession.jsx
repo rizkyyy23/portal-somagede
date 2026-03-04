@@ -3,7 +3,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../utils/api";
 import "../../styles/admin-dashboard.css";
 import "../../styles/DashboardAdmin.css";
-import "../../styles/MasterData.css";
+import "../../styles/MasterData.css";9
 
 const ActiveSession = () => {
   const { showToast } = useToast();

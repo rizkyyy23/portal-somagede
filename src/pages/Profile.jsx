@@ -66,30 +66,76 @@ export default function Profile() {
       const userId = storedUser?.id;
       if (!userId) return;
 
-      // Fetch both active sessions and login history in parallel
-      const [sessionsData, historyData] = await Promise.all([
+      // Fetch active sessions, login history, and current device info in parallel
+      const [sessionsData, historyData, deviceInfo] = await Promise.all([
         api.get(`/sessions/user/${userId}`),
         api.get(`/login-history/user/${userId}`),
+        api.get("/device-info").catch(() => null),
       ]);
 
-      const activeSessions = sessionsData.success ? sessionsData.data : [];
-      const loginHistory = historyData.success ? historyData.data : [];
+      let activeSessions = sessionsData.success ? sessionsData.data : [];
+      let loginHistory = historyData.success ? historyData.data : [];
+
+      // Enrich sessions & history with device-info if fields are missing
+      if (deviceInfo?.success && deviceInfo.data) {
+        const di = deviceInfo.data;
+        const enrichEntry = (entry) => {
+          const ip = di.ip_address || di.ip;
+          const isSameDevice =
+            entry.ip_address === ip ||
+            entry.ip_address === "127.0.0.1" ||
+            entry.ip_address === "0.0.0.0";
+          if (isSameDevice) {
+            return {
+              ...entry,
+              city: entry.city || di.city || null,
+              region: entry.region || di.region || null,
+              country: entry.country || di.country || null,
+            };
+          }
+          return entry;
+        };
+        activeSessions = activeSessions.map(enrichEntry);
+        loginHistory = loginHistory.map(enrichEntry);
+      }
 
       // Combine: active sessions first (marked as current), then past logins
       // Skip history entries that match the current active session time
-      const activeIds = new Set(activeSessions.map((s) => s.id));
       const activeLoginTimes = new Set(
         activeSessions.map((s) => new Date(s.login_at).getTime()),
       );
 
       const pastLogins = loginHistory
         .filter((h) => !activeLoginTimes.has(new Date(h.login_at).getTime()))
+        .filter((h) => h.ip_address && h.ip_address !== "0.0.0.0") // Skip old entries with no real IP
         .map((h) => ({ ...h, _isPast: true }));
 
-      setLoginSessions([
-        ...activeSessions.map((s) => ({ ...s, _isCurrent: true })),
-        ...pastLogins,
-      ]);
+      // Deduplicate: for entries with same IP + device, keep only the most recent
+      const activeEntries = activeSessions.map((s) => ({
+        ...s,
+        _isCurrent: true,
+      }));
+      const allEntries = [...activeEntries, ...pastLogins];
+
+      // Build unique key per IP+device combo, keep only the newest per group
+      const seen = new Map();
+      const deduped = [];
+      for (const entry of allEntries) {
+        const key = `${entry.ip_address || "0.0.0.0"}__${entry.device_type || entry.browser || entry.device_info || "unknown"}`;
+        // Always keep current sessions
+        if (entry._isCurrent) {
+          seen.set(key, true);
+          deduped.push(entry);
+        } else {
+          // For past entries, only keep if we haven't seen this IP+device yet
+          if (!seen.has(key)) {
+            seen.set(key, true);
+            deduped.push(entry);
+          }
+        }
+      }
+
+      setLoginSessions(deduped);
     } catch (error) {
       console.error("Error fetching user sessions:", error);
     } finally {
@@ -184,13 +230,10 @@ export default function Profile() {
 
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
-      const data = await api.put(
-        `/users/${storedUser?.id}/change-password`,
-        {
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        },
-      );
+      const data = await api.put(`/users/${storedUser?.id}/change-password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
 
       if (data.success) {
         setPasswordSuccess("Password changed successfully!");
@@ -267,7 +310,8 @@ export default function Profile() {
 
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
     if (diffDays === 1) {
       return `Yesterday at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     }
@@ -277,10 +321,74 @@ export default function Profile() {
     return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
   };
 
+  // Build location string from city, region, country fields
+  const getSessionLocation = (session) => {
+    const parts = [];
+    if (session.city) parts.push(session.city);
+    if (session.region && session.region !== session.city)
+      parts.push(session.region);
+    if (session.country) parts.push(session.country);
+    if (parts.length > 0) return parts.join(", ");
+    // Fallback to location field if exists
+    if (session.location) return session.location;
+    return null;
+  };
+
+  // Build display label from session data
+  const getSessionLabel = (session) => {
+    const parts = [];
+    if (session.browser) parts.push(session.browser);
+    if (session.os) {
+      let osLabel = session.os;
+      if (session.os_version) osLabel += ` ${session.os_version}`;
+      parts.push(osLabel);
+    }
+    if (parts.length > 0) return parts.join(" · ");
+    // Fallback to device_info or device_type
+    if (session.device_info) return session.device_info;
+    if (session.device_type) return session.device_type;
+    return null;
+  };
+
   const getDeviceIcon = (session) => {
-    // Simple icon — desktop monitor
+    const deviceType = (session.device_type || "").toLowerCase();
+    const os = (session.os || session.device_info || "").toLowerCase();
+    const isMobile =
+      deviceType === "mobile" ||
+      deviceType === "tablet" ||
+      os.includes("android") ||
+      os.includes("ios");
+
+    if (isMobile) {
+      // Smartphone icon
+      return (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+          <line x1="12" y1="18" x2="12.01" y2="18" />
+        </svg>
+      );
+    }
+    // Desktop monitor icon
     return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
         <line x1="8" y1="21" x2="16" y2="21" />
         <line x1="12" y1="17" x2="12" y2="21" />
@@ -633,29 +741,62 @@ export default function Profile() {
                   </div>
                   <div className="login-activity-list">
                     {loginSessionsLoading ? (
-                      <div className="login-item" style={{ justifyContent: "center", color: "#94a3b8", fontSize: "12px" }}>
+                      <div
+                        className="login-item"
+                        style={{
+                          justifyContent: "center",
+                          color: "#94a3b8",
+                          fontSize: "12px",
+                        }}
+                      >
                         Loading sessions...
                       </div>
                     ) : loginSessions.length === 0 ? (
-                      <div className="login-item" style={{ justifyContent: "center", color: "#94a3b8", fontSize: "12px" }}>
+                      <div
+                        className="login-item"
+                        style={{
+                          justifyContent: "center",
+                          color: "#94a3b8",
+                          fontSize: "12px",
+                        }}
+                      >
                         No login activity
                       </div>
                     ) : (
                       loginSessions.slice(0, 7).map((session) => (
-                        <div key={`${session.id}-${session._isPast ? 'h' : 's'}`} className={`login-item ${session._isCurrent ? "current" : ""}`}>
+                        <div
+                          key={`${session.id}-${session._isPast ? "h" : "s"}`}
+                          className={`login-item ${session._isCurrent ? "current" : ""}`}
+                        >
                           {getDeviceIcon(session)}
                           <div className="login-item-info">
                             <div className="login-device">
-                              {session.app_name || "Portal"}
+                              {getSessionLabel(session) ||
+                                session.app_name ||
+                                "Portal"}
                             </div>
                             <div className="login-details">
-                              IP: {session.ip_address} · {formatSessionTime(session.login_at)}
+                              {getSessionLocation(session) && (
+                                <>{getSessionLocation(session)} · </>
+                              )}
+                              IP: {session.ip_address} ·{" "}
+                              {formatSessionTime(session.login_at)}
                             </div>
                           </div>
                           {session._isCurrent ? (
-                            <span className="current-badge">Current Session</span>
+                            <span className="current-badge">
+                              Current Session
+                            </span>
                           ) : session._isPast ? (
-                            <span className="current-badge" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Past</span>
+                            <span
+                              className="current-badge"
+                              style={{
+                                background: "#f1f5f9",
+                                color: "#94a3b8",
+                              }}
+                            >
+                              Past
+                            </span>
                           ) : null}
                         </div>
                       ))
@@ -735,25 +876,48 @@ export default function Profile() {
 
             <div className="login-modal-body">
               {loginSessions.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "24px", color: "#94a3b8", fontSize: "13px" }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "24px",
+                    color: "#94a3b8",
+                    fontSize: "13px",
+                  }}
+                >
                   No login activity found
                 </div>
               ) : (
                 loginSessions.map((session) => (
-                  <div key={`modal-${session.id}-${session._isPast ? 'h' : 's'}`} className={`modal-login-item ${session._isCurrent ? "current" : ""}`}>
+                  <div
+                    key={`modal-${session.id}-${session._isPast ? "h" : "s"}`}
+                    className={`modal-login-item ${session._isCurrent ? "current" : ""}`}
+                  >
                     {getDeviceIcon(session)}
                     <div className="modal-login-info">
                       <div className="modal-login-device">
-                        {session.app_name || "Portal"}
+                        {getSessionLabel(session) ||
+                          session.app_name ||
+                          "Portal"}
                       </div>
                       <div className="modal-login-details">
-                        IP: {session.ip_address} · {formatSessionTime(session.login_at)}
+                        {getSessionLocation(session) && (
+                          <>{getSessionLocation(session)} · </>
+                        )}
+                        IP: {session.ip_address} ·{" "}
+                        {formatSessionTime(session.login_at)}
                       </div>
                     </div>
                     {session._isCurrent ? (
-                      <span className="modal-current-badge">Current Session</span>
+                      <span className="modal-current-badge">
+                        Current Session
+                      </span>
                     ) : session._isPast ? (
-                      <span className="modal-current-badge" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Past</span>
+                      <span
+                        className="modal-current-badge"
+                        style={{ background: "#f1f5f9", color: "#94a3b8" }}
+                      >
+                        Past
+                      </span>
                     ) : (
                       <button
                         className="modal-logout-btn"
@@ -1210,7 +1374,10 @@ export default function Profile() {
       {showLogoutConfirm && logoutTarget && (
         <div
           className="modal-overlay"
-          onClick={() => { setShowLogoutConfirm(false); setLogoutTarget(null); }}
+          onClick={() => {
+            setShowLogoutConfirm(false);
+            setLogoutTarget(null);
+          }}
         >
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="confirm-modal-icon logout-icon">
@@ -1255,7 +1422,10 @@ export default function Profile() {
             <div className="confirm-modal-actions">
               <button
                 className="confirm-cancel-btn"
-                onClick={() => { setShowLogoutConfirm(false); setLogoutTarget(null); }}
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  setLogoutTarget(null);
+                }}
               >
                 Cancel
               </button>

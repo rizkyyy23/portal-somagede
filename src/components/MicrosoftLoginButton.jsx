@@ -1,22 +1,83 @@
 import React from "react";
 import { useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
 
 export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
-  const { instance } = useMsal();
+  const { instance, inProgress } = useMsal();
+
+  // Bersihkan MSAL interaction state yang stuck di sessionStorage
+  const clearMsalInteractionState = () => {
+    const keys = Object.keys(sessionStorage);
+    keys.forEach((key) => {
+      if (key.includes("msal") && key.includes("interaction")) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  };
+
+  const attemptLogin = async () => {
+    const loginResponse = await instance.loginPopup();
+    if (onLoginSuccess) {
+      onLoginSuccess(loginResponse);
+    }
+  };
 
   const handleLogin = async () => {
     if (disabled) return;
+
+    // Daftar error yang bisa diabaikan (user cancel, popup ditutup, timeout)
+    const isIgnorableError = (error) => {
+      const ignorableCodes = [
+        "user_cancelled",
+        "popup_closed_by_user",
+        "timed_out",
+        "monitor_window_timeout",
+        "hash_empty_error",
+      ];
+      if (ignorableCodes.includes(error.errorCode)) return true;
+      const msg = error.message?.toLowerCase() || "";
+      if (
+        msg.includes("user cancelled") ||
+        msg.includes("popup closed") ||
+        msg.includes("timed_out")
+      )
+        return true;
+      return false;
+    };
+
     try {
-      const loginResponse = await instance.loginPopup();
-      if (onLoginSuccess) {
-        onLoginSuccess(loginResponse);
-      }
+      await attemptLogin();
     } catch (err) {
-      if (err.errorCode === "interaction_in_progress") {
-        // Bersihkan state MSAL dengan reload halaman
-        window.location.reload();
+      // User menutup popup / popup timeout — bersihkan state, tidak perlu alert
+      if (isIgnorableError(err)) {
+        console.log("Login dibatalkan atau timeout, membersihkan state...");
+        clearMsalInteractionState();
         return;
       }
+
+      // Interaction masih berjalan (stuck) — bersihkan lalu retry otomatis
+      if (err.errorCode === "interaction_in_progress") {
+        console.warn("Interaction stuck, membersihkan state dan retry...");
+        clearMsalInteractionState();
+        // Tunggu sebentar agar MSAL bisa membaca ulang state
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        try {
+          await attemptLogin();
+        } catch (retryErr) {
+          if (isIgnorableError(retryErr)) {
+            console.log(
+              "Login dibatalkan atau timeout (retry), membersihkan state...",
+            );
+            clearMsalInteractionState();
+            return;
+          }
+          console.error("Retry login gagal:", retryErr);
+          alert("Login Microsoft gagal: " + retryErr.message);
+        }
+        return;
+      }
+
+      console.error("Login error:", err);
       alert("Login Microsoft gagal: " + err.message);
     }
   };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import MicrosoftLoginButton from "../components/MicrosoftLoginButton";
 import { api } from "../utils/api";
 import "../styles/login.css";
 
@@ -68,22 +69,24 @@ export default function Login() {
         JSON.stringify({
           id: userData.id,
           name: userData.name,
-          role: userData.role?.toUpperCase() || (userType === "admin" ? "ADMIN" : "USER"),
+          role:
+            userData.role?.toUpperCase() ||
+            (userType === "admin" ? "ADMIN" : "USER"),
           department: userData.department,
           position: userData.position,
           avatar: userData.avatar || null,
         }),
       );
 
-      // Create active session
+      // Create active session — backend auto-detects IP, browser, OS, device, location
       try {
+        // Backend auto-detects: ip_address, browser, os, os_version, device_type, user_agent, city, country
         await api.post("/sessions", {
           user_id: userData.id || null,
           user_name: userData.name,
           user_email: userData.email,
           department: userData.department,
-          role: userData.role || (isAdmin ? "Admin" : "User"),
-          ip_address: "0.0.0.0",
+          role: userData.role || (userType === "admin" ? "Admin" : "User"),
           app_name: "Portal",
         });
       } catch (sessionError) {
@@ -255,46 +258,16 @@ export default function Login() {
                 <span>OR CONTINUE WITH</span>
               </div>
 
-              <button
-                type="button"
-                className="google-button"
-                onClick={handleMicrosoftLogin}
-                disabled
-                title="Coming Soon"
-                style={{ opacity: 0.6, cursor: "not-allowed" }}
-              >
-                <svg
-                  className="google-icon"
-                  viewBox="0 0 23 23"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect width="10.5" height="10.5" fill="#F25022" />
-                  <rect x="12" width="10.5" height="10.5" fill="#7FBA00" />
-                  <rect y="12" width="10.5" height="10.5" fill="#00A4EF" />
-                  <rect
-                    x="12"
-                    y="12"
-                    width="10.5"
-                    height="10.5"
-                    fill="#FFB900"
-                  />
-                </svg>
-                Sign in with Microsoft
-                <span
-                  style={{
-                    fontSize: "10px",
-                    background: "#f1f5f9",
-                    color: "#64748b",
-                    padding: "2px 8px",
-                    borderRadius: "4px",
-                    fontWeight: 600,
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  SOON
-                </span>
-              </button>
+              <MicrosoftLoginButton
+                onLoginSuccess={(loginResponse) => {
+                  localStorage.setItem(
+                    "msalAccount",
+                    JSON.stringify(loginResponse.account),
+                  );
+                  navigate("/dashboard");
+                }}
+                disabled={isLoading}
+              />
             </form>
 
             <div className="support-link">
