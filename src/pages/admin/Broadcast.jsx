@@ -135,7 +135,10 @@ const Broadcast = () => {
         `/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
       );
       if (result.success) {
-        showToast("Broadcast removed from active list (kept in history)", "success");
+        showToast(
+          "Broadcast removed from active list (kept in history)",
+          "success",
+        );
         // Refresh both lists so active no longer shows it, but history still does
         await fetchAllData();
         setDeleteCandidate(null);
@@ -298,11 +301,14 @@ const Broadcast = () => {
               </p>
             </div>
 
-            <button type="submit" className="btn-send-broadcast" disabled={sending}
+            <button
+              type="submit"
+              className="btn-send-broadcast"
+              disabled={sending}
               style={{
                 opacity: sending ? 0.7 : 1,
-                cursor: sending ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
+                cursor: sending ? "not-allowed" : "pointer",
+                transition: "all 0.3s ease",
               }}
             >
               <Send size={20} />
@@ -345,7 +351,10 @@ const Broadcast = () => {
 
                 if (displayList.length === 0) {
                   return (
-                    <div className="broadcast-empty" style={{ padding: "40px 0" }}>
+                    <div
+                      className="broadcast-empty"
+                      style={{ padding: "40px 0" }}
+                    >
                       <Inbox
                         size={48}
                         style={{ opacity: 0.2, marginBottom: "16px" }}
@@ -474,14 +483,15 @@ const Broadcast = () => {
                                   >
                                     <Trash2 size={11} />
                                     Removed:{" "}
-                                    {new Date(
-                                      item.deleted_at,
-                                    ).toLocaleString("id-ID", {
-                                      day: "numeric",
-                                      month: "short",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
+                                    {new Date(item.deleted_at).toLocaleString(
+                                      "id-ID",
+                                      {
+                                        day: "numeric",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      },
+                                    )}
                                   </div>
                                 )}
                                 {!item.deleted_at && item.expires_at && (

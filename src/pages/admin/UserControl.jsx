@@ -11,17 +11,26 @@ const UserControl = () => {
   // Fetch departments, positions, roles from database
   useEffect(() => {
     // Fetch departments
-    api.get("/departments").then((data) => {
-      if (data.success) setDepartments(data.data);
-    }).catch((e) => console.error("Failed to fetch departments:", e));
+    api
+      .get("/departments")
+      .then((data) => {
+        if (data.success) setDepartments(data.data);
+      })
+      .catch((e) => console.error("Failed to fetch departments:", e));
     // Fetch positions
-    api.get("/positions").then((data) => {
-      if (data.success) setPositions(data.data.map((p) => p.name));
-    }).catch((e) => console.error("Failed to fetch positions:", e));
+    api
+      .get("/positions")
+      .then((data) => {
+        if (data.success) setPositions(data.data.map((p) => p.name));
+      })
+      .catch((e) => console.error("Failed to fetch positions:", e));
     // Fetch roles
-    api.get("/roles").then((data) => {
-      if (data.success) setRoles(data.data);
-    }).catch((e) => console.error("Failed to fetch roles:", e));
+    api
+      .get("/roles")
+      .then((data) => {
+        if (data.success) setRoles(data.data);
+      })
+      .catch((e) => console.error("Failed to fetch roles:", e));
   }, []);
   // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
@@ -165,7 +174,9 @@ const UserControl = () => {
   const filteredUsers = getCurrentUsers()
     .filter(
       (user) =>
-        ((user.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        ((user.name || "")
+          .toLowerCase()
+          .includes(searchQuery.trim().toLowerCase()) ||
           (user.email || "")
             .toLowerCase()
             .includes(searchQuery.trim().toLowerCase())) &&
@@ -576,7 +587,9 @@ const UserControl = () => {
                                   `/users/${user.id}/privileges`,
                                 );
                                 if (data.success) {
-                                  const appIds = data.data.map((a) => a.application_id);
+                                  const appIds = data.data.map(
+                                    (a) => a.application_id,
+                                  );
                                   setSelectedApps(appIds);
                                   originalApps.current = [...appIds];
                                 } else {
@@ -2220,10 +2233,12 @@ const UserControl = () => {
                 Cancel
               </button>
               {(() => {
-                const hasChanges = JSON.stringify([...selectedApps].sort()) !== JSON.stringify([...originalApps.current].sort());
+                const hasChanges =
+                  JSON.stringify([...selectedApps].sort()) !==
+                  JSON.stringify([...originalApps.current].sort());
                 return (
                   <button
-                    className={`modal-btn ${hasChanges ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    className={`modal-btn ${hasChanges ? "modal-btn-primary" : "modal-btn-disabled"}`}
                     disabled={!hasChanges}
                     style={{
                       background: hasChanges ? "#3a3f47" : "#c8ccd0",
@@ -2248,13 +2263,15 @@ const UserControl = () => {
                           fetchAllUsers();
                           setNotification({
                             type: "success",
-                            message: "Application permissions updated successfully",
+                            message:
+                              "Application permissions updated successfully",
                           });
                           setTimeout(() => setNotification(null), 3500);
                         } else {
                           setNotification({
                             type: "error",
-                            message: data.message || "Failed to update permissions",
+                            message:
+                              data.message || "Failed to update permissions",
                           });
                           setTimeout(() => setNotification(null), 3500);
                         }
@@ -2262,7 +2279,8 @@ const UserControl = () => {
                         console.error("Error updating privileges:", err);
                         setNotification({
                           type: "error",
-                          message: "Network error. Please check your connection.",
+                          message:
+                            "Network error. Please check your connection.",
                         });
                         setTimeout(() => setNotification(null), 3500);
                       }

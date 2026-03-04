@@ -848,139 +848,152 @@ export default function Dashboard() {
         <aside className="sidebar" id="notifSidebar">
           <div className="sidebar-header">
             <div className="sidebar-header-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="m3 11 18-5v12L3 14v-3z" />
                 <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
               </svg>
             </div>
             <div>
               <h3 className="sidebar-title">Announcements</h3>
-              <span className="sidebar-subtitle">{broadcasts.length} active broadcast{broadcasts.length !== 1 ? 's' : ''}</span>
+              <span className="sidebar-subtitle">
+                {broadcasts.length} active broadcast
+                {broadcasts.length !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
           <div className="sidebar-cards-wrap">
-          {broadcasts.length > 0 ? (
-            broadcasts.map((broadcast) => {
-              const isCollapsed = collapsedIds.includes(broadcast.id);
-              return (
-                <div
-                  className={`notif-card priority-${broadcast.priority} ${isCollapsed ? "collapsed" : ""}`}
-                  key={broadcast.id}
-                >
-                  <div className="notif-head">
-                    <div className="notif-avatar">
-                      {broadcast.priority === "urgent" ? (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                          <line x1="12" y1="9" x2="12" y2="13" />
-                          <line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                      ) : broadcast.priority === "high" ? (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" y1="12" x2="12" y2="8" />
-                          <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                      ) : (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m3 11 18-5v12L3 14v-3z" />
-                          <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="notif-content">
-                      <div className="notif-title">{broadcast.title}</div>
-                      {!isCollapsed && (
-                        <div className="notif-time">
-                          {new Date(broadcast.created_at).toLocaleString()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {!isCollapsed && (
-                    <div className="notif-body">{broadcast.message}</div>
-                  )}
-
-                  <button
-                    className="notif-dismiss"
-                    onClick={() => toggleBroadcast(broadcast.id)}
+            {broadcasts.length > 0 ? (
+              broadcasts.map((broadcast) => {
+                const isCollapsed = collapsedIds.includes(broadcast.id);
+                return (
+                  <div
+                    className={`notif-card priority-${broadcast.priority} ${isCollapsed ? "collapsed" : ""}`}
+                    key={broadcast.id}
                   >
-                    {isCollapsed ? (
-                      <>
-                        Show Details
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          style={{ marginLeft: 4 }}
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        Dismiss
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          style={{ marginLeft: 4, transform: "rotate(180deg)" }}
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </>
+                    <div className="notif-head">
+                      <div className="notif-avatar">
+                        {broadcast.priority === "urgent" ? (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                          </svg>
+                        ) : broadcast.priority === "high" ? (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="12" x2="12" y2="8" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        ) : (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m3 11 18-5v12L3 14v-3z" />
+                            <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="notif-content">
+                        <div className="notif-title">{broadcast.title}</div>
+                        {!isCollapsed && (
+                          <div className="notif-time">
+                            {new Date(broadcast.created_at).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="notif-body">{broadcast.message}</div>
                     )}
-                  </button>
-                </div>
-              );
-            })
-          ) : (
-            <div
-              style={{
-                padding: "20px",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: "12px",
-                background: "white",
-                borderRadius: "12px",
-                border: "1px solid var(--border)",
-              }}
-            >
-              No new announcements
-            </div>
-          )}
+
+                    <button
+                      className="notif-dismiss"
+                      onClick={() => toggleBroadcast(broadcast.id)}
+                    >
+                      {isCollapsed ? (
+                        <>
+                          Show Details
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ marginLeft: 4 }}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </>
+                      ) : (
+                        <>
+                          Dismiss
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{
+                              marginLeft: 4,
+                              transform: "rotate(180deg)",
+                            }}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <div
+                style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  fontSize: "12px",
+                  background: "white",
+                  borderRadius: "12px",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                No new announcements
+              </div>
+            )}
           </div>
         </aside>
       </div>
