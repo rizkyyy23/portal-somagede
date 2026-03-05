@@ -196,6 +196,27 @@
   border-radius: 16px;
 }
 
+.badge-auth-provider {
+  font-family: "Poppins", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
+.badge-auth-provider.microsoft {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-auth-provider.local {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
 .status-dot {
   width: 6px;
   height: 6px;
@@ -706,6 +727,61 @@
   transform: none;
   box-shadow: none;
   background: #94a3b8;
+}
+
+/* Forgot Password Link in Settings */
+.settings-forgot-link {
+  text-align: right;
+  margin-top: 8px;
+}
+
+.settings-forgot-link a {
+  font-size: 12px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.settings-forgot-link a:hover {
+  color: #1a73e8;
+  text-decoration: underline;
+}
+
+/* Microsoft Account Badge & Link */
+.settings-badge-microsoft {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f0f7ff;
+  color: #1a73e8;
+  border: 1px solid #d4e5fa;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.settings-btn-microsoft {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f0f7ff;
+  color: #1a73e8;
+  border: 1px solid #d4e5fa;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-btn-microsoft:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
 }
 
 /* Password Cooldown Badge */
@@ -1674,6 +1750,16 @@
     padding: 3px 8px;
   }
 
+  .badge-auth-provider {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .settings-btn-microsoft {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
   .profile-tabs {
     margin-bottom: 12px;
   }
@@ -1827,4 +1913,3 @@
     border-radius: 8px;
   }
 }
-

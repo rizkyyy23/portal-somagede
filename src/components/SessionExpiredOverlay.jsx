@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { api } from "../utils/api";
 
 /**
  * Global overlay that appears when a session is terminated.
- * Listens for a custom "session-expired" event dispatched from api.js or ActiveSession.
- * Also polls backend every 5s to detect force logout by admin.
+ * Listens for a custom "session-expired" event dispatched by:
+ * - api.js → any 401 response (backend menolak karena session tidak valid / idle timeout / JWT expired)
+ * - ActiveSession.jsx → admin force-logout diri sendiri
+ * - Profile.jsx → user logout session terakhirnya sendiri
+ * - ProtectedRoute.jsx → frontend idle timeout (UX warning)
+ *
+ * TIDAK ada polling.
+ * Security enforcement 100% di backend (cek session + last_activity setiap request).
+ * Force logout terdeteksi saat user melakukan request berikutnya → 401 → event ini.
  *
  * Reasons:
  * - "force_logout" → Admin force-logged out your session
- * - "session_timeout" → Session expired (401 from backend)
+ * - "session_timeout" → Session expired (401 from backend / JWT expired)
+ * - "idle_timeout" → User inactive for 30 minutes (backend enforcement + frontend UX)
  */
 const SessionExpiredOverlay = () => {
   const [visible, setVisible] = useState(false);
@@ -25,45 +32,7 @@ const SessionExpiredOverlay = () => {
       window.removeEventListener("session-expired", handleSessionExpired);
   }, []);
 
-  // Poll backend every 30s to check if session is still active
-  useEffect(() => {
-    if (visible) return; // Stop polling once overlay is shown
-
-    const checkSession = async () => {
-      try {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const token = localStorage.getItem("token");
-        const userType = localStorage.getItem("userType");
-        const userEmail = localStorage.getItem("userEmail");
-        const isLoggedIn = storedUser?.id && (token || (userType && userEmail));
-        if (!isLoggedIn) return; // Not logged in
-
-        const result = await api.get(`/sessions/user/${storedUser.id}`);
-        if (
-          result.success &&
-          Array.isArray(result.data) &&
-          result.data.length === 0
-        ) {
-          setReason("force_logout");
-          setVisible(true);
-        }
-      } catch (err) {
-        // Network error or 401 — handled by api.js
-      }
-    };
-
-    // Start polling after 3s, then every 5s
-    const initialTimeout = setTimeout(checkSession, 3000);
-    const interval = setInterval(checkSession, 5000);
-
-    return () => {
-      clearTimeout(initialTimeout);
-      clearInterval(interval);
-    };
-  }, [visible]); // Re-run when visible changes
-
   const handleLogin = () => {
-    localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
@@ -73,6 +42,21 @@ const SessionExpiredOverlay = () => {
   if (!visible) return null;
 
   const isForceLogout = reason === "force_logout";
+  const isIdleTimeout = reason === "idle_timeout";
+
+  const getTitle = () => {
+    if (isForceLogout) return "Session Terminated";
+    if (isIdleTimeout) return "Session Idle";
+    return "Session Expired";
+  };
+
+  const getMessage = () => {
+    if (isForceLogout)
+      return "Your active session has been ended by an administrator. Please log in again to continue.";
+    if (isIdleTimeout)
+      return "You have been logged out due to 30 minutes of inactivity. Please log in again to continue.";
+    return "Your session has expired. Please log in again to continue.";
+  };
 
   return (
     <div
@@ -156,7 +140,11 @@ const SessionExpiredOverlay = () => {
               '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
-          {isForceLogout ? "Session Terminated" : "Session Timeout"}
+          {isForceLogout
+            ? "Session Terminated"
+            : isIdleTimeout
+              ? "Session Idle"
+              : "Session Expired"}
         </h2>
 
         <p
@@ -169,9 +157,7 @@ const SessionExpiredOverlay = () => {
               '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
-          {isForceLogout
-            ? "Your active session has been ended by an administrator. Please log in again to continue."
-            : "Your session has expired due to inactivity. Please log in again to continue."}
+          {getMessage()}
         </p>
 
         <button

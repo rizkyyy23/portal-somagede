@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../utils/api";
+import { getInitials } from "../utils/helpers";
+import { logger } from "../utils/logger";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
@@ -8,6 +10,9 @@ const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
   const [expandedMenus, setExpandedMenus] = useState({ masterdata: false });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [user] = useState(() =>
+    JSON.parse(localStorage.getItem("user") || "null"),
+  );
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -142,10 +147,9 @@ const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
         await api.delete(`/sessions/user/${storedUser.id}`);
       }
     } catch (e) {
-      console.error("Failed to cleanup session:", e);
+      logger.error("Failed to cleanup session:", e);
     }
 
-    localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
@@ -158,15 +162,6 @@ const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
-
-  const getUserInitials = (name) => {
-    if (!name) return "RS";
-    const names = name.split(" ");
-    if (names.length === 1) return name.substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
-  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
     if (!user) {
@@ -284,7 +279,7 @@ const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
                   }}
                 />
               ) : (
-                getUserInitials(user.name)
+                getInitials(user.name)
               )}
             </div>
             <div className="profile-info">

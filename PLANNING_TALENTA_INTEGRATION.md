@@ -11,8 +11,8 @@
 ```
 User input email + password
   → POST /api/users/login
-  → Backend validasi + return user data + token
-  → Frontend simpan localStorage → navigate ke Dashboard
+  → Backend validasi + set httpOnly cookie (JWT) + return user data
+  → Frontend simpan user data ke localStorage → navigate ke Dashboard
 ```
 
 ### Login Microsoft ⚠️ BELUM BENAR
@@ -35,8 +35,8 @@ User klik Microsoft Login
   → MSAL popup → dapat loginResponse (berisi id_token, email, microsoft_id)
   → POST /api/auth/microsoft ke backend
      Body: { microsoft_id, email, id_token }
-  → Backend validasi token + cek user di DB → return user data + JWT token
-  → Frontend simpan user data + JWT ke localStorage
+  → Backend validasi token + cek user di DB → set httpOnly cookie (JWT) + return user data
+  → Frontend simpan user data ke localStorage (bukan token)
   → POST /api/sessions (buat active session)
   → Navigate ke Dashboard
 ```
@@ -86,16 +86,11 @@ User klik Microsoft Login
 
       const userData = result.data;
 
-      // 2. Simpan JWT token
-      if (userData.token) {
-        localStorage.setItem("token", userData.token);
-      }
-
-      // 3. Tentukan user type
+      // 2. Tentukan user type
       const userRole = userData.role?.toLowerCase();
       const userType = userRole === "admin" ? "admin" : "user";
 
-      // 4. Simpan user data ke localStorage
+      // 3. Simpan user data ke localStorage (token tidak disimpan, pakai httpOnly cookie)
       localStorage.setItem("userType", userType);
       localStorage.setItem("userEmail", userData.email);
       localStorage.setItem("msalAccount", JSON.stringify(account));
@@ -113,7 +108,7 @@ User klik Microsoft Login
         }),
       );
 
-      // 5. Buat active session
+      // 4. Buat active session
       try {
         await api.post("/sessions", {
           user_id: userData.id,
@@ -127,7 +122,7 @@ User klik Microsoft Login
         console.error("Session creation failed:", sessionError);
       }
 
-      // 6. Navigate ke dashboard
+      // 5. Navigate ke dashboard
       navigate("/dashboard");
     } catch (error) {
       console.error("Microsoft login error:", error);
@@ -172,8 +167,7 @@ POST /api/auth/microsoft
     "role": "User",
     "status": "active",
     "employee_id": "EMP001",
-    "avatar": null,
-    "token": "eyJhbGciOiJIUzI1NiIs..."
+    "avatar": null
   }
 }
 ```
@@ -237,14 +231,15 @@ POST /api/auth/microsoft
 
 ## BAGIAN 3: localStorage Structure
 
-| Key               | Tipe        | Value                                              | Diset di                           |
-| ----------------- | ----------- | -------------------------------------------------- | ---------------------------------- |
-| `token`           | string      | JWT auth token                                     | Login.jsx (setelah backend return) |
-| `userType`        | string      | `"admin"` atau `"user"`                            | Login.jsx                          |
-| `userEmail`       | string      | Email user                                         | Login.jsx                          |
-| `user`            | JSON string | `{ id, name, role, department, position, avatar }` | Login.jsx                          |
-| `rememberedEmail` | string      | Email (persist antar session)                      | Login.jsx (jika Remember Me)       |
-| `msalAccount`     | JSON string | MSAL account object                                | Login.jsx (Microsoft login)        |
+| Key               | Tipe        | Value                                              | Diset di                     |
+| ----------------- | ----------- | -------------------------------------------------- | ---------------------------- |
+| `userType`        | string      | `"admin"` atau `"user"`                            | Login.jsx                    |
+| `userEmail`       | string      | Email user                                         | Login.jsx                    |
+| `user`            | JSON string | `{ id, name, role, department, position, avatar }` | Login.jsx                    |
+| `rememberedEmail` | string      | Email (persist antar session)                      | Login.jsx (jika Remember Me) |
+| `msalAccount`     | JSON string | MSAL account object                                | Login.jsx (Microsoft login)  |
+
+> **Catatan:** Token (JWT) TIDAK ada di localStorage. JWT disimpan di httpOnly cookie, dikelola sepenuhnya oleh browser.
 
 ---
 
@@ -274,13 +269,13 @@ Data user dari Talenta API (`GET /employee`) yang relevan untuk portal:
 
 - [x] **Ubah `onLoginSuccess` di Login.jsx** — POST ke backend sebelum navigate ✅ DONE
 - [x] **Refactor login logic** — `storeUserAndCreateSession()` shared function untuk email & Microsoft login ✅ DONE
-- [x] **Update ProtectedRoute** — komentar diperbarui, backward compatible ✅ DONE
+- [x] **Update ProtectedRoute** — cek autentikasi dari localStorage user data (cookie dikirim otomatis oleh browser) ✅ DONE
 - [ ] **Test Microsoft login flow** — pastikan POST `/api/auth/microsoft` dipanggil (butuh backend endpoint)
 - [ ] **Test error handling** — jika user Microsoft belum terdaftar, tampilkan pesan error
 
 ### Backend (tim lain / dummy Anda):
 
-- [ ] Buat endpoint `POST /api/auth/microsoft` — terima `{ microsoft_id, email, name, id_token }`, return user data + JWT
+- [ ] Buat endpoint `POST /api/auth/microsoft` — terima `{ microsoft_id, email, name, id_token }`, generate JWT, set httpOnly cookie, return user data
 - [ ] Validasi `id_token` dari Microsoft (verify signature via JWKS)
 - [ ] Cek apakah email terdaftar di database (data dari Talenta sync)
 - [ ] Tambah kolom `microsoft_id` di tabel users (untuk link account)

@@ -13,6 +13,7 @@ import "../../styles/admin-dashboard.css";
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../utils/api";
+import { logger } from "../../utils/logger";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/Broadcast.css";
 
@@ -45,7 +46,7 @@ const Broadcast = () => {
       const data = await api.get(`/broadcasts/active?t=${t}`);
       if (data.success) setActiveBroadcasts(data.data);
     } catch (error) {
-      console.error("Error fetching active broadcasts:", error);
+      logger.error("Error fetching active broadcasts:", error);
     }
   };
 
@@ -56,7 +57,7 @@ const Broadcast = () => {
       const data = await api.get(`/broadcasts/history?t=${t}`);
       if (data.success) setHistoryBroadcasts(data.data);
     } catch (error) {
-      console.error("Error fetching broadcast history:", error);
+      logger.error("Error fetching broadcast history:", error);
     }
   };
 
@@ -115,7 +116,7 @@ const Broadcast = () => {
         showToast(result.message || "Failed to send broadcast", "error");
       }
     } catch (error) {
-      console.error("Error sending broadcast:", error);
+      logger.error("Error sending broadcast:", error);
       showToast("Failed to send broadcast", "error");
     } finally {
       setSending(false);
@@ -146,7 +147,7 @@ const Broadcast = () => {
         showToast(result.message || "Failed to remove broadcast", "error");
       }
     } catch (error) {
-      console.error("Error deleting broadcast:", error);
+      logger.error("Error deleting broadcast:", error);
       showToast("Failed to remove broadcast", "error");
     }
   };

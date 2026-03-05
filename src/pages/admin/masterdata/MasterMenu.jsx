@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
 import "../../../styles/admin-dashboard.css";
 
 // Font Awesome icon options for sidebar menus
@@ -55,7 +56,7 @@ const MasterMenu = () => {
         showToast("Failed to fetch menus", "error");
       }
     } catch (error) {
-      console.error("Error fetching menus:", error);
+      logger.error("Error fetching menus:", error);
       showToast("Failed to connect to server", "error");
     } finally {
       setLoading(false);
@@ -136,7 +137,7 @@ const MasterMenu = () => {
       }
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving menu:", error);
+      logger.error("Error saving menu:", error);
       showToast("Failed to save menu", "error");
     } finally {
       setLoading(false);
@@ -153,7 +154,7 @@ const MasterMenu = () => {
         showToast(data.message || "Failed to delete menu", "error");
       }
     } catch (error) {
-      console.error("Error deleting menu:", error);
+      logger.error("Error deleting menu:", error);
       showToast("Failed to delete menu", "error");
     }
     setShowDeleteModal(false);
@@ -196,7 +197,7 @@ const MasterMenu = () => {
     .filter(
       (menu) =>
         (menu.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        menu.path.toLowerCase().includes(searchQuery.toLowerCase())) &&
+          menu.path.toLowerCase().includes(searchQuery.toLowerCase())) &&
         menu.path !== "/admin/masterdata",
     )
     .sort((a, b) => a.order - b.order);
@@ -447,18 +448,40 @@ const MasterMenu = () => {
 
             {/* Body */}
             <div className="modal-body-modern" style={{ padding: "24px 30px" }}>
-              <div 
-                style={{ 
-                  display: "grid", 
-                  gridTemplateColumns: "1fr 1fr", 
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
                   gap: "30px",
-                  alignItems: "start" 
+                  alignItems: "start",
                 }}
               >
                 {/* Left Column: General Info */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <div style={{ padding: "0 0 10px 0", borderBottom: "1px solid #f1f5f9", marginBottom: "5px" }}>
-                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px" }}>General Info</h4>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "0 0 10px 0",
+                      borderBottom: "1px solid #f1f5f9",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      General Info
+                    </h4>
                   </div>
 
                   {/* Menu Label */}
@@ -492,7 +515,10 @@ const MasterMenu = () => {
                     </label>
                     <div className="input-wrapper">
                       <span className="input-icon">
-                        <i className="fas fa-route" style={{ fontSize: 13 }}></i>
+                        <i
+                          className="fas fa-route"
+                          style={{ fontSize: 13 }}
+                        ></i>
                       </span>
                       <input
                         type="text"
@@ -562,7 +588,10 @@ const MasterMenu = () => {
                             <span className="toggle-title">
                               {formData.isActive ? "Active" : "Inactive"}
                             </span>
-                            <span className="toggle-subtitle" style={{ fontSize: "10px" }}>
+                            <span
+                              className="toggle-subtitle"
+                              style={{ fontSize: "10px" }}
+                            >
                               {formData.isActive
                                 ? "Menu ditampilkan"
                                 : "Menu disembunyikan"}
@@ -580,9 +609,31 @@ const MasterMenu = () => {
                 </div>
 
                 {/* Right Column: Icon Management */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <div style={{ padding: "0 0 10px 0", borderBottom: "1px solid #f1f5f9", marginBottom: "5px" }}>
-                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px" }}>Icon Management</h4>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "0 0 10px 0",
+                      borderBottom: "1px solid #f1f5f9",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Icon Management
+                    </h4>
                   </div>
 
                   <div className="form-group-modern">
@@ -626,9 +677,24 @@ const MasterMenu = () => {
                           <i className={formData.icon}></i>
                         )}
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                          {formData.customIcon ? "Custom Icon" : (MENU_ICONS.find(i => i.name === formData.icon)?.label || "Menu Icon")}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          flex: 1,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#334155",
+                          }}
+                        >
+                          {formData.customIcon
+                            ? "Custom Icon"
+                            : MENU_ICONS.find((i) => i.name === formData.icon)
+                                ?.label || "Menu Icon"}
                         </span>
                         <span style={{ fontSize: 11, color: "#64748b" }}>
                           Icon used in sidebar
@@ -657,7 +723,7 @@ const MasterMenu = () => {
                   {/* Icon Picker */}
                   <div className="form-group-modern">
                     <label>Select From Preset</label>
-                    <div 
+                    <div
                       className="icon-grid"
                       style={{
                         display: "grid",
@@ -669,7 +735,7 @@ const MasterMenu = () => {
                         background: "#ffffff",
                         borderRadius: 12,
                         border: "1px solid #e2e8f0",
-                        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
+                        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
                       }}
                     >
                       {MENU_ICONS.map((icon) => (
@@ -691,13 +757,24 @@ const MasterMenu = () => {
                             justifyContent: "center",
                             borderRadius: 8,
                             cursor: "pointer",
-                            background: (formData.icon === icon.name && !formData.customIcon) ? "#4a90e2" : "#f8fafc",
-                            color: (formData.icon === icon.name && !formData.customIcon) ? "white" : "#64748b",
+                            background:
+                              formData.icon === icon.name &&
+                              !formData.customIcon
+                                ? "#4a90e2"
+                                : "#f8fafc",
+                            color:
+                              formData.icon === icon.name &&
+                              !formData.customIcon
+                                ? "white"
+                                : "#64748b",
                             border: "1px solid #e2e8f0",
                             transition: "all 0.2s",
                           }}
                         >
-                          <i className={icon.name} style={{ fontSize: "16px" }}></i>
+                          <i
+                            className={icon.name}
+                            style={{ fontSize: "16px" }}
+                          ></i>
                         </div>
                       ))}
                     </div>
@@ -716,7 +793,7 @@ const MasterMenu = () => {
                         cursor: "pointer",
                         position: "relative",
                         background: "#f8fafc",
-                        transition: "all 0.2s"
+                        transition: "all 0.2s",
                       }}
                     >
                       <input
@@ -731,9 +808,25 @@ const MasterMenu = () => {
                         }}
                       />
                       <div style={{ color: "#475569", fontSize: 13 }}>
-                        <i className="fas fa-cloud-upload-alt" style={{ marginBottom: 6, display: "block", fontSize: "20px", color: "#4a90e2" }}></i>
+                        <i
+                          className="fas fa-cloud-upload-alt"
+                          style={{
+                            marginBottom: 6,
+                            display: "block",
+                            fontSize: "20px",
+                            color: "#4a90e2",
+                          }}
+                        ></i>
                         <span style={{ fontWeight: "600" }}>Choose Image</span>
-                        <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>PNG, JPG up to 500KB</p>
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "#94a3b8",
+                            marginTop: "2px",
+                          }}
+                        >
+                          PNG, JPG up to 500KB
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -742,7 +835,10 @@ const MasterMenu = () => {
             </div>
 
             {/* Footer */}
-            <div className="modal-footer-modern" style={{ padding: "12px 20px" }}>
+            <div
+              className="modal-footer-modern"
+              style={{ padding: "12px 20px" }}
+            >
               <button
                 className="btn-modern-secondary"
                 style={{ height: 36, padding: "0 16px", fontSize: 13 }}
@@ -752,7 +848,9 @@ const MasterMenu = () => {
               </button>
               {(() => {
                 const isEdit = !!selectedMenu;
-                const hasChanges = !isEdit || !originalData.current ||
+                const hasChanges =
+                  !isEdit ||
+                  !originalData.current ||
                   formData.label !== originalData.current.label ||
                   formData.path !== originalData.current.path ||
                   formData.icon !== originalData.current.icon ||
@@ -761,13 +859,15 @@ const MasterMenu = () => {
                   formData.isActive !== originalData.current.isActive;
                 const canSave = hasChanges && !loading;
                 return (
-                  <button 
-                    className={`${canSave ? 'btn-modern-primary' : 'btn-modern-disabled'}`}
-                    style={{ 
-                      height: 36, padding: "0 16px", fontSize: 13,
+                  <button
+                    className={`${canSave ? "btn-modern-primary" : "btn-modern-disabled"}`}
+                    style={{
+                      height: 36,
+                      padding: "0 16px",
+                      fontSize: 13,
                       opacity: canSave ? 1 : 0.5,
-                      cursor: canSave ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease',
+                      cursor: canSave ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
                     }}
                     onClick={handleSave}
                     disabled={!canSave}
@@ -775,7 +875,11 @@ const MasterMenu = () => {
                     <i
                       className={selectedMenu ? "fas fa-check" : "fas fa-plus"}
                     ></i>
-                    {loading ? 'Saving...' : selectedMenu ? "Save Changes" : "Add Menu"}
+                    {loading
+                      ? "Saving..."
+                      : selectedMenu
+                        ? "Save Changes"
+                        : "Add Menu"}
                   </button>
                 );
               })()}
@@ -827,8 +931,8 @@ const MasterMenu = () => {
               >
                 Cancel
               </button>
-              <button 
-                className="btn-modern-danger" 
+              <button
+                className="btn-modern-danger"
                 style={{ height: 36, padding: "0 16px", fontSize: 13 }}
                 onClick={confirmDelete}
               >

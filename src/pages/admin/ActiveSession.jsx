@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../utils/api";
+import { getInitials, getInitialsColor } from "../../utils/helpers";
+import { logger } from "../../utils/logger";
 import "../../styles/admin-dashboard.css";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/MasterData.css";
@@ -30,7 +32,7 @@ const ActiveSession = () => {
         setDepartments(result.data);
       }
     } catch (error) {
-      console.error("Error fetching departments:", error);
+      logger.error("Error fetching departments:", error);
     }
   };
 
@@ -54,33 +56,10 @@ const ActiveSession = () => {
         setSessions(result.data);
       }
     } catch (error) {
-      console.error("Error fetching sessions:", error);
+      logger.error("Error fetching sessions:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const getUserInitials = (name) => {
-    if (!name) return "??";
-    const names = name.split(" ");
-    if (names.length === 1) return name.substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
-  const getInitialsColor = (name) => {
-    const colors = [
-      { bg: "#e3f2fd", color: "#4a90e2" },
-      { bg: "#ffebee", color: "#e74c3c" },
-      { bg: "#e8f5e9", color: "#27ae60" },
-      { bg: "#f3e5f5", color: "#9b59b6" },
-      { bg: "#fff3e0", color: "#f39c12" },
-      { bg: "#e0f7fa", color: "#00bcd4" },
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
   };
 
   const handleForceLogout = (session) => {
@@ -223,7 +202,7 @@ const ActiveSession = () => {
                   currentPage * itemsPerPage,
                 )
                 .map((session) => {
-                  const initials = getUserInitials(session.user_name);
+                  const initials = getInitials(session.user_name);
                   const colors = getInitialsColor(session.user_name);
                   return (
                     <tr key={session.id}>

@@ -1,6 +1,6 @@
 import React from "react";
 import { useMsal } from "@azure/msal-react";
-import { InteractionStatus } from "@azure/msal-browser";
+import { logger } from "../utils/logger";
 
 export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
   const { instance, inProgress } = useMsal();
@@ -69,13 +69,13 @@ export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
             clearMsalInteractionState();
             return;
           }
-          console.error("Retry login gagal:", retryErr);
+          logger.error("Retry login gagal:", retryErr);
           alert("Login Microsoft gagal: " + retryErr.message);
         }
         return;
       }
 
-      console.error("Login error:", err);
+      logger.error("Login error:", err);
       alert("Login Microsoft gagal: " + err.message);
     }
   };

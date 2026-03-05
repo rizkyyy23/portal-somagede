@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../utils/api";
+import { getInitials } from "../utils/helpers";
+import { logger } from "../utils/logger";
 import "../styles/DashboardNew.css";
 
 export default function Dashboard() {
@@ -64,7 +66,7 @@ export default function Dashboard() {
       const userId = storedUser?.id;
 
       if (!userId) {
-        console.error("No user ID found, redirecting to login");
+        logger.error("No user ID found, redirecting to login");
         navigate("/login");
         return;
       }
@@ -112,7 +114,7 @@ export default function Dashboard() {
             }
           }
         } catch (e) {
-          console.error("Error fetching department permissions:", e);
+          logger.error("Error fetching department permissions:", e);
         }
       }
 
@@ -150,7 +152,7 @@ export default function Dashboard() {
         setBroadcasts(activeBroadcasts);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      logger.error("Error fetching dashboard data:", error);
       // If unauthorized, the API client will handle the redirect/modal
     } finally {
       setLoading(false);
@@ -169,10 +171,9 @@ export default function Dashboard() {
         await api.delete(`/sessions/user/${userId}`);
       }
     } catch (e) {
-      console.error("Failed to cleanup session:", e);
+      logger.error("Failed to cleanup session:", e);
     }
 
-    localStorage.removeItem("token");
     localStorage.removeItem("userType");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("user");
@@ -193,16 +194,6 @@ export default function Dashboard() {
     if (isAdmin) return true; // Admin sees all apps
     if (!deptAllowedCodes || deptAllowedCodes.length === 0) return false;
     return deptAllowedCodes.includes(appCode);
-  };
-
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
   };
 
   const toggleSectionDrop = (category) => {

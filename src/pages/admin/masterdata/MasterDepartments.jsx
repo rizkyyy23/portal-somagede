@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api, apiClient } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
 import "../../../styles/admin-dashboard.css";
 
 // 22 unique colors for departments
@@ -133,7 +134,7 @@ const MasterDepartments = () => {
         setDepartments(sortedData);
       }
     } catch (error) {
-      console.error("Error fetching departments:", error);
+      logger.error("Error fetching departments:", error);
       showToast("Failed to load departments", "error");
     } finally {
       setLoading(false);
@@ -252,7 +253,7 @@ const MasterDepartments = () => {
         showToast(data.message || "Failed to save department", "error");
       }
     } catch (error) {
-      console.error("Error saving department:", error);
+      logger.error("Error saving department:", error);
       showToast("Failed to save department", "error");
     } finally {
       setLoading(false);
@@ -272,7 +273,7 @@ const MasterDepartments = () => {
         showToast(data.message || "Failed to delete department", "error");
       }
     } catch (error) {
-      console.error("Error deleting department:", error);
+      logger.error("Error deleting department:", error);
       showToast("Failed to delete department", "error");
     } finally {
       setLoading(false);
@@ -853,7 +854,9 @@ const MasterDepartments = () => {
               </button>
               {(() => {
                 const isEdit = !!selectedDepartment;
-                const hasChanges = !isEdit || !originalData.current ||
+                const hasChanges =
+                  !isEdit ||
+                  !originalData.current ||
                   formData.name !== originalData.current.name ||
                   formData.code !== originalData.current.code ||
                   formData.description !== originalData.current.description ||
@@ -863,13 +866,13 @@ const MasterDepartments = () => {
                 const canSave = hasChanges && !loading;
                 return (
                   <button
-                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    className={`modal-btn ${canSave ? "modal-btn-primary" : "modal-btn-disabled"}`}
                     onClick={handleSave}
                     disabled={!canSave}
                     style={{
                       opacity: canSave ? 1 : 0.5,
-                      cursor: canSave ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease',
+                      cursor: canSave ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <svg
@@ -882,7 +885,11 @@ const MasterDepartments = () => {
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Department"}
+                    {loading
+                      ? "Saving..."
+                      : isEdit
+                        ? "Save Changes"
+                        : "Save Department"}
                   </button>
                 );
               })()}

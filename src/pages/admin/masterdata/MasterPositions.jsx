@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
 import "../../../styles/admin-dashboard.css";
 
 const MasterPositions = () => {
@@ -30,7 +31,7 @@ const MasterPositions = () => {
         setPositions(data.data);
       }
     } catch (error) {
-      console.error("Error fetching positions:", error);
+      logger.error("Error fetching positions:", error);
       showToast("Failed to load positions", "error");
     } finally {
       setLoading(false);
@@ -101,7 +102,7 @@ const MasterPositions = () => {
         showToast(data.message || "Failed to save position", "error");
       }
     } catch (error) {
-      console.error("Error saving position:", error);
+      logger.error("Error saving position:", error);
       showToast("Failed to save position", "error");
     } finally {
       setLoading(false);
@@ -121,7 +122,7 @@ const MasterPositions = () => {
         showToast(data.message || "Failed to delete position", "error");
       }
     } catch (error) {
-      console.error("Error deleting position:", error);
+      logger.error("Error deleting position:", error);
       showToast("Failed to delete position", "error");
     } finally {
       setLoading(false);

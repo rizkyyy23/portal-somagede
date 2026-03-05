@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../utils/api";
+import { getInitials } from "../utils/helpers";
+import { logger } from "../utils/logger";
 import "../styles/profile.css";
 
 export default function Profile() {
@@ -52,7 +54,7 @@ export default function Profile() {
         setUserData(data.data);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      logger.error("Error fetching user data:", error);
     } finally {
       setLoading(false);
     }
@@ -137,7 +139,7 @@ export default function Profile() {
 
       setLoginSessions(deduped);
     } catch (error) {
-      console.error("Error fetching user sessions:", error);
+      logger.error("Error fetching user sessions:", error);
     } finally {
       setLoginSessionsLoading(false);
     }
@@ -249,21 +251,11 @@ export default function Profile() {
         setPasswordError(data.message || "Failed to change password");
       }
     } catch (error) {
-      console.error("Error changing password:", error);
+      logger.error("Error changing password:", error);
       setPasswordError("An error occurred. Please try again.");
     } finally {
       setPasswordLoading(false);
     }
-  };
-
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
   };
 
   // Password change cooldown helpers
@@ -419,7 +411,7 @@ export default function Profile() {
       // Re-fetch sessions to update the list
       await fetchUserSessions();
     } catch (error) {
-      console.error("Error logging out session:", error);
+      logger.error("Error logging out session:", error);
     }
     setShowLogoutConfirm(false);
     setLogoutTarget(null);
@@ -526,6 +518,19 @@ export default function Profile() {
                   Internship
                 </span>
               )}
+              <span
+                className={`badge-auth-provider ${userData?.auth_provider === "microsoft" ? "microsoft" : "local"}`}
+              >
+                {userData?.auth_provider === "microsoft" ? (
+                  <>
+                    <i className="fab fa-microsoft"></i> Microsoft SSO
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-key"></i> Local Account
+                  </>
+                )}
+              </span>
             </div>
           </div>
         </div>
@@ -680,40 +685,80 @@ export default function Profile() {
                     </svg>
                     <h3>Security Settings</h3>
                   </div>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <h4 className="settings-item-title">Change Password</h4>
-                      <p className="settings-item-desc">
-                        {getPasswordChangeInfo().label}
-                      </p>
-                      {!getPasswordChangeInfo().canChange && (
-                        <div className="password-cooldown-badge">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
-                          <span>
-                            {getPasswordChangeInfo().remainingDays} day(s)
-                            remaining
-                          </span>
-                        </div>
-                      )}
+
+                  {userData?.auth_provider === "microsoft" ? (
+                    <div className="settings-item">
+                      <div className="settings-item-info">
+                        <h4 className="settings-item-title">Password</h4>
+                        <p className="settings-item-desc">
+                          Akun Anda menggunakan login Microsoft 365. Password
+                          dikelola oleh Microsoft.
+                        </p>
+                      </div>
+                      <a
+                        href="https://account.microsoft.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="settings-btn-microsoft"
+                      >
+                        <i
+                          className="fab fa-microsoft"
+                          style={{ marginRight: 6 }}
+                        ></i>
+                        Microsoft Account
+                      </a>
                     </div>
-                    <button
-                      className={`settings-btn-primary ${!getPasswordChangeInfo().canChange ? "btn-disabled" : ""}`}
-                      onClick={openPasswordModal}
-                      disabled={!getPasswordChangeInfo().canChange}
-                    >
-                      Update Password
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="settings-item">
+                        <div className="settings-item-info">
+                          <h4 className="settings-item-title">
+                            Change Password
+                          </h4>
+                          <p className="settings-item-desc">
+                            {getPasswordChangeInfo().label}
+                          </p>
+                          {!getPasswordChangeInfo().canChange && (
+                            <div className="password-cooldown-badge">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <span>
+                                {getPasswordChangeInfo().remainingDays} day(s)
+                                remaining
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          className={`settings-btn-primary ${!getPasswordChangeInfo().canChange ? "btn-disabled" : ""}`}
+                          onClick={openPasswordModal}
+                          disabled={!getPasswordChangeInfo().canChange}
+                        >
+                          Update Password
+                        </button>
+                      </div>
+                      <div className="settings-forgot-link">
+                        <a
+                          href="/login"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.href = "/login";
+                          }}
+                        >
+                          Lupa password lama?
+                        </a>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Recent Login Activity */}

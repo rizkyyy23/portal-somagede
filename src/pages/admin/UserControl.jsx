@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { api, apiClient } from "../../utils/api";
+import { getInitials, getInitialsColor } from "../../utils/helpers";
+import { logger } from "../../utils/logger";
 import "../../styles/UserControl.css";
 
 const UserControl = () => {
@@ -16,21 +18,21 @@ const UserControl = () => {
       .then((data) => {
         if (data.success) setDepartments(data.data);
       })
-      .catch((e) => console.error("Failed to fetch departments:", e));
+      .catch((e) => logger.error("Failed to fetch departments:", e));
     // Fetch positions
     api
       .get("/positions")
       .then((data) => {
         if (data.success) setPositions(data.data.map((p) => p.name));
       })
-      .catch((e) => console.error("Failed to fetch positions:", e));
+      .catch((e) => logger.error("Failed to fetch positions:", e));
     // Fetch roles
     api
       .get("/roles")
       .then((data) => {
         if (data.success) setRoles(data.data);
       })
-      .catch((e) => console.error("Failed to fetch roles:", e));
+      .catch((e) => logger.error("Failed to fetch roles:", e));
   }, []);
   // State declarations
   const [activeTab, setActiveTab] = useState("all-users");
@@ -117,7 +119,7 @@ const UserControl = () => {
         setError("Failed to fetch users data");
       }
     } catch (err) {
-      console.error("Error fetching users:", err);
+      logger.error("Error fetching users:", err);
       setError("Failed to connect to server. Make sure backend is running.");
     } finally {
       setLoading(false);
@@ -138,29 +140,6 @@ const UserControl = () => {
     if (!deptName) return "#94a3b8";
     const dept = departments.find((d) => d.name === deptName);
     return dept?.color || "#6366f1";
-  };
-
-  const getUserInitials = (name) => {
-    if (!name) return "??";
-    const names = name.split(" ");
-    if (names.length === 1) return name.substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
-  const getInitialsColor = (name) => {
-    const colors = [
-      { bg: "#e3f2fd", color: "#4a90e2" },
-      { bg: "#ffebee", color: "#e74c3c" },
-      { bg: "#e8f5e9", color: "#27ae60" },
-      { bg: "#fff3e0", color: "#f39c12" },
-      { bg: "#ede7f6", color: "#8e44ad" },
-      { bg: "#f1f8e9", color: "#388e3c" },
-      { bg: "#fce4ec", color: "#d81b60" },
-      { bg: "#f9fbe7", color: "#cddc39" },
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-    return colors[hash % colors.length];
   };
 
   const getCurrentUsers = () => {
@@ -385,7 +364,7 @@ const UserControl = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((user) => {
-                  const initials = getUserInitials(user.name);
+                  const initials = getInitials(user.name);
                   const colors = getInitialsColor(user.name);
                   const extraCount = user.extra_app_count || 0;
                   const limitCount = user.limit_app_count || 0;
@@ -725,7 +704,7 @@ const UserControl = () => {
                           }}
                         />
                       ) : (
-                        getUserInitials(formData.name)
+                        getInitials(formData.name)
                       )}
                     </div>
                     <label
@@ -1120,7 +1099,7 @@ const UserControl = () => {
                         }}
                       />
                     ) : (
-                      getUserInitials(formData.name)
+                      getInitials(formData.name)
                     )}
                   </div>
                   <div
@@ -1196,7 +1175,7 @@ const UserControl = () => {
                           }}
                         />
                       ) : (
-                        getUserInitials(formData.name)
+                        getInitials(formData.name)
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -1821,7 +1800,7 @@ const UserControl = () => {
                             setTimeout(() => setNotification(null), 3500);
                           }
                         } catch (err) {
-                          console.error("Error activating user:", err);
+                          logger.error("Error activating user:", err);
                           setShowConfirmModal(false);
                           setNotification({
                             type: "error",
@@ -1890,7 +1869,7 @@ const UserControl = () => {
                                 setTimeout(() => setNotification(null), 3500);
                               }
                             } catch (err) {
-                              console.error("Error saving changes:", err);
+                              logger.error("Error saving changes:", err);
                               setShowConfirmModal(false);
                               setNotification({
                                 type: "error",
@@ -1995,7 +1974,7 @@ const UserControl = () => {
                       }}
                     />
                   ) : (
-                    getUserInitials(selectedUser.name)
+                    getInitials(selectedUser.name)
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -2276,7 +2255,7 @@ const UserControl = () => {
                           setTimeout(() => setNotification(null), 3500);
                         }
                       } catch (err) {
-                        console.error("Error updating privileges:", err);
+                        logger.error("Error updating privileges:", err);
                         setNotification({
                           type: "error",
                           message:

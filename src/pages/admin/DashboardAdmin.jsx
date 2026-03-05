@@ -25,6 +25,8 @@ import {
   Area,
 } from "recharts";
 import { api } from "../../utils/api";
+import { getInitialsColor } from "../../utils/helpers";
+import { logger } from "../../utils/logger";
 import "../../styles/DashboardAdmin.css";
 import "../../styles/MasterData.css";
 
@@ -63,7 +65,7 @@ const DashboardAdmin = () => {
         const userData = JSON.parse(storedUser);
         adminName = userData.name || "Admin";
       } catch (error) {
-        console.error("Error parsing user data:", error);
+        logger.error("Error parsing user data:", error);
       }
     }
     const timer = setTimeout(() => {
@@ -80,7 +82,7 @@ const DashboardAdmin = () => {
         setDepartments(result.data);
       }
     } catch (error) {
-      console.error("Error fetching departments:", error);
+      logger.error("Error fetching departments:", error);
     }
   };
 
@@ -97,7 +99,7 @@ const DashboardAdmin = () => {
         setLoginTrends(formattedTrends);
       }
     } catch (error) {
-      console.error("Error fetching analytics:", error);
+      logger.error("Error fetching analytics:", error);
     }
   };
 
@@ -117,7 +119,7 @@ const DashboardAdmin = () => {
         setActiveBroadcasts(result.data.slice(0, 3)); // Limit to 3 latest
       }
     } catch (error) {
-      console.error("Error fetching broadcasts:", error);
+      logger.error("Error fetching broadcasts:", error);
     }
   };
 
@@ -165,7 +167,7 @@ const DashboardAdmin = () => {
         setAppUsage(data.topActiveApps || []);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      logger.error("Error fetching dashboard data:", error);
     }
   };
 
@@ -174,23 +176,6 @@ const DashboardAdmin = () => {
     const names = name.split(" ");
     if (names.length === 1) return name.substring(0, 2).toUpperCase();
     return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
-  const getInitialsColor = (name) => {
-    const colors = [
-      { bg: "#e3f2fd", color: "#4a90e2" },
-      { bg: "#ffebee", color: "#e74c3c" },
-      { bg: "#e8f5e9", color: "#27ae60" },
-      { bg: "#f3e5f5", color: "#9b59b6" },
-      { bg: "#fff3e0", color: "#f39c12" },
-      { bg: "#e0f7fa", color: "#00bcd4" },
-    ];
-    if (!name) return colors[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
   };
 
   const handleForceLogout = (session) => {

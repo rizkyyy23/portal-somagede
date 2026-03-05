@@ -1,46 +1,63 @@
 /**
  * Centralized API Client for Portal Somagede
  *
- * - Otomatis menambahkan Authorization header jika token tersedia
+ * - Autentikasi via httpOnly cookie (session-based, dikirim otomatis oleh browser)
  * - Otomatis handle response.ok check
  * - Handle 401 (auto redirect ke login)
  * - Support FormData (file upload) dan JSON
  */
 
 export const API_URL = "/api";
+import { logger } from "./logger";
 
 /**
- * Wrapper untuk fetch API yang sudah include auth header & error handling.
+ * Wrapper untuk fetch API yang sudah include cookie credentials & error handling.
  *
  * @param {string} endpoint - Path endpoint (contoh: "/users" atau "/users/1")
  * @param {object} options - Fetch options (method, body, headers, dll)
  * @returns {Promise<object>} Parsed JSON response
  */
 export const apiClient = async (endpoint, options = {}) => {
-  const token = localStorage.getItem("token");
-
   // Build headers — jangan set Content-Type jika body adalah FormData
   const isFormData = options.body instanceof FormData;
   const headers = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
+  // credentials: "include" supaya browser otomatis kirim httpOnly cookie
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: "include",
   });
 
-  // Handle 401 Unauthorized — token expired atau tidak valid
+  // Handle 401 Unauthorized — session expired, idle timeout, atau force logout
   if (response.status === 401) {
     // Jangan redirect jika sedang di halaman login
     const isLoginEndpoint = endpoint.includes("/login");
     if (!isLoginEndpoint) {
+      // Coba baca reason dari response body backend
+      let reason = "session_timeout";
+      try {
+        const errBody = await response.clone().json();
+        // Backend bisa kirim: { message: "force_logout" | "idle_timeout" | "session_expired" }
+        if (
+          errBody.message?.includes("force") ||
+          errBody.message?.includes("not found")
+        ) {
+          reason = "force_logout";
+        } else if (errBody.message?.includes("idle")) {
+          reason = "idle_timeout";
+        }
+      } catch (_) {
+        // Tidak bisa parse body — gunakan default reason
+      }
+
       // Dispatch event so SessionExpiredOverlay can show the modal
       window.dispatchEvent(
         new CustomEvent("session-expired", {
-          detail: { reason: "session_timeout" },
+          detail: { reason },
         }),
       );
       throw new Error("Session expired. Please login again.");
@@ -83,7 +100,7 @@ export const api = {
         }),
       });
     } catch (err) {
-      console.error("Failed to update active app:", err);
+      logger.error("Failed to update active app:", err);
     }
   },
 

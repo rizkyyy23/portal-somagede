@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../utils/api";
+import { logger } from "../../utils/logger";
 import "../../styles/ApplicationManagement.css";
 
 const ApplicationManagement = () => {
@@ -51,7 +52,7 @@ const ApplicationManagement = () => {
         setApplications(data.data);
       }
     } catch (error) {
-      console.error("Error fetching applications:", error);
+      logger.error("Error fetching applications:", error);
     }
   };
 
@@ -82,7 +83,7 @@ const ApplicationManagement = () => {
         setPermissions(permissionMap);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      logger.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ const ApplicationManagement = () => {
         throw new Error("API error");
       }
     } catch (error) {
-      console.error("Error saving permission:", error);
+      logger.error("Error saving permission:", error);
       setPermissions(oldPermissions);
       showToast(`Failed to update ${appName} permission`, "error");
     }

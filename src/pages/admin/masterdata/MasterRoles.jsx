@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
 import "../../../styles/admin-dashboard.css";
 
 const MasterRoles = () => {
@@ -18,7 +19,7 @@ const MasterRoles = () => {
         showToast("Failed to fetch roles", "error");
       }
     } catch (error) {
-      console.error("Error fetching roles:", error);
+      logger.error("Error fetching roles:", error);
       showToast("Failed to connect to server", "error");
     } finally {
       setLoading(false);
@@ -76,7 +77,10 @@ const MasterRoles = () => {
       isActive: role.isActive,
     };
     setFormData(editData);
-    originalData.current = { ...editData, permissions: [...(role.permissions || [])] };
+    originalData.current = {
+      ...editData,
+      permissions: [...(role.permissions || [])],
+    };
     setShowModal(true);
   };
 
@@ -127,7 +131,7 @@ const MasterRoles = () => {
       setShowModal(false);
       fetchRoles();
     } catch (error) {
-      console.error("Error saving role:", error);
+      logger.error("Error saving role:", error);
       showToast("Failed to connect to server", "error");
     } finally {
       setLoading(false);
@@ -153,7 +157,7 @@ const MasterRoles = () => {
         showToast(data.message || "Failed to delete role", "error");
       }
     } catch (error) {
-      console.error("Error deleting role:", error);
+      logger.error("Error deleting role:", error);
       showToast("Failed to connect to server", "error");
     }
   };
@@ -175,7 +179,7 @@ const MasterRoles = () => {
         showToast(data.message || "Failed to toggle role status", "error");
       }
     } catch (error) {
-      console.error("Error toggling role status:", error);
+      logger.error("Error toggling role status:", error);
       showToast("Failed to connect to server", "error");
     }
   };
@@ -523,21 +527,24 @@ const MasterRoles = () => {
               </button>
               {(() => {
                 const isEdit = !!selectedRole;
-                const hasChanges = !isEdit || !originalData.current ||
+                const hasChanges =
+                  !isEdit ||
+                  !originalData.current ||
                   formData.name !== originalData.current.name ||
                   formData.code !== originalData.current.code ||
                   formData.description !== originalData.current.description ||
-                  JSON.stringify(formData.permissions) !== JSON.stringify(originalData.current.permissions);
+                  JSON.stringify(formData.permissions) !==
+                    JSON.stringify(originalData.current.permissions);
                 const canSave = hasChanges && !loading;
                 return (
                   <button
-                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    className={`modal-btn ${canSave ? "modal-btn-primary" : "modal-btn-disabled"}`}
                     onClick={handleSave}
                     disabled={!canSave}
                     style={{
                       opacity: canSave ? 1 : 0.5,
-                      cursor: canSave ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease',
+                      cursor: canSave ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <svg
@@ -550,7 +557,11 @@ const MasterRoles = () => {
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Role'}
+                    {loading
+                      ? "Saving..."
+                      : isEdit
+                        ? "Save Changes"
+                        : "Save Role"}
                   </button>
                 );
               })()}

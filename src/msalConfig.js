@@ -6,4 +6,8 @@ export const msalConfig = {
     authority: "https://login.microsoftonline.com/common",
     redirectUri: window.location.origin,
   },
+  cache: {
+    cacheLocation: "localStorage", // Persist MSAL token across tabs & browser restart
+    storeAuthStateInCookie: false,
+  },
 };

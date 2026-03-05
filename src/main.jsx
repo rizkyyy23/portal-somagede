@@ -6,12 +6,13 @@ import App from "./App.jsx";
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import { msalConfig } from "./msalConfig";
+import { logger } from "./utils/logger";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
 // Bersihkan MSAL interaction state yang mungkin tersisa dari session sebelumnya
 msalInstance.handleRedirectPromise().catch((err) => {
-  console.error("MSAL redirect cleanup error:", err);
+  logger.error("MSAL redirect cleanup error:", err);
 });
 
 // Scrollable selectors — elements that ARE allowed to scroll

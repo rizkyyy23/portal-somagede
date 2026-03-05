@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from "../utils/logger";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -6,13 +7,12 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null };
   }
 
-
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   handleReload = () => {

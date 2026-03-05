@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { api, apiClient } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
 import "../../../styles/admin-dashboard.css";
 
 const MasterApplications = () => {
@@ -40,7 +41,7 @@ const MasterApplications = () => {
         setApplications(mappedApps);
       }
     } catch (error) {
-      console.error("Error fetching applications:", error);
+      logger.error("Error fetching applications:", error);
       showToast("Failed to load applications", "error");
     } finally {
       setLoading(false);
@@ -113,7 +114,11 @@ const MasterApplications = () => {
       showToast("Application code must be less than 20 characters", "warning");
       return;
     }
-    if (formData.url && formData.url.trim() && !/^https?:\/\/.+/i.test(formData.url.trim())) {
+    if (
+      formData.url &&
+      formData.url.trim() &&
+      !/^https?:\/\/.+/i.test(formData.url.trim())
+    ) {
       showToast("URL must start with http:// or https://", "warning");
       return;
     }
@@ -150,7 +155,7 @@ const MasterApplications = () => {
         showToast(result.message || "Failed to save application", "error");
       }
     } catch (error) {
-      console.error("Error saving application:", error);
+      logger.error("Error saving application:", error);
       showToast("Failed to save application", "error");
     } finally {
       setLoading(false);
@@ -173,7 +178,7 @@ const MasterApplications = () => {
         showToast(data.message || "Failed to delete application", "error");
       }
     } catch (error) {
-      console.error("Error deleting application:", error);
+      logger.error("Error deleting application:", error);
       showToast("Failed to delete application", "error");
     } finally {
       setLoading(false);
@@ -210,7 +215,7 @@ const MasterApplications = () => {
         showToast(data.message || "Failed to update status", "error");
       }
     } catch (error) {
-      console.error("Error updating status:", error);
+      logger.error("Error updating status:", error);
       showToast("Failed to update status", "error");
     } finally {
       setLoading(false);
@@ -547,7 +552,9 @@ const MasterApplications = () => {
               </button>
               {(() => {
                 const isEdit = !!selectedApp;
-                const hasChanges = !isEdit || !originalData.current ||
+                const hasChanges =
+                  !isEdit ||
+                  !originalData.current ||
                   formData.name !== originalData.current.name ||
                   formData.code !== originalData.current.code ||
                   formData.description !== originalData.current.description ||
@@ -556,13 +563,13 @@ const MasterApplications = () => {
                 const canSave = hasChanges && !loading;
                 return (
                   <button
-                    className={`modal-btn ${canSave ? 'modal-btn-primary' : 'modal-btn-disabled'}`}
+                    className={`modal-btn ${canSave ? "modal-btn-primary" : "modal-btn-disabled"}`}
                     onClick={handleSave}
                     disabled={!canSave}
                     style={{
                       opacity: canSave ? 1 : 0.5,
-                      cursor: canSave ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease',
+                      cursor: canSave ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <svg
@@ -575,7 +582,11 @@ const MasterApplications = () => {
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    {loading ? "Saving..." : isEdit ? "Save Changes" : "Save Application"}
+                    {loading
+                      ? "Saving..."
+                      : isEdit
+                        ? "Save Changes"
+                        : "Save Application"}
                   </button>
                 );
               })()}

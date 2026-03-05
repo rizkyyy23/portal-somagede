@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { api } from "../utils/api";
+import { logger } from "../utils/logger";
 import "../styles/admin-dashboard.css";
 
 const AdminLayout = () => {
@@ -20,7 +21,7 @@ const AdminLayout = () => {
           setMenus(data.data.filter((m) => m.isActive));
         }
       } catch (error) {
-        console.error("Failed to fetch sidebar menus:", error);
+        logger.error("Failed to fetch sidebar menus:", error);
       } finally {
         setIsMenusLoaded(true);
       }
@@ -28,13 +29,12 @@ const AdminLayout = () => {
     fetchMenus();
   }, []);
 
-
   // Get page title based on current route
   const getPageTitle = () => {
     // Normalize path: lowercase and remove trailing slash
     const normalizePath = (p) => p.toLowerCase().replace(/\/$/, "");
     const currentPath = normalizePath(location.pathname);
-    
+
     // 1. Check dynamic menus (including those from DB)
     // We also check the hardcoded submenus for Master Data
     const masterDataSubmenus = [
@@ -52,12 +52,17 @@ const AdminLayout = () => {
       // Add common static routes as fallback if they aren't in DB
       { path: "/admin/dashboard-admin", label: "DASHBOARD" },
       { path: "/admin/active-session", label: "ACTIVE SESSION" },
-      { path: "/admin/application-management", label: "APPLICATION MANAGEMENT" },
+      {
+        path: "/admin/application-management",
+        label: "APPLICATION MANAGEMENT",
+      },
       { path: "/admin/user-control", label: "USER CONTROL" },
       { path: "/admin/broadcast", label: "BROADCAST MESSAGE" },
     ];
-    
-    const activeMenu = allMenus.find(m => normalizePath(m.path) === currentPath);
+
+    const activeMenu = allMenus.find(
+      (m) => normalizePath(m.path) === currentPath,
+    );
     if (activeMenu) return activeMenu.label.toUpperCase();
 
     // 2. Fallback: derive from path name
