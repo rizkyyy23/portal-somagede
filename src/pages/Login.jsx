@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MicrosoftLoginButton from "../components/MicrosoftLoginButton";
 import { api } from "../utils/api";
@@ -17,6 +17,30 @@ export default function Login() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotError, setForgotError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const resendTimerRef = useRef(null);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+    };
+  }, []);
+
+  const startResendTimer = () => {
+    setResendCooldown(60);
+    if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+    resendTimerRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(resendTimerRef.current);
+          resendTimerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -90,9 +114,10 @@ export default function Login() {
       await api.post("/auth/forgot-password", { email });
       // Always show success — never reveal if email exists or not (security)
       setForgotSent(true);
+      startResendTimer();
     } catch (err) {
       logger.error("Forgot password error:", err);
-      setForgotError("Terjadi kesalahan. Silakan coba lagi.");
+      setForgotError("Something went wrong. Please try again.");
     } finally {
       setForgotLoading(false);
     }
@@ -339,72 +364,90 @@ export default function Login() {
         >
           <div className="forgot-modal" onClick={(e) => e.stopPropagation()}>
             <button
-              className="forgot-modal-close"
+              className="forgot-close-btn"
               onClick={() => setShowForgotModal(false)}
+              type="button"
             >
-              &times;
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
 
-            {!forgotSent ? (
-              <>
-                <div className="forgot-modal-icon">
-                  <i className="fas fa-lock"></i>
-                </div>
-                <h2>Lupa Password?</h2>
-                <p className="forgot-modal-desc">
-                  Masukkan email akun Anda. Jika terdaftar, kami akan mengirim
-                  link untuk reset password.
-                </p>
+            <div className="forgot-modal-logo">
+              <img
+                src="/assets/logo somagede black.png"
+                alt="Somagede Indonesia"
+              />
+            </div>
 
-                <form onSubmit={handleForgotPassword}>
-                  {forgotError && (
-                    <div className="forgot-error">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                      </svg>
-                      {forgotError}
-                    </div>
-                  )}
+            <h2>Reset Your Password</h2>
+            <p className="forgot-modal-desc">
+              Enter your registered employee email to receive a password reset
+              link.
+            </p>
 
-                  <div className="forgot-form-group">
-                    <label htmlFor="forgot-email">Email Address</label>
-                    <input
-                      type="email"
-                      id="forgot-email"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="nama@somagede.com"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="forgot-submit-btn"
-                    disabled={forgotLoading}
-                  >
-                    {forgotLoading ? (
+            {/* Success notification banner */}
+            {forgotSent && (
+              <div className="forgot-sent-banner">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <div>
+                  <strong>Reset link has been sent!</strong>
+                  <span>
+                    Check your inbox and spam folder.
+                    {resendCooldown > 0 ? (
                       <>
-                        <span className="forgot-spinner"></span>
-                        Mengirim...
+                        {" "}
+                        Resend in{" "}
+                        <strong className="forgot-countdown">
+                          {resendCooldown}s
+                        </strong>
                       </>
                     ) : (
-                      "Kirim Link Reset"
+                      <button
+                        className="forgot-resend-btn"
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await api.post("/auth/forgot-password", {
+                              email: forgotEmail.trim().toLowerCase(),
+                            });
+                            startResendTimer();
+                          } catch (err) {
+                            logger.error("Resend forgot password error:", err);
+                          }
+                        }}
+                      >
+                        Resend
+                      </button>
                     )}
-                  </button>
-                </form>
+                  </span>
+                </div>
+              </div>
+            )}
 
-                <div className="forgot-modal-info">
+            <form onSubmit={handleForgotPassword}>
+              {forgotError && (
+                <div className="forgot-error">
                   <svg
                     width="14"
                     height="14"
@@ -414,48 +457,64 @@ export default function Login() {
                     strokeWidth="2"
                   >
                     <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
                   </svg>
-                  <span>
-                    Karyawan internal? Gunakan{" "}
-                    <strong>Login dengan Microsoft 365</strong> di halaman
-                    login.
-                  </span>
+                  {forgotError}
                 </div>
-              </>
-            ) : (
-              <div className="forgot-success">
-                <div className="forgot-success-icon">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                </div>
-                <h2>Email Terkirim!</h2>
-                <p className="forgot-modal-desc">
-                  Jika email tersebut terdaftar di sistem kami, Anda akan
-                  menerima link untuk reset password dalam beberapa menit.
-                </p>
-                <p className="forgot-success-note">
-                  Tidak menerima email? Periksa folder spam atau hubungi Admin
-                  IT.
-                </p>
-                <button
-                  className="forgot-submit-btn"
-                  onClick={() => setShowForgotModal(false)}
-                >
-                  Kembali ke Login
-                </button>
+              )}
+
+              <div className="forgot-form-group">
+                <label htmlFor="forgot-email">Employee Email</label>
+                <input
+                  type="email"
+                  id="forgot-email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="enter your email address..."
+                  required
+                  autoFocus
+                />
               </div>
-            )}
+
+              <button
+                type="submit"
+                className="forgot-submit-btn"
+                disabled={forgotLoading || resendCooldown > 0}
+              >
+                {forgotLoading ? (
+                  <>
+                    <span className="forgot-spinner"></span>
+                    Sending...
+                  </>
+                ) : forgotSent && resendCooldown > 0 ? (
+                  `Resend (${resendCooldown}s)`
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+            </form>
+
+            <div className="forgot-modal-divider"></div>
+
+            <div className="forgot-modal-info">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>
+                Internal employee? Use{" "}
+                <strong>Login with Microsoft 365</strong> on the login page.
+              </span>
+            </div>
           </div>
         </div>
       )}
