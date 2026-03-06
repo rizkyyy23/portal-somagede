@@ -518,19 +518,6 @@ export default function Profile() {
                   Internship
                 </span>
               )}
-              <span
-                className={`badge-auth-provider ${userData?.auth_provider === "microsoft" ? "microsoft" : "local"}`}
-              >
-                {userData?.auth_provider === "microsoft" ? (
-                  <>
-                    <i className="fab fa-microsoft"></i> Microsoft SSO
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-key"></i> Local Account
-                  </>
-                )}
-              </span>
             </div>
           </div>
         </div>
@@ -696,16 +683,26 @@ export default function Profile() {
                         </p>
                       </div>
                       <a
-                        href="https://account.microsoft.com/"
+                        href="https://mysignins.microsoft.com/security-info"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="settings-btn-microsoft"
                       >
-                        <i
-                          className="fab fa-microsoft"
-                          style={{ marginRight: 6 }}
-                        ></i>
-                        Microsoft Account
+                        <span style={{ display: "flex", alignItems: "center", marginRight: 8 }}>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 23 23"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <rect width="10.5" height="10.5" fill="#F25022" />
+                            <rect x="12" width="10.5" height="10.5" fill="#7FBA00" />
+                            <rect y="12" width="10.5" height="10.5" fill="#00A4EF" />
+                            <rect x="12" y="12" width="10.5" height="10.5" fill="#FFB900" />
+                          </svg>
+                        </span>
+                        Manage on Microsoft
                       </a>
                     </div>
                   ) : (
@@ -745,17 +742,6 @@ export default function Profile() {
                         >
                           Update Password
                         </button>
-                      </div>
-                      <div className="settings-forgot-link">
-                        <a
-                          href="/login"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.href = "/login";
-                          }}
-                        >
-                          Lupa password lama?
-                        </a>
                       </div>
                     </>
                   )}
@@ -853,28 +839,16 @@ export default function Profile() {
               <div className="settings-right">
                 {/* IT Support Box */}
                 <div className="it-support-box">
-                  <p className="it-support-text">
-                    Contact IT Support at <strong>support@somagede.com</strong>{" "}
+                    <p className="it-support-text">
+                      Contact <strong>IT Support </strong>
                     if you notice any suspicious activity.
-                  </p>
+                    </p>
                 </div>
               </div>
             </div>
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="profile-footer">
-        <div className="footer-content">
-          <span>© 2025 SOMAGEDE INDONESIA</span>
-          <div className="footer-links">
-            <a href="#">TERMS OF SERVICE</a>
-            <a href="#">PRIVACY POLICY</a>
-            <a href="#">SECURITY</a>
-          </div>
-        </div>
-      </footer>
 
       {/* Login Activity Modal */}
       {showLoginModal && (

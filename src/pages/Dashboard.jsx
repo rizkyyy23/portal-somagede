@@ -11,10 +11,14 @@ export default function Dashboard() {
   const [showAdminNavModal, setShowAdminNavModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth > 1024);
 
-  // Track open state for section dropdowns: { 'it': true, 'finance': false }
-  const [openSections, setOpenSections] = useState({});
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  // Track viewport for admin panel access
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Data States
   const [user, setUser] = useState(null);
@@ -33,12 +37,6 @@ export default function Dashboard() {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".profile-btn")) {
         setProfileOpen(false);
-      }
-      if (
-        !event.target.closest(".section-dropdown-wrap") &&
-        !event.target.closest(".hero-filter-wrap")
-      ) {
-        setOpenSections({});
       }
     };
 
@@ -196,31 +194,6 @@ export default function Dashboard() {
     return deptAllowedCodes.includes(appCode);
   };
 
-  const toggleSectionDrop = (category) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  const scrollToCard = (appId) => {
-    const element = document.getElementById(`card-${appId}`);
-    if (element) {
-      // Close all dropdowns
-      setOpenSections({});
-
-      // Scroll functionality
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      // Flash effect
-      element.style.transition = "box-shadow .3s";
-      element.style.boxShadow = "0 0 0 3px var(--blue)";
-      setTimeout(() => {
-        element.style.boxShadow = "";
-      }, 800);
-    }
-  };
-
   // Broadcast Collapse State: Array of IDs that are collapsed
   const [collapsedIds, setCollapsedIds] = useState([]);
 
@@ -352,7 +325,7 @@ export default function Dashboard() {
                 <span className="di-arrow">›</span>
               </div>
 
-              {isAdmin && (
+              {isAdmin && isDesktop && (
                 <div
                   className="dropdown-item"
                   onClick={() => setShowAdminNavModal(true)}
@@ -416,131 +389,6 @@ export default function Dashboard() {
               one unified platform.
             </p>
           </div>
-
-          <div
-            className={`hero-filter-wrap ${openSections["_heroFilter"] ? "open" : ""}`}
-          >
-            <button
-              className="hero-filter-trigger"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenSections((prev) => ({
-                  ...prev,
-                  _heroFilter: !prev._heroFilter,
-                }));
-              }}
-            >
-              <div className="filter-icon-bg">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="4" y1="21" x2="4" y2="14" />
-                  <line x1="4" y1="10" x2="4" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12" y2="3" />
-                  <line x1="20" y1="21" x2="20" y2="16" />
-                  <line x1="20" y1="12" x2="20" y2="3" />
-                  <line x1="1" y1="14" x2="7" y2="14" />
-                  <line x1="9" y1="8" x2="15" y2="8" />
-                  <line x1="17" y1="16" x2="23" y2="16" />
-                </svg>
-              </div>
-              <span>
-                {selectedFilter === "all"
-                  ? "All Applications"
-                  : (() => {
-                      const cat = selectedFilter;
-                      const isOther =
-                        cat.toLowerCase() === "other" ||
-                        cat.toLowerCase() === "others";
-                      return isOther ? user?.department || "Department" : cat;
-                    })()}
-              </span>
-              <svg
-                className="hero-filter-caret"
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            <div className="hero-filter-dropdown">
-              <div className="filter-dropdown-title">FILTER BY SECTION</div>
-
-              <div className="dropdown-scroll-area">
-                {Object.entries(categorizedApps).map(([category, apps]) => {
-                  const isOther =
-                    category.toLowerCase() === "other" ||
-                    category.toLowerCase() === "others";
-                  const visibleApps = isAdmin
-                    ? apps
-                    : apps.filter((app) => isAppInDepartment(app.code));
-
-                  if (visibleApps.length === 0) return null;
-
-                  const displayName = isOther
-                    ? `${user?.department || "Department"}`
-                    : category;
-
-                  return (
-                    <div key={category} className="filter-dropdown-group">
-                      <button
-                        className={`hero-filter-item category ${selectedFilter === category ? "active" : ""}`}
-                        onClick={() => {
-                          setSelectedFilter(category);
-                          setOpenSections((prev) => ({
-                            ...prev,
-                            _heroFilter: false,
-                          }));
-                        }}
-                      >
-                        <div className="item-icon">
-                          <span className="cat-dot" />
-                        </div>
-                        <span>{displayName}</span>
-                        <span className="count-badge">
-                          {visibleApps.length}
-                        </span>
-                      </button>
-
-                      <div className="dropdown-apps-list">
-                        {visibleApps.map((app) => (
-                          <div
-                            key={app.id}
-                            className="dropdown-app-link"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              scrollToCard(app.id);
-                              setOpenSections((prev) => ({
-                                ...prev,
-                                _heroFilter: false,
-                              }));
-                            }}
-                          >
-                            <span className="app-link-dot" />
-                            {app.name}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -570,12 +418,6 @@ export default function Dashboard() {
                 className="section"
                 data-category={category.toLowerCase()}
                 key={category}
-                style={{
-                  display:
-                    selectedFilter === "all" || selectedFilter === category
-                      ? "block"
-                      : "none",
-                }}
               >
                 <div
                   className={`section-header ${isDeptHeader ? "department-header" : ""}`}
@@ -735,21 +577,7 @@ export default function Dashboard() {
                               </svg>
                             </>
                           ) : isInactive ? (
-                            <>
-                              Temporarily Unavailable
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                              </svg>
-                            </>
+                            "Temporarily Unavailable"
                           ) : (
                             <>
                               Access Locked
@@ -988,6 +816,12 @@ export default function Dashboard() {
           </div>
         </aside>
       </div>
+
+      {/* Footer - visible on tablet/mobile */}
+      <footer className="dashboard-footer">
+        <span>©2026 SOMAGEDE INDONESIA</span>
+      </footer>
+
       {/* Navigation Modal */}
       {showAdminNavModal && (
         <div

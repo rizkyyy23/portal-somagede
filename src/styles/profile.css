@@ -329,6 +329,7 @@
   align-self: start;
   position: sticky;
   top: 0;
+  margin-bottom: 24px;
 }
 
 .info-section {
@@ -765,10 +766,11 @@
 .settings-btn-microsoft {
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
-  background: #f0f7ff;
-  color: #1a73e8;
-  border: 1px solid #d4e5fa;
+  justify-content: center;
+  padding: 10px 18px;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -776,12 +778,14 @@
   flex-shrink: 0;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  gap: 10px;
 }
 
 .settings-btn-microsoft:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Password Cooldown Badge */

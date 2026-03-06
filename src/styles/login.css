@@ -650,45 +650,90 @@
    RESPONSIVE — TABLET (≤1024px)
    ============================================ */
 @media (max-width: 1024px) {
-  .login-page .left-title {
-    font-size: 32px;
+  .login-page {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
   }
 
-  .login-page .left-logo img {
-    width: 220px;
-  }
-
-  .login-page .left-description {
-    font-size: 13px;
+  .login-page .container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
   }
 
   .login-page .left-side {
-    padding: 30px 24px;
+    display: none;
   }
 
   .login-page .right-side {
-    padding: 30px 36px;
+    flex: 1;
+    min-height: 100vh;
+    padding: 40px 36px;
+    align-items: flex-start;
+    padding-top: 48px;
+  }
+
+  .login-page .login-container {
+    max-width: 600px;
+    margin: 0 auto;
   }
 
   .login-page .top-logo img {
-    width: 240px;
+    width: 320px;
   }
 
   .login-page .top-logo {
-    margin-bottom: 30px;
+    margin-bottom: 52px;
   }
 
   .login-page .login-header {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
   }
 
   .login-page .login-header h1 {
-    font-size: 22px;
-    margin-bottom: 8px;
+    font-size: 30px;
+    margin-bottom: 12px;
   }
 
   .login-page .login-header p {
+    font-size: 16px;
+  }
+
+  .login-page .form-group {
+    margin-bottom: 20px;
+  }
+
+  .login-page .form-group label {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .login-page .form-group input {
+    padding: 16px 18px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .login-page .forgot-password a {
+    font-size: 14px;
+  }
+
+  .login-page .login-button {
+    padding: 18px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+
+  .login-page .divider span {
     font-size: 13px;
+  }
+
+  .login-page .microsoft-button,
+  .login-page .google-button {
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 10px;
   }
 }
 

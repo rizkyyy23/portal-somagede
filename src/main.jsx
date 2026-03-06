@@ -17,6 +17,7 @@ msalInstance.handleRedirectPromise().catch((err) => {
 
 // Scrollable selectors — elements that ARE allowed to scroll
 const SCROLLABLE_SELECTORS = [
+  ".dashboard-container",
   ".content-area",
   ".admin-main",
   ".sidebar",
@@ -48,10 +49,16 @@ const canScrollInside = (el) => {
   return false;
 };
 
+// Check if current viewport is mobile/tablet (stacked layout)
+const isMobileViewport = () => window.innerWidth <= 1024;
+
 // Prevent ALL wheel scroll at document level, except inside scrollable containers
 document.addEventListener(
   "wheel",
   (e) => {
+    // On mobile/tablet, allow all scrolling
+    if (isMobileViewport()) return;
+
     // Always block horizontal trackpad drag
     if (Math.abs(e.deltaX) > 0) {
       e.preventDefault();
@@ -76,6 +83,9 @@ document.addEventListener("dragstart", (e) => {
 document.addEventListener(
   "touchmove",
   (e) => {
+    // On mobile/tablet, allow all touch scrolling
+    if (isMobileViewport()) return;
+
     if (!canScrollInside(e.target)) {
       e.preventDefault();
     }

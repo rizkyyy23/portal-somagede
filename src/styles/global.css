@@ -7,8 +7,6 @@
 html,
 body {
   overscroll-behavior: none;
-  overflow: hidden;
-  height: 100%;
 }
 
 body {
@@ -16,9 +14,18 @@ body {
   background-color: #f5f6fa;
 }
 
-#root {
-  height: 100%;
-  overflow: hidden;
+/* Scroll lock ONLY on desktop */
+@media (min-width: 1025px) {
+  html,
+  body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 
 /* ==================== TOAST NOTIFICATION STYLES ==================== */
