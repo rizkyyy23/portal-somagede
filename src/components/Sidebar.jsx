@@ -140,11 +140,11 @@ const AdminSidebar = ({ dynamicMenus = [], isMenusLoaded = false }) => {
     // Simulate logout process (untuk animasi)
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Delete active session
+    // Delete active session — backend identifies user from JWT
     try {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       if (storedUser?.id) {
-        await api.delete(`/sessions/user/${storedUser.id}`);
+        await api.delete("/sessions");
       }
     } catch (e) {
       logger.error("Failed to cleanup session:", e);

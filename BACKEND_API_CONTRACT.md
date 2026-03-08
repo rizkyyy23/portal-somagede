@@ -39,30 +39,12 @@
 
 ## 1. Arsitektur & Alur Umum
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      FRONTEND (React)                       │
-│  Vite Dev Server → proxy /api → http://localhost:3001       │
-│  Vite Dev Server → proxy /uploads → http://localhost:3001   │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ HTTP (JSON / FormData)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    BACKEND (Express/etc)                     │
-│  Port: 3001                                                 │
-│  Base Path: /api                                            │
-│  Static Files: /uploads (untuk avatar, icon)                │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    DATABASE (MySQL)                          │
-│  Tables: users, sessions, applications, departments,        │
-│          positions, roles, menus, broadcasts,                │
-│          login_history, user_privileges,                     │
-│          department_permissions                              │
-└─────────────────────────────────────────────────────────────┘
-```
+ FRONTEND (React)  
+
+│  Vite Dev Server → proxy /api → http://localhost:5173/      │
+│  Vite Dev Server → proxy /uploads → http://localhost:5173/  │
+
+              
 
 ### Alur Autentikasi
 
@@ -70,8 +52,8 @@ Portal punya 2 metode login untuk 2 tipe user:
 
 | Metode               | Untuk Siapa                                          | Cara Akun Dibuat                                       |
 | -------------------- | ---------------------------------------------------- | ------------------------------------------------------ |
-| **Microsoft 365**    | Karyawan internal (punya akun Microsoft perusahaan)  | Admin daftarkan di User Control, login pakai Microsoft |
-| **Email + Password** | User eksternal / intern (tidak punya akun Microsoft) | Admin buat akun + password di User Control             |
+| **Microsoft 365**    | Karyawan internal (punya akun Microsoft perusahaan)  | Data diambil dari talenta (pihak ke 3 kepegawaian), login pakai Microsoft |
+| **Email + Password** | User eksternal / (tidak punya akun Microsoft) | Admin buat akun + password di User Control             |
 
 Kedua metode menghasilkan output yang sama: JWT di httpOnly cookie + session di database.
 

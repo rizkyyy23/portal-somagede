@@ -68,38 +68,15 @@ export default function Profile() {
       const userId = storedUser?.id;
       if (!userId) return;
 
-      // Fetch active sessions, login history, and current device info in parallel
-      const [sessionsData, historyData, deviceInfo] = await Promise.all([
-        api.get(`/sessions/user/${userId}`),
+      // Fetch active sessions and login history in parallel
+      // Backend detects device info internally — no need for /device-info endpoint
+      const [sessionsData, historyData] = await Promise.all([
+        api.get("/sessions/me"),
         api.get(`/login-history/user/${userId}`),
-        api.get("/device-info").catch(() => null),
       ]);
 
       let activeSessions = sessionsData.success ? sessionsData.data : [];
       let loginHistory = historyData.success ? historyData.data : [];
-
-      // Enrich sessions & history with device-info if fields are missing
-      if (deviceInfo?.success && deviceInfo.data) {
-        const di = deviceInfo.data;
-        const enrichEntry = (entry) => {
-          const ip = di.ip_address || di.ip;
-          const isSameDevice =
-            entry.ip_address === ip ||
-            entry.ip_address === "127.0.0.1" ||
-            entry.ip_address === "0.0.0.0";
-          if (isSameDevice) {
-            return {
-              ...entry,
-              city: entry.city || di.city || null,
-              region: entry.region || di.region || null,
-              country: entry.country || di.country || null,
-            };
-          }
-          return entry;
-        };
-        activeSessions = activeSessions.map(enrichEntry);
-        loginHistory = loginHistory.map(enrichEntry);
-      }
 
       // Combine: active sessions first (marked as current), then past logins
       // Skip history entries that match the current active session time
@@ -688,7 +665,13 @@ export default function Profile() {
                         rel="noopener noreferrer"
                         className="settings-btn-microsoft"
                       >
-                        <span style={{ display: "flex", alignItems: "center", marginRight: 8 }}>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginRight: 8,
+                          }}
+                        >
                           <svg
                             width="18"
                             height="18"
@@ -697,9 +680,25 @@ export default function Profile() {
                             xmlns="http://www.w3.org/2000/svg"
                           >
                             <rect width="10.5" height="10.5" fill="#F25022" />
-                            <rect x="12" width="10.5" height="10.5" fill="#7FBA00" />
-                            <rect y="12" width="10.5" height="10.5" fill="#00A4EF" />
-                            <rect x="12" y="12" width="10.5" height="10.5" fill="#FFB900" />
+                            <rect
+                              x="12"
+                              width="10.5"
+                              height="10.5"
+                              fill="#7FBA00"
+                            />
+                            <rect
+                              y="12"
+                              width="10.5"
+                              height="10.5"
+                              fill="#00A4EF"
+                            />
+                            <rect
+                              x="12"
+                              y="12"
+                              width="10.5"
+                              height="10.5"
+                              fill="#FFB900"
+                            />
                           </svg>
                         </span>
                         Manage on Microsoft
@@ -839,10 +838,10 @@ export default function Profile() {
               <div className="settings-right">
                 {/* IT Support Box */}
                 <div className="it-support-box">
-                    <p className="it-support-text">
-                      Contact <strong>IT Support </strong>
+                  <p className="it-support-text">
+                    Contact <strong>IT Support </strong>
                     if you notice any suspicious activity.
-                    </p>
+                  </p>
                 </div>
               </div>
             </div>

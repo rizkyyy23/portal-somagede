@@ -147,13 +147,9 @@ export default function Login() {
     );
 
     // Create active session — backend auto-detects IP, browser, OS, device, location
+    // Backend reads user identity from JWT token (not from request body)
     try {
       await api.post("/sessions", {
-        user_id: userData.id || null,
-        user_name: userData.name,
-        user_email: userData.email,
-        department: userData.department,
-        role: userData.role || (userType === "admin" ? "Admin" : "User"),
         app_name: "-",
       });
     } catch (sessionError) {
@@ -511,8 +507,8 @@ export default function Login() {
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
               <span>
-                Internal employee? Use{" "}
-                <strong>Login with Microsoft 365</strong> on the login page.
+                Internal employee? Use <strong>Login with Microsoft 365</strong>{" "}
+                on the login page.
               </span>
             </div>
           </div>

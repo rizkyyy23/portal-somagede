@@ -96,11 +96,8 @@ const Broadcast = () => {
 
     setSending(true);
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const result = await api.post("/broadcasts", {
-        ...formData,
-        admin_id: user.id,
-      });
+      // Backend reads admin identity from JWT — no need to send admin_id
+      const result = await api.post("/broadcasts", formData);
 
       if (result.success) {
         showToast("Broadcast sent successfully!", "success");
@@ -131,10 +128,8 @@ const Broadcast = () => {
     if (!deleteCandidate) return;
 
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const result = await api.delete(
-        `/broadcasts/${deleteCandidate}?admin_id=${user.id}`,
-      );
+      // Backend reads admin identity from JWT — no need for admin_id query param
+      const result = await api.delete(`/broadcasts/${deleteCandidate}`);
       if (result.success) {
         showToast(
           "Broadcast removed from active list (kept in history)",

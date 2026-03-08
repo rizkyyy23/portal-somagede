@@ -90,12 +90,9 @@ export const api = {
    */
   updateActiveApp: async (appName) => {
     try {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      if (!storedUser?.id) return;
       await apiClient("/sessions/update-app", {
         method: "PUT",
         body: JSON.stringify({
-          user_id: storedUser.id,
           app_name: appName || "-",
         }),
       });
