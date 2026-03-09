@@ -1,3 +1,38 @@
+### Endpoint SSO untuk Launch Application
+
+- **Endpoint:** `GET /api/sso/:appName`
+- **Deskripsi:**
+  - Digunakan frontend untuk mendapatkan URL SSO aplikasi tujuan (misal: SGI+), agar user tidak perlu login ulang.
+  - Nama aplikasi dikirim sebagai path parameter (`:appName`).
+  - Session user diidentifikasi dari cookie HttpOnly yang dikirim otomatis oleh browser.
+
+- **Request Contoh:**
+
+  ```http
+  GET /api/sso/SGI%2B HTTP/1.1
+  Host: portal.domain.com
+  Cookie: token=xxxxxx;
+  ```
+
+- **Response Sukses:**
+
+  ```json
+  {
+    "url": "https://sgi+.domain.com/sso-login?token=xxxx"
+  }
+  ```
+
+- **Flow:**
+  1. Frontend memanggil endpoint ini saat user klik "Launch Application".
+  2. Backend memvalidasi session user dari cookie.
+  3. Backend membuat token SSO untuk aplikasi tujuan.
+  4. Backend mengembalikan URL aplikasi tujuan beserta token SSO.
+  5. Frontend melakukan redirect ke URL tersebut.
+
+- **Catatan:**
+  - Jika response tidak mengandung properti `url`, frontend akan menampilkan pesan error.
+  - Format endpoint dan response dapat disesuaikan sesuai kebutuhan backend.
+
 # Backend API Contract — Portal Somagede
 
 > Dokumen ini berisi **seluruh kontrak API** yang harus diimplementasikan oleh tim backend
@@ -39,21 +74,19 @@
 
 ## 1. Arsitektur & Alur Umum
 
- FRONTEND (React)  
+FRONTEND (React)
 
-│  Vite Dev Server → proxy /api → http://localhost:5173/      │
-│  Vite Dev Server → proxy /uploads → http://localhost:5173/  │
-
-              
+│ Vite Dev Server → proxy /api → http://localhost:5173/ │
+│ Vite Dev Server → proxy /uploads → http://localhost:5173/ │
 
 ### Alur Autentikasi
 
 Portal punya 2 metode login untuk 2 tipe user:
 
-| Metode               | Untuk Siapa                                          | Cara Akun Dibuat                                       |
-| -------------------- | ---------------------------------------------------- | ------------------------------------------------------ |
-| **Microsoft 365**    | Karyawan internal (punya akun Microsoft perusahaan)  | Data diambil dari talenta (pihak ke 3 kepegawaian), login pakai Microsoft |
-| **Email + Password** | User eksternal / (tidak punya akun Microsoft) | Admin buat akun + password di User Control             |
+| Metode               | Untuk Siapa                                         | Cara Akun Dibuat                                                          |
+| -------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Microsoft 365**    | Karyawan internal (punya akun Microsoft perusahaan) | Data diambil dari talenta (pihak ke 3 kepegawaian), login pakai Microsoft |
+| **Email + Password** | User eksternal / (tidak punya akun Microsoft)       | Admin buat akun + password di User Control                                |
 
 Kedua metode menghasilkan output yang sama: JWT di httpOnly cookie + session di database.
 

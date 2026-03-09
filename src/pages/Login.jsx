@@ -286,7 +286,7 @@ export default function Login() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="username@somagede.com"
+                  placeholder="username@gmail.com"
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ export default function Login() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Enter your security key"
+                    placeholder="Enter your password"
                     required
                   />
                   <span
@@ -388,7 +388,7 @@ export default function Login() {
 
             <h2>Reset Your Password</h2>
             <p className="forgot-modal-desc">
-              Enter your registered employee email to receive a password reset
+              Enter your registered email to receive a password reset
               link.
             </p>
 
@@ -461,7 +461,7 @@ export default function Login() {
               )}
 
               <div className="forgot-form-group">
-                <label htmlFor="forgot-email">Employee Email</label>
+                <label htmlFor="forgot-email">Email</label>
                 <input
                   type="email"
                   id="forgot-email"

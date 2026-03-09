@@ -101,7 +101,7 @@ export default function MicrosoftLoginButton({ onLoginSuccess, disabled }) {
           <rect x="12" y="12" width="10.5" height="10.5" fill="#FFB900" />
         </svg>
       </span>
-      <span style={{ fontWeight: 600 }}>Login with Microsoft 365</span>
+      <span style={{ fontWeight: 600 }}>Sign in with Microsoft 365</span>
     </button>
   );
 }

@@ -1,4 +1,19 @@
 /**
+ * Request SSO URL dari backend untuk aplikasi tertentu.
+ * @param {string} appName Nama aplikasi (misal: "SGI+")
+ * @returns {Promise<string>} URL tujuan SSO (misal: https://sgi+.domain.com/sso-login?token=xxxx)
+ *
+ * Ganti endpoint '/api/sso/:appName' sesuai dengan endpoint backend yang akan disediakan.
+ */
+export const getSsoUrl = async (appName) => {
+  // TODO: Ganti endpoint di bawah ini jika backend sudah siap
+  const endpoint = `/sso/${encodeURIComponent(appName)}`;
+  const response = await apiClient(endpoint, { method: "GET" });
+  // Asumsikan backend mengembalikan { url: "https://sgi+.domain.com/sso-login?token=xxxx" }
+  if (!response || !response.url) throw new Error("SSO URL tidak ditemukan");
+  return response.url;
+};
+/**
  * Centralized API Client for Portal Somagede
  *
  * - Autentikasi via httpOnly cookie (session-based, dikirim otomatis oleh browser)

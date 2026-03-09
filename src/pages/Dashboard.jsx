@@ -544,17 +544,28 @@ export default function Dashboard() {
                         {/* Description removed as per request */}
 
                         <a
-                          href={canAccess ? app.url : "#"}
-                          target={canAccess ? "_blank" : "_self"}
+                          href="#"
+                          target="_self"
                           rel="noopener noreferrer"
                           className={`launch-link ${!canAccess ? "disabled" : ""}`}
-                          onClick={(e) => {
-                            if (!canAccess || !app.url) {
+                          onClick={async (e) => {
+                            if (!canAccess) {
                               e.preventDefault();
                               return;
                             }
-                            // Update active app only when app has a valid URL
-                            api.updateActiveApp(app.name);
+                            // Semua aplikasi menggunakan SSO
+                            e.preventDefault();
+                            try {
+                              // getSsoUrl dari utils/api.js
+                              const { getSsoUrl } =
+                                await import("../utils/api");
+                              const ssoUrl = await getSsoUrl(app.name);
+                              window.location.href = ssoUrl;
+                            } catch (err) {
+                              alert(
+                                "Gagal mendapatkan SSO URL: " + err.message,
+                              );
+                            }
                           }}
                         >
                           {canAccess ? (

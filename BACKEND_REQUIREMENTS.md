@@ -1,3 +1,35 @@
+### Kebutuhan Request Frontend untuk Endpoint SSO (Launch Application)
+
+- **Endpoint:** `GET /api/sso/:appName`
+- **Deskripsi:**
+  - Endpoint ini dipanggil frontend setiap kali user ingin membuka aplikasi dari portal.
+  - Nama aplikasi dikirim sebagai path parameter (`:appName`).
+  - Tidak ada data di body request.
+  - Session user dikirim otomatis melalui cookie HttpOnly (misal: `token=xxxxxx`).
+
+- **Contoh Request:**
+
+  ```http
+  GET /api/sso/SGI%2B HTTP/1.1
+  Host: portal.domain.com
+  Cookie: token=xxxxxx;
+  ```
+
+- **Yang perlu dilakukan backend:**
+  1. Validasi session user dari cookie.
+  2. Generate token SSO untuk aplikasi tujuan.
+  3. Kembalikan response JSON:
+     ```json
+     {
+       "url": "https://sgi+.domain.com/sso-login?token=xxxx"
+     }
+     ```
+  4. Jika gagal, kembalikan error message yang jelas.
+
+- **Catatan:**
+  - Frontend akan melakukan redirect ke URL yang diberikan pada response.
+  - Jika response tidak mengandung properti `url`, frontend akan menampilkan pesan error.
+
 # Backend Requirements — Portal Somagede
 
 > Dokumen ini berisi **kebutuhan backend** yang harus diimplementasikan agar frontend Portal Somagede berjalan dengan sempurna.
